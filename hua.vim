@@ -1,4 +1,3 @@
-source fgl.vim
 syn match keywordGroup '\c\<BOOLEAN\>'
 syn match keywordGroup '\c\<CONSTANT\>'
 syn match keywordGroup '\c\<DEFINE\>'
