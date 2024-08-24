@@ -6,3 +6,4 @@ test
 syntax_test.hua
 
 *.pyc
+.hua*

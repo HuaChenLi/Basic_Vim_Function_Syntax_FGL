@@ -43,8 +43,8 @@ call delete('.temp_tags')
 
 "autocmd TextChanged <buffer> call LoadSyntax()
 "autocmd TextChangedI <buffer> call LoadSyntax()
-autocmd CursorMoved <buffer> call ShowFuncName(line('.'), col('.'), line('.'), col('.'))
-autocmd CursorMovedI <buffer> call ShowFuncName(line('.'), col('.'), line('.'), col('.'))
+autocmd CursorMoved <buffer> call ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
+autocmd CursorMovedI <buffer> call ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
 """""""""""""""""""""""""""""""""""""""
 
 """""""""""""""""""""""""""""""""""""""
@@ -260,30 +260,24 @@ function! ShowFuncName(newLine, newColumn, originalLine, originalColumn)
 	call cursor(a:newLine, a:newColumn)
 
 
-	" have an idea, where you can grab the further down line number between { and FUNCTION
-	" if it's {, you look for the next place that has } that isn't a comment or String
-	" then you keep going
 	let tempLineNumber = search('\cFUNCTION', 'bnW', 'g')
 	let tempLineCurlyNumber = search('}', 'bnW', 'g')
 
+	let tempLineCurlyNumber = SearchNotCommentLineNumber('}', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
+	let tempLineNumber = SearchNotCommentLineNumber('\cFUNCTION', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
+
 	if tempLineNumber >= tempLineCurlyNumber
 	   let currentLine = getline(tempLineNumber)
-	   echo "not curly"
 
-    	   if IsComment(currentLine, 'FUNCTION')
-    	   	call ShowFuncName(tempLineNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
-    	   else
-    	   	call cursor(a:originalLine, a:originalColumn)
-    	   	let statusMessage = substitute(currentLine, '\s', '\\ ', 'g')
-    	   	execute "set statusline=" . statusMessage
-    	   	if IsEndOfFunction(currentLine)
-    	   		let statusMessage = "end of function"
-    	   		let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
-    	   		execute "set statusline =" . statusMessage
-    	   	endif
+    	   call cursor(a:originalLine, a:originalColumn)
+    	   let statusMessage = substitute(currentLine, '\s', '\\ ', 'g')
+    	   execute "set statusline=" . statusMessage
+    	   if IsEndOfFunction(currentLine)
+    	   	let statusMessage = "end of function"
+    	   	let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
+    	   	execute "set statusline =" . statusMessage
     	   endif
 	else
-	    echo "curly part"
 	    let currentLineCurly = getline(tempLineCurlyNumber)
 	    if IsComment(currentLineCurly, '{')
     	   	call ShowFuncName(tempLineCurlyNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
@@ -292,29 +286,26 @@ function! ShowFuncName(newLine, newColumn, originalLine, originalColumn)
 		call ShowFuncName(newLineNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
 	    endif
 	endif
-	"echo search('}', 'bnW', 'g')
 endfunction
 
 function! IsComment(currentLine, comparedString)
-	" will need to update so that it doesn't need a comparedString and can just recognise if the position is a comment
-	let isComment = v:true
-	"echo 'hello'
-	" still can't quite get the comment in {}
+    " will need to update so that it doesn't need a comparedString and can just recognise if the position is a comment
+    let isComment = v:true
+    " still can't quite get the comment in {}
 
-	let hashCommentString = '\#.*\c' . a:comparedString
-	let doubleDashString = '\--.*\c' . a:comparedString
-	let doubleQuoteString = '\".*\c' . a:comparedString
-	let singleQuoteString = "'.*\\c" . a:comparedString
-	let backTickQuoteString = '`.*\c' . a:comparedString
-	if match(a:currentLine, hashCommentString) < 0 && match(a:currentLine, doubleDashString) < 0 && match(a:currentLine, doubleQuoteString) < 0 && match(a:currentLine, singleQuoteString) < 0 && match(a:currentLine, backTickQuoteString) < 0
-		let isComment = v:false
-	endif
-	return isComment
+    let hashCommentString = '\#.*\c' . a:comparedString
+    let doubleDashString = '\--.*\c' . a:comparedString
+    let doubleQuoteString = '\".*\c' . a:comparedString
+    let singleQuoteString = "'.*\\c" . a:comparedString
+    let backTickQuoteString = '`.*\c' . a:comparedString
+    if match(a:currentLine, hashCommentString) < 0 && match(a:currentLine, doubleDashString) < 0 && match(a:currentLine, doubleQuoteString) < 0 && match(a:currentLine, singleQuoteString) < 0 && match(a:currentLine, backTickQuoteString) < 0
+        let isComment = v:false
+    endif
+return isComment
 endfunction
 
 function! IsEndOfFunction(statusMessage)
     let isEndOfFunction = v:false
-    "echo a:statusMessage
     if match(a:statusMessage, 'end function') >= 0
     	let isEndOfFunction = v:true
     endif
@@ -323,15 +314,15 @@ endfunction
 
 function! SearchNotCommentLineNumber(searchString, currentLineNumber, currentColumnNumber, originalLine, originalColumn)
     call cursor(a:currentLineNumber, a:currentColumnNumber)
-    let tempLineNumber = search(a:searchString, 'bnW', 'g')
-    let currentLine = getline(tempLineNumber)
+    let returnLine = search(a:searchString, 'bnW', 'g')
+    let currentLine = getline(returnLine)
     if IsComment(currentLine, a:searchString)
 	call cursor(a:currentLineNumber, a:currentColumnNumber)
-	call SearchNotComment(a:searchString, tempLineNumber - 1, a:currentColumnNumber, a:originalLine, a:originalColumn)
+	let returnLine = SearchNotCommentLineNumber(a:searchString, returnLine - 1, a:currentColumnNumber, a:originalLine, a:originalColumn)
     else
 	call cursor(a:originalLine, a:originalColumn)
     endif
-    return tempLineNumber
+    return returnLine
 endfunction
 
 """""""""""""""""""""""""""""""""""""""
