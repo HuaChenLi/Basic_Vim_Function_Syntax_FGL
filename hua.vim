@@ -257,35 +257,30 @@ endfunction
 set laststatus=2
 
 function! ShowFuncName(newLine, newColumn, originalLine, originalColumn)
-	call cursor(a:newLine, a:newColumn)
+    call cursor(a:newLine, a:newColumn)
 
 
-	let tempLineNumber = search('\cFUNCTION', 'bnW', 'g')
-	let tempLineCurlyNumber = search('}', 'bnW', 'g')
+    let tempLineNumber = search('\cFUNCTION', 'bnW', 'g')
+    let tempLineCurlyNumber = search('}', 'bnW', 'g')
 
-	let tempLineCurlyNumber = SearchNotCommentLineNumber('}', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
-	let tempLineNumber = SearchNotCommentLineNumber('\cFUNCTION', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
+    let tempLineCurlyNumber = SearchNotCommentLineNumber('}', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
+    let tempLineNumber = SearchNotCommentLineNumber('\cFUNCTION', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
 
-	if tempLineNumber >= tempLineCurlyNumber
-	   let currentLine = getline(tempLineNumber)
-
-    	   call cursor(a:originalLine, a:originalColumn)
-    	   let statusMessage = substitute(currentLine, '\s', '\\ ', 'g')
-    	   execute "set statusline=" . statusMessage
-    	   if IsEndOfFunction(currentLine)
-    	   	let statusMessage = "end of function"
-    	   	let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
-    	   	execute "set statusline =" . statusMessage
-    	   endif
-	else
-	    let currentLineCurly = getline(tempLineCurlyNumber)
-	    if IsComment(currentLineCurly, '{')
-    	   	call ShowFuncName(tempLineCurlyNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
-	    else
-		let newLineNumber = SearchNotCommentLineNumber('{', tempLineCurlyNumber, a:newColumn, a:originalLine, a:originalColumn)
-		call ShowFuncName(newLineNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
-	    endif
-	endif
+    if tempLineNumber >= tempLineCurlyNumber
+	let currentLine = getline(tempLineNumber)
+    
+       	call cursor(a:originalLine, a:originalColumn)
+       	let statusMessage = substitute(currentLine, '\s', '\\ ', 'g')
+       	execute "set statusline=" . statusMessage
+       	if IsEndOfFunction(currentLine)
+	    let statusMessage = "end of function"
+	    let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
+	    execute "set statusline=" . statusMessage
+       	endif
+    else
+	let newLineNumber = SearchNotCommentLineNumber('{', tempLineCurlyNumber, a:newColumn, a:originalLine, a:originalColumn)
+	call ShowFuncName(newLineNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
+    endif
 endfunction
 
 function! IsComment(currentLine, comparedString)
