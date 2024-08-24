@@ -11,7 +11,7 @@ syn match keywordGroup '\c\<PRIVATE\>'
 syn match keywordGroup '\c\<STRING\>'
 syn match keywordGroup '\c\<VAR\>'
 
-hi keywordGroup ctermfg=lightgreen
+hi keywordGroup ctermfg=darkblue
 hi variableGroup ctermfg=lightblue
 hi functionGroup ctermfg=yellow
 hi constantGroup ctermfg=darkyellow
@@ -41,8 +41,8 @@ call delete('.temp_tags')
 """""""""""""""""""""""""""""""""""""""
 "call LoadSyntax()
 
-autocmd TextChanged <buffer> call LoadSyntax()
-autocmd TextChangedI <buffer> call LoadSyntax()
+"autocmd TextChanged <buffer> call LoadSyntax()
+"autocmd TextChangedI <buffer> call LoadSyntax()
 autocmd CursorMoved <buffer> call ShowFuncName(line('.'), col('.'), line('.'), col('.'))
 autocmd CursorMovedI <buffer> call ShowFuncName(line('.'), col('.'), line('.'), col('.'))
 """""""""""""""""""""""""""""""""""""""
@@ -146,17 +146,17 @@ function LoadSyntax()
 endfunction
 
 function SplitRegex()
-	let specialCharacterList = ['\.', ',', '\(',  '\)', '\[', '\]', '{', '}', '#', '\$', "'", '"', '`', '\\', '\+', '\-', '=', '\*', '&', '!', '\|', ';', '<', '>', '@']
-	" dunno why this can't be v:null
-	let specialCharacterString = ''
+    let specialCharacterList = ['\.', ',', '\(',  '\)', '\[', '\]', '{', '}', '#', '\$', "'", '"', '`', '\\', '\+', '\-', '=', '\*', '&', '!', '\|', ';', '<', '>', '@']
+    " dunno why this can't be v:null
+    let specialCharacterString = ''
 
-	for specialCharacter in specialCharacterList
-		let specialCharacterString = specialCharacterString . specialCharacter
-	endfor
+    for specialCharacter in specialCharacterList
+    	let specialCharacterString = specialCharacterString . specialCharacter
+    endfor
 
-	let regexString = '\s\|\v(([' . specialCharacterString . '])@<=|([' . specialCharacterString . '])@=)'
+    let regexString = '\s\|\v(([' . specialCharacterString . '])@<=|([' . specialCharacterString . '])@=)'
 
-	return regexString
+    return regexString
 endfunction
 
 function AddFunctionVariable(functionName, inputString)
@@ -181,23 +181,20 @@ function HighlightVariable(variable, functionName)
 	syntax match myMatch 'temp2' contained containedin=myRegion
 "	hi myMatch ctermfg=red
 	endif
-
-
-
 endfunction
 
 function HighlightFunction(inputString)
-	execute 'syn keyword functionGroup ' . a:inputString
+    execute 'syn keyword functionGroup ' . a:inputString
 endfunction
 
 function HighlightConstant(inputString)
-	execute 'syn keyword constantGroup ' . a:inputString
+    execute 'syn keyword constantGroup ' . a:inputString
 endfunction
 
 function HighlightFunctionVariables(functionNameList)
-	for name in a:functionNameList
-		execute 'hi '. g:FUNCTION_GROUP_PREFIX . name . ' ctermfg=lightblue'
-	endfor
+    for name in a:functionNameList
+    	execute 'hi '. g:FUNCTION_GROUP_PREFIX . name . ' ctermfg=lightblue'
+    endfor
 endfunction
 
 function CreateFunctionRegion(functionName)
@@ -211,9 +208,9 @@ function CreateFunctionRegion(functionName)
 endfunction
 
 function SetMode(inputList, inputMode)
-	let a:inputList[1] = a:inputList[0]
-	let a:inputList[0] = a:inputMode
-	return a:inputList
+    let a:inputList[1] = a:inputList[0]
+    let a:inputList[0] = a:inputMode
+    return a:inputList
 endfunction
 
 """""""""""""""""""""""""""""""""""""""
@@ -262,36 +259,89 @@ set laststatus=2
 function! ShowFuncName(newLine, newColumn, originalLine, originalColumn)
 	call cursor(a:newLine, a:newColumn)
 
-	let tempLine = search('\cFUNCTION', 'bnW', 'g')
-	let statusMessage = getline(tempLine)
-	echo statusMessage
-	if IsComment(statusMessage)
-		call cursor(a:originalLine, a:originalColumn)
-		let statusMessage = substitute(statusMessage, ' ', '\\ ', 'g')
-		execute "set statusline=" . statusMessage
+
+	" have an idea, where you can grab the further down line number between { and FUNCTION
+	" if it's {, you look for the next place that has } that isn't a comment or String
+	" then you keep going
+	let tempLineNumber = search('\cFUNCTION', 'bnW', 'g')
+	let tempLineCurlyNumber = search('}', 'bnW', 'g')
+
+	if tempLineNumber >= tempLineCurlyNumber
+	   let currentLine = getline(tempLineNumber)
+	   echo "not curly"
+
+    	   if IsComment(currentLine, 'FUNCTION')
+    	   	call ShowFuncName(tempLineNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
+    	   else
+    	   	call cursor(a:originalLine, a:originalColumn)
+    	   	let statusMessage = substitute(currentLine, '\s', '\\ ', 'g')
+    	   	execute "set statusline=" . statusMessage
+    	   	if IsEndOfFunction(currentLine)
+    	   		let statusMessage = "end of function"
+    	   		let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
+    	   		execute "set statusline =" . statusMessage
+    	   	endif
+    	   endif
 	else
-		call ShowFuncName(tempLine - 1, a:newColumn, a:originalLine, a:originalColumn)
+	    echo "curly part"
+	    let currentLineCurly = getline(tempLineCurlyNumber)
+	    if IsComment(currentLineCurly, '{')
+    	   	call ShowFuncName(tempLineCurlyNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
+	    else
+		let newLineNumber = SearchNotCommentLineNumber('{', tempLineCurlyNumber, a:newColumn, a:originalLine, a:originalColumn)
+		call ShowFuncName(newLineNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
+	    endif
 	endif
+	"echo search('}', 'bnW', 'g')
 endfunction
 
-function! IsComment(function)
-	let isComment = v:false
+function! IsComment(currentLine, comparedString)
+	" will need to update so that it doesn't need a comparedString and can just recognise if the position is a comment
+	let isComment = v:true
+	"echo 'hello'
 	" still can't quite get the comment in {}
-	if match(a:function, '\#.*\cFUNCTION') < 0 && match(a:function, '\--.*\cFUNCTION') < 0 && match(a:function, '\".*\cFUNCTION') < 0 && match(a:function, "'.*\\cFUNCTION") < 0 && match(a:function, '`.*\cFUNCTION') < 0
-		let isComment = v:true
+
+	let hashCommentString = '\#.*\c' . a:comparedString
+	let doubleDashString = '\--.*\c' . a:comparedString
+	let doubleQuoteString = '\".*\c' . a:comparedString
+	let singleQuoteString = "'.*\\c" . a:comparedString
+	let backTickQuoteString = '`.*\c' . a:comparedString
+	if match(a:currentLine, hashCommentString) < 0 && match(a:currentLine, doubleDashString) < 0 && match(a:currentLine, doubleQuoteString) < 0 && match(a:currentLine, singleQuoteString) < 0 && match(a:currentLine, backTickQuoteString) < 0
+		let isComment = v:false
 	endif
 	return isComment
 endfunction
 
+function! IsEndOfFunction(statusMessage)
+    let isEndOfFunction = v:false
+    "echo a:statusMessage
+    if match(a:statusMessage, 'end function') >= 0
+    	let isEndOfFunction = v:true
+    endif
+    return isEndOfFunction
+endfunction
+
+function! SearchNotCommentLineNumber(searchString, currentLineNumber, currentColumnNumber, originalLine, originalColumn)
+    call cursor(a:currentLineNumber, a:currentColumnNumber)
+    let tempLineNumber = search(a:searchString, 'bnW', 'g')
+    let currentLine = getline(tempLineNumber)
+    if IsComment(currentLine, a:searchString)
+	call cursor(a:currentLineNumber, a:currentColumnNumber)
+	call SearchNotComment(a:searchString, tempLineNumber - 1, a:currentColumnNumber, a:originalLine, a:originalColumn)
+    else
+	call cursor(a:originalLine, a:originalColumn)
+    endif
+    return tempLineNumber
+endfunction
 
 """""""""""""""""""""""""""""""""""""""
 function! GetCurrentRegion()
 """""""""""""""""""""""""""""""""""""""
-	let region = v:null
-	for id in synstack(line("."), col("."))
-		let region = synIDattr(id, "name") 
-	endfor
-	return region
+    let region = v:null
+    for id in synstack(line("."), col("."))
+	let region = synIDattr(id, "name")
+    endfor
+    return region
 endfunction
 
 
@@ -324,3 +374,29 @@ function! SetCommentHighlight()
 	syntax region commentRegion start=/--/ end=/\n/
 	syntax region commentRegion start=/{/ end=/}/
 endfunction
+
+
+" This is the wrapper function of the python script
+" This sets the directory to be the same directory, which I think is fine
+
+let s:script_dir = fnamemodify(resolve(expand('<sfile>', ':p')), ':h')
+"""""""""""""""""""""""""""""""""""""""
+function! DoSomething()
+"""""""""""""""""""""""""""""""""""""""
+
+
+python << EOF
+import sys
+import vim
+
+script_dir = vim.eval('s:script_dir')
+sys.path.insert(0, script_dir)
+
+import vim_syntax_in_python
+
+vim_syntax_in_python.myPrint()
+EOF
+
+endfunction
+
+call DoSomething()
