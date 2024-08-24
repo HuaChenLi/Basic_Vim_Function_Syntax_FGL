@@ -4,3 +4,5 @@ test
 .temp_tags
 
 syntax_test.hua
+
+*.pyc
