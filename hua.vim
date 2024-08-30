@@ -259,15 +259,19 @@ set laststatus=2
 function! ShowFuncName(newLine, newColumn, originalLine, originalColumn)
     call cursor(a:newLine, a:newColumn)
 
+    let tempFunctionLineNumber = SearchNotCommentLineNumber('\cFUNCTION', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
 
-    let tempLineNumber = search('\cFUNCTION', 'bnW', 'g')
-    let tempLineCurlyNumber = search('}', 'bnW', 'g')
+    let tempLineCloseCurlyNumber = SearchNotCommentLineNumber('}', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
 
-    let tempLineCurlyNumber = SearchNotCommentLineNumber('}', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
-    let tempLineNumber = SearchNotCommentLineNumber('\cFUNCTION', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
 
-    if tempLineNumber >= tempLineCurlyNumber
-	let currentLine = getline(tempLineNumber)
+    if tempFunctionLineNumber >= tempLineCloseCurlyNumber
+	" check that there is a closed curly bracket before the Function anywhere or there is no open curly brack before the Function
+	let tempLineOpenCurlyNumber = 0
+	if tempFunctionLineNumber != 0
+	    let tempLineOpenCurlyNumber = SearchNotCommentLineNumber('{', a:newLine - 1, a:newColumn, a:originalLine, a:originalColumn)
+	endif
+
+	let currentLine = getline(tempFunctionLineNumber)
     
        	call cursor(a:originalLine, a:originalColumn)
        	let statusMessage = substitute(currentLine, '\s', '\\ ', 'g')
@@ -277,8 +281,14 @@ function! ShowFuncName(newLine, newColumn, originalLine, originalColumn)
 	    let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
 	    execute "set statusline=" . statusMessage
        	endif
+
+	if tempLineOpenCurlyNumber > tempLineCloseCurlyNumber
+	    echo 'tempLineOpenCurlyNumber: ' . tempLineOpenCurlyNumber . ' tempFunctionLineNumber: ' . tempFunctionLineNumber . ' tempLineCloseCurlyNumber: ' . tempLineCloseCurlyNumber
+	    call ShowFuncName(tempLineOpenCurlyNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
+	endif
+
     else
-	let newLineNumber = SearchNotCommentLineNumber('{', tempLineCurlyNumber, a:newColumn, a:originalLine, a:originalColumn)
+	let newLineNumber = SearchNotCommentLineNumber('{', tempLineCloseCurlyNumber, a:newColumn, a:originalLine, a:originalColumn)
 	call ShowFuncName(newLineNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
     endif
 endfunction
