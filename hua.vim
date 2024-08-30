@@ -260,28 +260,22 @@ set laststatus=2
 function! ShowFuncName(newLine, newColumn, originalLine, originalColumn)
     call cursor(a:newLine, a:newColumn)
 
-    let tempFunctionLineNumber = SearchNotCommentLineNumber('\cFUNCTION',
-							    a:newLine,
-							    a:newColumn,
-							    a:originalLine,
-							    a:originalColumn)
+    let tempFunctionLineNumber = SearchNotCommentLineNumber('\cFUNCTION', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
 
-    let tempLineCloseCurlyNumber = SearchNotCommentLineNumber('}',
-							      a:newLine,
-							      a:newColumn,
-							      a:originalLine,
-							      a:originalColumn)
+    let tempReportLineNumber = SearchNotCommentLineNumber('\cREPORT', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
+
+    if tempFunctionLineNumber < tempReportLineNumber
+	let tempFunctionLineNumber = tempReportLineNumber
+    endif
+
+    let tempLineCloseCurlyNumber = SearchNotCommentLineNumber('}', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
 
 
     if tempFunctionLineNumber >= tempLineCloseCurlyNumber
 	" check that there is a closed curly bracket before the Function anywhere or there is no open curly brack before the Function
 	let tempLineOpenCurlyNumber = 0
 	if tempFunctionLineNumber != 0
-	    let tempLineOpenCurlyNumber = SearchNotCommentLineNumber('{',
-								     a:newLine - 1,
-								     a:newColumn,
-								     a:originalLine,
-								     a:originalColumn)
+	    let tempLineOpenCurlyNumber = SearchNotCommentLineNumber('{', a:newLine - 1, a:newColumn, a:originalLine, a:originalColumn)
 	endif
 
 	let currentLine = getline(tempFunctionLineNumber)
@@ -291,29 +285,25 @@ function! ShowFuncName(newLine, newColumn, originalLine, originalColumn)
        	let statusMessage = substitute(currentLine, '\s', '\\ ', 'g')
        	execute "set statusline=" . statusMessage
 
-       	if IsEndOfFunction(currentLine)
+	if IsEndOfFunction(currentLine)
 	    let statusMessage = "end of function"
 	    let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
 	    execute "set statusline=" . statusMessage
-       	endif
+	endif
+
+	if IsEndOfReport(currentLine)
+	    let statusMessage = "end of report"
+	    let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
+	    execute "set statusline=" . statusMessage
+	endif
 
 	if tempLineOpenCurlyNumber > tempLineCloseCurlyNumber
-	    call ShowFuncName(tempLineOpenCurlyNumber - 1,
-			      a:newColumn,
-			      a:originalLine,
-			      a:originalColumn)
+	    call ShowFuncName(tempLineOpenCurlyNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
 	endif
 
     else
-	let newLineNumber = SearchNotCommentLineNumber('{',
-						       tempLineCloseCurlyNumber,
-						       a:newColumn,
-						       a:originalLine,
-						       a:originalColumn)
-	call ShowFuncName(tempLineOpenCurlyNumber - 1,
-			  a:newColumn,
-			  a:originalLine,
-			  a:originalColumn)
+	let newLineNumber = SearchNotCommentLineNumber('{', tempLineCloseCurlyNumber, a:newColumn, a:originalLine, a:originalColumn)
+	call ShowFuncName(newLineNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
     endif
 endfunction
 
@@ -335,8 +325,16 @@ endfunction
 
 function! IsEndOfFunction(statusMessage)
     let isEndOfFunction = v:false
-    if match(a:statusMessage, 'end\s*function') >= 0
-    	let isEndOfFunction = v:true
+    if match(a:statusMessage, '\cEND\s*FUNCTION') >= 0
+	let isEndOfFunction = v:true
+    endif
+    return isEndOfFunction
+endfunction
+
+function! IsEndOfReport(statusMessage)
+    let isEndOfFunction = v:false
+    if match(a:statusMessage, '\cEND\s*REPORT') >= 0
+	let isEndOfFunction = v:true
     endif
     return isEndOfFunction
 endfunction
