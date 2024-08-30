@@ -8,6 +8,7 @@ syn match keywordGroup '\c\<FUNCTION\>'
 syn match keywordGroup '\c\<INTEGER\>'
 syn match keywordGroup '\c\<LET\>'
 syn match keywordGroup '\c\<PRIVATE\>'
+syn match keywordGroup '\c\<REPORT\>'
 syn match keywordGroup '\c\<STRING\>'
 syn match keywordGroup '\c\<VAR\>'
 
@@ -259,23 +260,37 @@ set laststatus=2
 function! ShowFuncName(newLine, newColumn, originalLine, originalColumn)
     call cursor(a:newLine, a:newColumn)
 
-    let tempFunctionLineNumber = SearchNotCommentLineNumber('\cFUNCTION', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
+    let tempFunctionLineNumber = SearchNotCommentLineNumber('\cFUNCTION',
+							    a:newLine,
+							    a:newColumn,
+							    a:originalLine,
+							    a:originalColumn)
 
-    let tempLineCloseCurlyNumber = SearchNotCommentLineNumber('}', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
+    let tempLineCloseCurlyNumber = SearchNotCommentLineNumber('}',
+							      a:newLine,
+							      a:newColumn,
+							      a:originalLine,
+							      a:originalColumn)
 
 
     if tempFunctionLineNumber >= tempLineCloseCurlyNumber
 	" check that there is a closed curly bracket before the Function anywhere or there is no open curly brack before the Function
 	let tempLineOpenCurlyNumber = 0
 	if tempFunctionLineNumber != 0
-	    let tempLineOpenCurlyNumber = SearchNotCommentLineNumber('{', a:newLine - 1, a:newColumn, a:originalLine, a:originalColumn)
+	    let tempLineOpenCurlyNumber = SearchNotCommentLineNumber('{',
+								     a:newLine - 1,
+								     a:newColumn,
+								     a:originalLine,
+								     a:originalColumn)
 	endif
 
 	let currentLine = getline(tempFunctionLineNumber)
-    
+
        	call cursor(a:originalLine, a:originalColumn)
+
        	let statusMessage = substitute(currentLine, '\s', '\\ ', 'g')
        	execute "set statusline=" . statusMessage
+
        	if IsEndOfFunction(currentLine)
 	    let statusMessage = "end of function"
 	    let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
@@ -283,13 +298,22 @@ function! ShowFuncName(newLine, newColumn, originalLine, originalColumn)
        	endif
 
 	if tempLineOpenCurlyNumber > tempLineCloseCurlyNumber
-	    echo 'tempLineOpenCurlyNumber: ' . tempLineOpenCurlyNumber . ' tempFunctionLineNumber: ' . tempFunctionLineNumber . ' tempLineCloseCurlyNumber: ' . tempLineCloseCurlyNumber
-	    call ShowFuncName(tempLineOpenCurlyNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
+	    call ShowFuncName(tempLineOpenCurlyNumber - 1,
+			      a:newColumn,
+			      a:originalLine,
+			      a:originalColumn)
 	endif
 
     else
-	let newLineNumber = SearchNotCommentLineNumber('{', tempLineCloseCurlyNumber, a:newColumn, a:originalLine, a:originalColumn)
-	call ShowFuncName(newLineNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
+	let newLineNumber = SearchNotCommentLineNumber('{',
+						       tempLineCloseCurlyNumber,
+						       a:newColumn,
+						       a:originalLine,
+						       a:originalColumn)
+	call ShowFuncName(tempLineOpenCurlyNumber - 1,
+			  a:newColumn,
+			  a:originalLine,
+			  a:originalColumn)
     endif
 endfunction
 
@@ -311,7 +335,7 @@ endfunction
 
 function! IsEndOfFunction(statusMessage)
     let isEndOfFunction = v:false
-    if match(a:statusMessage, 'end function') >= 0
+    if match(a:statusMessage, 'end\s*function') >= 0
     	let isEndOfFunction = v:true
     endif
     return isEndOfFunction
