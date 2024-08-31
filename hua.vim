@@ -403,7 +403,11 @@ function! DoSomething()
 """""""""""""""""""""""""""""""""""""""
 
 
-python << EOF
+let fileContent = getline(1, '$')
+
+" python for 2, python3 for 3
+
+python3 << EOF
 import sys
 import vim
 
@@ -412,7 +416,7 @@ sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
 
-vim_syntax_in_python.myPrint()
+vim_syntax_in_python.printTokens(vim.eval('fileContent'))
 EOF
 
 endfunction

@@ -8,3 +8,4 @@ syntax_test.hua
 *.pyc
 .hua*
 .syntax*
+other_python.py
