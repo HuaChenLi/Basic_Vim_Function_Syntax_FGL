@@ -404,6 +404,7 @@ function! DoSomething()
 
 
 let fileContent = getline(1, '$')
+let fileName = expand('%:t')
 
 " python for 2, python3 for 3
 
@@ -416,7 +417,7 @@ sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
 
-vim_syntax_in_python.printTokens(vim.eval('fileContent'))
+vim_syntax_in_python.printTokens(vim.eval('fileContent'), vim.eval('fileName'))
 EOF
 
 endfunction
