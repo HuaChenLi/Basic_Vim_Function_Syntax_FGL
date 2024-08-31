@@ -1,4 +1,5 @@
 syn match keywordGroup '\c\<BOOLEAN\>'
+syn match keywordGroup '\c\<CALL\>'
 syn match keywordGroup '\c\<CONSTANT\>'
 syn match keywordGroup '\c\<DEFINE\>'
 syn match keywordGroup '\c\<DISPLAY\>'
@@ -265,9 +266,9 @@ set laststatus=2
 function! ShowFuncName(newLine, newColumn, originalLine, originalColumn)
     call cursor(a:newLine, a:newColumn)
 
-    let tempFunctionLineNumber = SearchNotCommentLineNumber('\cFUNCTION', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
+    let tempFunctionLineNumber = SearchNotCommentLineNumber('\c\<FUNCTION\>', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
 
-    let tempReportLineNumber = SearchNotCommentLineNumber('\cREPORT', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
+    let tempReportLineNumber = SearchNotCommentLineNumber('\c\<REPORT\>', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
 
     if tempFunctionLineNumber < tempReportLineNumber
 	let tempFunctionLineNumber = tempReportLineNumber
@@ -330,7 +331,7 @@ endfunction
 
 function! IsEndOfFunction(statusMessage)
     let isEndOfFunction = v:false
-    if match(a:statusMessage, '\cEND\s*FUNCTION') >= 0
+    if match(a:statusMessage, '\c\<END\>\s*\<FUNCTION\>') >= 0
 	let isEndOfFunction = v:true
     endif
     return isEndOfFunction
@@ -338,7 +339,7 @@ endfunction
 
 function! IsEndOfReport(statusMessage)
     let isEndOfFunction = v:false
-    if match(a:statusMessage, '\cEND\s*REPORT') >= 0
+    if match(a:statusMessage, '\c\<END\>\s*\<REPORT\>') >= 0
 	let isEndOfFunction = v:true
     endif
     return isEndOfFunction
