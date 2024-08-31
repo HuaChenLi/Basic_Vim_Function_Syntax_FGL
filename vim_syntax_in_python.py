@@ -1,6 +1,5 @@
 import re
 
-
 TAGS_FILE = ".temp_tags"
 
 def printTokens(inputString, currentFile):

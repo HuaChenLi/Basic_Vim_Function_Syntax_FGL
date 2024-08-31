@@ -20,8 +20,13 @@ hi stringRegion ctermfg=brown
 hi commentRegion ctermfg=darkgreen
 
 
-call SetStringHighlight()
-call SetCommentHighlight()
+syntax region commentRegion start=/#/ end=/\n/
+syntax region commentRegion start=/--/ end=/\n/
+syntax region commentRegion start=/{/ end=/}/
+
+syntax region stringRegion start=/\"/ skip=/\\"/ end=/\"/
+syntax region stringRegion start=/\'/ skip=/\\'/ end=/\'/
+syntax region stringRegion start=/`/ end=/`/
 
 
 " interesting, so it feels like this section of the code is somehow run twice
@@ -373,24 +378,6 @@ function! IsCurrentRegionInFunction()
 		return 1
 	endif
 	return 0
-endfunction
-
-
-"""""""""""""""""""""""""""""""""""""""
-function! SetStringHighlight()
-"""""""""""""""""""""""""""""""""""""""
-	"I would like the skip characters to be highlighted differently
-	syntax region stringRegion start=/\"/ skip=/\\"/ end=/\"/
-	syntax region stringRegion start=/\'/ skip=/\\'/ end=/\'/
-	syntax region stringRegion start=/`/ end=/`/
-endfunction
-
-"""""""""""""""""""""""""""""""""""""""
-function! SetCommentHighlight()
-"""""""""""""""""""""""""""""""""""""""
-	syntax region commentRegion start=/#/ end=/\n/
-	syntax region commentRegion start=/--/ end=/\n/
-	syntax region commentRegion start=/{/ end=/}/
 endfunction
 
 
