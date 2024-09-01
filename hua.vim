@@ -392,29 +392,32 @@ function! IsCurrentRegionInFunction()
 endfunction
 
 
-
-
-"""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " The entire below section is for generating the tags so that you can jump to function definitions (the default is <CTRL>-])
-"""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set tags=.temp_tags
 setlocal iskeyword+=\. "allows '.' to be considered part of a word
-"""""""""""""""""""""""""""""""""""""""
-" removes the .temp_tags file when vim is opened for the tags
-call delete('.temp_tags')
-"""""""""""""""""""""""""""""""""""""""
+
+" This runs the GenerateTags() whenever a buffer is switched to
+" This could potentially get pretty heavy depending on the number of files there are
+autocmd BufNew <buffer> call GenerateTags()
 
 " This is the wrapper function of the python script
 " This sets the directory to be the same directory, which I think is fine
 let s:script_dir = fnamemodify(resolve(expand('<sfile>', ':p')), ':h')
-"""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! GenerateTags()
-"""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let fileContent = getline(1, '$')
-let fileName = expand('%:t')
+let filePath = expand('%:p')
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" removes the .temp_tags file when vim is opened for the tags
+" could change in the future where it doesn't need to delete the .temp_tags
+call delete('.temp_tags')
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " python for 2, python3 for 3
-
 python3 << EOF
 import sys
 import vim
@@ -424,9 +427,10 @@ sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
 
-vim_syntax_in_python.generateTags(vim.eval('fileContent'), vim.eval('fileName'))
+vim_syntax_in_python.generateTags(vim.eval('fileContent'), vim.eval('filePath'))
 EOF
 
 endfunction
 
+" Run the GenerateTags() on vim startup
 call GenerateTags()
