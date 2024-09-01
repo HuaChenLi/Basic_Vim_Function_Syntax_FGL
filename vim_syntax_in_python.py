@@ -117,7 +117,7 @@ def printTokens(inputString, currentFile):
 			isPreviousTokenEnd = False
 			isPreviousTokenFunction = False
 			# We create the list of the function tags
-			tagsLinesList = createListOfTags(token, currentFile, lineNumber, tagsLinesList)
+			tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, fileAlias=currentFile, currentDirectory=currentDirectory))
 
 		if re.fullmatch("import", token, flags=re.IGNORECASE) and isPreviousTokenNewLine:
 			# we need to check that Import is at the start of the line
@@ -137,13 +137,13 @@ def printTokens(inputString, currentFile):
 			isPreviousTokenNewLine = True
 			isImportingLibrary = False
 			importFilePath = importFilePath + FGL_SUFFIX
-			tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, importFilePath))
+			tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, importFilePath, currentDirectory))
 			importFilePath = currentDirectory
 			continue
 		elif isImportingLibrary and isPreviousTokenAs:
 			isPreviousTokenNewLine = True 			# I don't like this line, because it's technically a lie
 			isImportingLibrary = False
-			tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, token))
+			tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, token, currentDirectory))
 			importFilePath = currentDirectory
 
 
@@ -155,7 +155,9 @@ def printTokens(inputString, currentFile):
 
 	writeTagsFile(tagsLinesList)
 
-def createListOfTags(functionName, currentFile, lineNumber, tagsLinesList):
+def createListOfTags(functionName, currentFile, lineNumber, fileAlias, currentDirectory):
+	tagsLinesList = []
+
 	tagLine = functionName + "\t" + currentFile + "\t" + str(lineNumber) + "\n"
 	tagsLinesList.append(tagLine)
 	return tagsLinesList
@@ -170,7 +172,7 @@ def writeTagsFile(tagsLinesList):
 	file.close()
 
 
-def getPublicFunctionsFromLibrary(importFilePath, fileAlias):
+def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 	file = open(importFilePath, "r")
 
 
@@ -281,7 +283,7 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias):
 				isPreviousTokenEnd = False
 				isPreviousTokenFunction = False
 				# We create the list of the function tags
-				tagsLinesList = createListOfTags(token, importFilePath, lineNumber, tagsLinesList)
+				tagsLinesList.extend(createListOfTags(functionName=token, currentFile=importFilePath, lineNumber=lineNumber, fileAlias=fileAlias, currentDirectory=workingDirectory))
 
 	return tagsLinesList
 
