@@ -435,3 +435,26 @@ endfunction
 
 " Run the GenerateTags() on vim startup
 call GenerateTags()
+
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"The entire below section is for jumping to variable definition
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+nnoremap <F12> : call GotoDefinition()<CR>
+
+
+function! GotoDefinition()
+    let line = line('.')
+    let col = col('.')
+    let searchString = '\<\cdefine\>\s\+\<' . expand('<cword>') . '\>'
+    let returnLine =  SearchNotCommentLineNumber(searchString, line, col, line, col)
+
+    if returnLine == 0
+	" no idea how to include comments in this right now
+	let searchString = '\<\cdefine\>\(\s\+\w\+\s\+\w\+,\(\n\s*\)*\)*\s\+' . expand('<cword>')
+	let returnLine =  SearchNotCommentLineNumber(searchString, line, col, line, col)
+	call cursor(returnLine, 1)
+    else
+	call cursor(returnLine, 1)
+    endif
+endfunction
