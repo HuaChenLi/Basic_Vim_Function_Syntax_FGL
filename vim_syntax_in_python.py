@@ -191,7 +191,6 @@ def writeTagsFile(tagsLinesList):
 def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 	file = open(importFilePath, "r")
 
-
 	tokenList = []
 	for lineNumber, line in enumerate(file, start=1):
 		tokenBlock = tokenizeString(line)
