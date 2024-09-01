@@ -30,6 +30,26 @@ syntax region stringRegion start=/\'/ skip=/\\'/ end=/\'/
 syntax region stringRegion start=/`/ end=/`/
 
 
+"""""""""""""""""""""""""""""""""""""""
+" automatic closing of open syntax
+"""""""""""""""""""""""""""""""""""""""
+inoremap " ""<left>
+inoremap ' ''<left>
+inoremap ` ``<left>
+inoremap ( ()<left>
+inoremap [ []<left>
+inoremap { {}<left>
+
+"rather than typing out the whole word, you can change the word to be something different
+inoremap FUNCTION FUNCTION<CR>END<SPACE>FUNCTION<UP>
+inoremap function function<CR>end<SPACE>function<UP>
+inoremap REPORT REPORT<CR>END<SPACE>REPORT<UP>
+inoremap report report<CR>end<SPACE>report<UP>
+inoremap IF IF<CR>END<SPACE>IF<UP>
+inoremap if if<CR>end<SPACE>if<UP>
+
+
+
 " interesting, so it feels like this section of the code is somehow run twice
 let FUNCTION_REGION_PREFIX = 'functionRegion_'
 let FUNCTION_GROUP_PREFIX = 'functionGroup_'
