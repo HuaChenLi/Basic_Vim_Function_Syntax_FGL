@@ -117,7 +117,7 @@ def printTokens(inputString, currentFile):
 			isPreviousTokenEnd = False
 			isPreviousTokenFunction = False
 			# We create the list of the function tags
-			tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, fileAlias=currentFile, currentDirectory=currentDirectory))
+			tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=currentFile, fileAlias=currentFile, currentDirectory=currentDirectory))
 
 		if re.fullmatch("import", token, flags=re.IGNORECASE) and isPreviousTokenNewLine:
 			# we need to check that Import is at the start of the line
@@ -155,11 +155,32 @@ def printTokens(inputString, currentFile):
 
 	writeTagsFile(tagsLinesList)
 
-def createListOfTags(functionName, currentFile, lineNumber, fileAlias, currentDirectory):
+def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDirectory):
+	# this is interesting, I would need to, for each separation, create a tagLine
 	tagsLinesList = []
+	functionCallRoot = currentFile.replace(currentDirectory + "\\", "")
+	functionCallRoot = functionCallRoot.replace(FGL_SUFFIX, "")
+	print(functionCallRoot)
+	functionTokens = functionCallRoot.split("\\")
 
 	tagLine = functionName + "\t" + currentFile + "\t" + str(lineNumber) + "\n"
 	tagsLinesList.append(tagLine)
+
+	functionNameString = functionName
+	print(functionNameString)
+	for token in reversed(functionTokens):
+		print(token)
+		functionNameString = token + "." + functionNameString
+		tagLine = functionNameString + "\t" + currentFile + "\t" + str(lineNumber) + "\n"
+		tagsLinesList.append(tagLine)
+
+	if fileAlias != currentFile:
+		aliasFunctionName = fileAlias + "." + functionName
+		tagLine = aliasFunctionName + "\t" + currentFile + "\t" + str(lineNumber) + "\n"
+		tagsLinesList.append(tagLine)
+
+	print(functionCallRoot)
+
 	return tagsLinesList
 
 
@@ -197,6 +218,7 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 	isPreviousTokenBackslash = False
 	isPreviousTokenFunction = False
 	isPreviousTokenEnd = False
+	isPreviousTokenPrivate = False
 
 	tagsLinesList = []
 
@@ -269,21 +291,28 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 				isBackQuoteNeeded = True
 				continue
 
-			if re.fullmatch("function", token, flags=re.IGNORECASE) and not isPreviousTokenEnd:
+			if re.fullmatch("private", token, flags=re.IGNORECASE):
+				isPreviousTokenPrivate = True
+				continue
+
+			if re.fullmatch("function", token, flags=re.IGNORECASE) and not isPreviousTokenEnd and not isPreviousTokenPrivate:
 				isPreviousTokenFunction = True
+				isPreviousTokenPrivate = False
 				continue
 			elif re.fullmatch("function", token, flags=re.IGNORECASE) and isPreviousTokenEnd:
 				isPreviousTokenEnd = False
+				isPreviousTokenPrivate = False
 
 			if re.fullmatch("end", token, flags=re.IGNORECASE):
 				isPreviousTokenEnd = True
+				isPreviousTokenPrivate = False
 				continue
 
 			if isPreviousTokenFunction and not isPreviousTokenEnd:
 				isPreviousTokenEnd = False
 				isPreviousTokenFunction = False
 				# We create the list of the function tags
-				tagsLinesList.extend(createListOfTags(functionName=token, currentFile=importFilePath, lineNumber=lineNumber, fileAlias=fileAlias, currentDirectory=workingDirectory))
+				tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=importFilePath, fileAlias=fileAlias, currentDirectory=workingDirectory))
 
 	return tagsLinesList
 
