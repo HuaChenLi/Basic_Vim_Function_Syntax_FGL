@@ -248,6 +248,7 @@ set includeexpr=LoadModule(v:fname)
 " tags playground, trying to jump to function definition
 """""""""""""""""""""""""""""""""""""""
 set tags=.temp_tags
+setlocal iskeyword+=\. "allows '.' to be considered part of a word
 
 function CreateFunctionTag(functionName)
 	let fileName = expand('%:t')
