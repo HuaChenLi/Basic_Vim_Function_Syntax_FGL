@@ -103,10 +103,10 @@ def generateTags(inputString, currentFile):
 			isBackQuoteNeeded = True
 			continue
 
-		if re.fullmatch("function", token, flags=re.IGNORECASE) and not isPreviousTokenEnd:
+		if (re.fullmatch("function", token, flags=re.IGNORECASE) or re.fullmatch("report", token, flags=re.IGNORECASE)) and not isPreviousTokenEnd:
 			isPreviousTokenFunction = True
 			continue
-		elif re.fullmatch("function", token, flags=re.IGNORECASE) and isPreviousTokenEnd:
+		elif (re.fullmatch("function", token, flags=re.IGNORECASE) or re.fullmatch("report", token, flags=re.IGNORECASE)) and isPreviousTokenEnd:
 			isPreviousTokenEnd = False
 
 		if re.fullmatch("end", token, flags=re.IGNORECASE):
@@ -289,11 +289,11 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 				isPreviousTokenPrivate = True
 				continue
 
-			if re.fullmatch("function", token, flags=re.IGNORECASE) and not isPreviousTokenEnd and not isPreviousTokenPrivate:
+			if (re.fullmatch("function", token, flags=re.IGNORECASE) or re.fullmatch("report", token, flags=re.IGNORECASE)) and not isPreviousTokenEnd and not isPreviousTokenPrivate:
 				isPreviousTokenFunction = True
 				isPreviousTokenPrivate = False
 				continue
-			elif re.fullmatch("function", token, flags=re.IGNORECASE) and isPreviousTokenEnd:
+			elif (re.fullmatch("function", token, flags=re.IGNORECASE) or re.fullmatch("report", token, flags=re.IGNORECASE)) and isPreviousTokenEnd:
 				isPreviousTokenEnd = False
 				isPreviousTokenPrivate = False
 
