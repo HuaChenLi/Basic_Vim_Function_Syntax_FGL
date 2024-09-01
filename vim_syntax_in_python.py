@@ -11,7 +11,6 @@ def generateTags(inputString, currentFile):
 		tokenBlock.append("\n")
 		tokenList.extend([(token,lineNumber) for token in tokenBlock])
 
-
 	# This is the part where we want to loop through and find the function definitions
 	# We need to first set a couple of flags when we're ignoring sections
 	isNewLineNeeded = False

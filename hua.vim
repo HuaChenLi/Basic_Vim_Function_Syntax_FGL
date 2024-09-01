@@ -401,6 +401,7 @@ setlocal iskeyword+=\. "allows '.' to be considered part of a word
 " This runs the GenerateTags() whenever a buffer is switched to
 " This could potentially get pretty heavy depending on the number of files there are
 autocmd BufNew <buffer> call GenerateTags()
+autocmd InsertLeave <buffer> call GenerateTags()
 
 " This is the wrapper function of the python script
 " This sets the directory to be the same directory, which I think is fine
