@@ -62,10 +62,6 @@ let DEFINE = 'DEFINE'
 let MAIN = 'MAIN'
 
 
-"""""""""""""""""""""""""""""""""""""""
-" removes the .temp_tags file when vim is opened for the tags
-call delete('.temp_tags')
-"""""""""""""""""""""""""""""""""""""""
 
 """""""""""""""""""""""""""""""""""""""
 "call LoadSyntax()
@@ -266,16 +262,7 @@ set includeexpr=LoadModule(v:fname)
 
 
 
-"""""""""""""""""""""""""""""""""""""""
-" tags playground, trying to jump to function definition
-"""""""""""""""""""""""""""""""""""""""
-set tags=.temp_tags
-setlocal iskeyword+=\. "allows '.' to be considered part of a word
 
-function CreateFunctionTag(functionName)
-	let fileName = expand('%:t')
-	call writefile([a:functionName . "\t" . fileName . "\t/\\cFUNCTION " . a:functionName . '/;" c'] , '.temp_tags', 'a')
-endfunction
 
 
 
@@ -405,15 +392,24 @@ function! IsCurrentRegionInFunction()
 endfunction
 
 
+
+
+"""""""""""""""""""""""""""""""""""""""
+" The entire below section is for generating the tags so that you can jump to function definitions (the default is <CTRL>-])
+"""""""""""""""""""""""""""""""""""""""
+set tags=.temp_tags
+setlocal iskeyword+=\. "allows '.' to be considered part of a word
+"""""""""""""""""""""""""""""""""""""""
+" removes the .temp_tags file when vim is opened for the tags
+call delete('.temp_tags')
+"""""""""""""""""""""""""""""""""""""""
+
 " This is the wrapper function of the python script
 " This sets the directory to be the same directory, which I think is fine
-
 let s:script_dir = fnamemodify(resolve(expand('<sfile>', ':p')), ':h')
 """""""""""""""""""""""""""""""""""""""
-function! DoSomething()
+function! GenerateTags()
 """""""""""""""""""""""""""""""""""""""
-
-
 let fileContent = getline(1, '$')
 let fileName = expand('%:t')
 
@@ -428,9 +424,9 @@ sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
 
-vim_syntax_in_python.printTokens(vim.eval('fileContent'), vim.eval('fileName'))
+vim_syntax_in_python.generateTags(vim.eval('fileContent'), vim.eval('fileName'))
 EOF
 
 endfunction
 
-call DoSomething()
+call GenerateTags()

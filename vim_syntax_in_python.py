@@ -4,7 +4,7 @@ import os
 TAGS_FILE = ".temp_tags"
 FGL_SUFFIX = ".4gl"
 
-def printTokens(inputString, currentFile):
+def generateTags(inputString, currentFile):
 	tokenList = []
 	for lineNumber, line in enumerate(inputString, start=1):
 		tokenBlock = tokenizeString(line)
@@ -160,16 +160,13 @@ def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDi
 	tagsLinesList = []
 	functionCallRoot = currentFile.replace(currentDirectory + "\\", "")
 	functionCallRoot = functionCallRoot.replace(FGL_SUFFIX, "")
-	print(functionCallRoot)
 	functionTokens = functionCallRoot.split("\\")
 
 	tagLine = functionName + "\t" + currentFile + "\t" + str(lineNumber) + "\n"
 	tagsLinesList.append(tagLine)
 
 	functionNameString = functionName
-	print(functionNameString)
 	for token in reversed(functionTokens):
-		print(token)
 		functionNameString = token + "." + functionNameString
 		tagLine = functionNameString + "\t" + currentFile + "\t" + str(lineNumber) + "\n"
 		tagsLinesList.append(tagLine)
@@ -178,8 +175,6 @@ def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDi
 		aliasFunctionName = fileAlias + "." + functionName
 		tagLine = aliasFunctionName + "\t" + currentFile + "\t" + str(lineNumber) + "\n"
 		tagsLinesList.append(tagLine)
-
-	print(functionCallRoot)
 
 	return tagsLinesList
 
