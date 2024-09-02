@@ -15,11 +15,6 @@ function! setFunctions#GotoDefinition()
 endfunction
 
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" The entire below section is for generating the tags so that you can jump to function definitions (the default is <CTRL>-])
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " This is the wrapper function of the python script
 " This sets the directory to be the same directory, which I think is fine

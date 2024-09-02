@@ -237,8 +237,31 @@ function SetMode(inputList, inputMode)
 endfunction
 
 """""""""""""""""""""""""""""""""""""""
-" In Genero manuals
+function! GetCurrentRegion()
 """""""""""""""""""""""""""""""""""""""
+    let region = v:null
+    for id in synstack(line("."), col("."))
+	let region = synIDattr(id, "name")
+    endfor
+    return region
+endfunction
+
+"""""""""""""""""""""""""""""""""""""""
+function! IsCurrentRegionInFunction()
+"""""""""""""""""""""""""""""""""""""""
+	let region = GetCurrentRegion()
+	if stridx(region, g:FUNCTION_REGION_PREFIX) >=0
+		return 1
+	endif
+	return 0
+endfunction
+
+
+
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" In Genero manuals: allows you to press gf to go to the file with the function
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set suffixesadd=.4gl
 
 function! LoadModule(fname)
@@ -259,48 +282,16 @@ endfunction
 set includeexpr=LoadModule(v:fname)
 
 
-
-
-
-
-
-
-
-"""""""""""""""""""""""""""""""""""""""
-" trying to set the statusline
-"""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" The below section sets the Status Line to show the current function
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set laststatus=2
 
 autocmd CursorMoved <buffer> call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
 autocmd CursorMovedI <buffer> call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
 
-"""""""""""""""""""""""""""""""""""""""
-function! GetCurrentRegion()
-"""""""""""""""""""""""""""""""""""""""
-    let region = v:null
-    for id in synstack(line("."), col("."))
-	let region = synIDattr(id, "name")
-    endfor
-    return region
-endfunction
-
-
-
-
-"""""""""""""""""""""""""""""""""""""""
-function! IsCurrentRegionInFunction()
-"""""""""""""""""""""""""""""""""""""""
-	let region = GetCurrentRegion()
-	if stridx(region, g:FUNCTION_REGION_PREFIX) >=0
-		return 1
-	endif
-	return 0
-endfunction
-
-
-
-
-
+" The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 nnoremap <buffer> <silent> <C-]> :execute 'tag '.setFunctions#CWordWithKey(46)<CR>
 
 " Grabs the filepath of the buffer
@@ -313,6 +304,10 @@ call setFunctions#GenerateTags(filePath)
 autocmd BufNew <buffer> call setFunctions#GenerateTags(filePath)
 autocmd InsertLeave <buffer> call setFunctions#GenerateTags(filePath)
 
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" The below section allows the user to jump to the definition of a variable (still in progress)
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 nnoremap <F12> : call setFunctions#GotoDefinition()<CR>
 
 
