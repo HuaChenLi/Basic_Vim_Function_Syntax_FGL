@@ -394,22 +394,8 @@ endfunction
 
 
 
-" Allows the '.' to be used as a keyword temporarily for searching for 200 milliseconds
-function! CWordWithKey(key) abort
-    let s:saved_iskeyword = &iskeyword
-    let s:saved_updatetime = &updatetime
-    if &updatetime > 200 | let &updatetime = 200 | endif
-    augroup CWordWithKeyAuGroup
-        autocmd CursorHold,CursorHoldI <buffer>
-                    \ let &updatetime = s:saved_updatetime |
-                    \ let &iskeyword = s:saved_iskeyword |
-                    \ autocmd! CWordWithKeyAuGroup
-    augroup END
-    execute 'set iskeyword+='.a:key
-    return expand('<cword>')
-endfunction
 
-nnoremap <buffer> <silent> <C-]> :execute 'tag '.CWordWithKey(46)<CR>
+nnoremap <buffer> <silent> <C-]> :execute 'tag '.setFunctions#CWordWithKey(46)<CR>
 
 " Grabs the filepath of the buffer
 let filePath = expand('%:p')
