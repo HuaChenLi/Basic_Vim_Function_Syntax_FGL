@@ -287,6 +287,9 @@ set includeexpr=LoadModule(v:fname)
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set laststatus=2
 
+" You can change the colour of the Status Line
+hi StatusLine ctermfg=black ctermbg=yellow
+
 autocmd CursorMoved <buffer> call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
 autocmd CursorMovedI <buffer> call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
 
