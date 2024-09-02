@@ -392,46 +392,6 @@ function! IsCurrentRegionInFunction()
 endfunction
 
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" The entire below section is for generating the tags so that you can jump to function definitions (the default is <CTRL>-])
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-set tags=.temp_tags
-
-" This runs the GenerateTags() whenever a buffer is switched to
-" This could potentially get pretty heavy depending on the number of files there are
-autocmd BufNew <buffer> call GenerateTags()
-autocmd InsertLeave <buffer> call GenerateTags()
-
-" This is the wrapper function of the python script
-" This sets the directory to be the same directory, which I think is fine
-let s:script_dir = fnamemodify(resolve(expand('<sfile>', ':p')), ':h')
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-function! GenerateTags()
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    let fileContent = getline(1, '$')
-    let filePath = expand('%:p')
-
-    " removes the .temp_tags file when vim is opened for the tags
-    " could change in the future where it doesn't need to delete the .temp_tags
-    call delete('.temp_tags')
-
-    " python for 2, python3 for 3
-python3 << EOF
-import sys
-import vim
-
-script_dir = vim.eval('s:script_dir')
-sys.path.insert(0, script_dir)
-
-import vim_syntax_in_python
-
-vim_syntax_in_python.generateTags(vim.eval('fileContent'), vim.eval('filePath'))
-EOF
-
-endfunction
-
-" Run the GenerateTags() on vim startup
-call GenerateTags()
 
 
 " Allows the '.' to be used as a keyword temporarily for searching for 200 milliseconds
@@ -451,22 +411,14 @@ endfunction
 
 nnoremap <buffer> <silent> <C-]> :execute 'tag '.CWordWithKey(46)<CR>
 
+" Run the GenerateTags() on vim startup
+call setFunctions#GenerateTags()
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"The entire below section is for jumping to variable definition
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-nnoremap <F12> : call GotoDefinition()<CR>
+" This runs the GenerateTags() whenever a buffer is switched to
+" This could potentially get pretty heavy depending on the number of files there are
+autocmd BufNew <buffer> call setFunctions#GenerateTags()
+autocmd InsertLeave <buffer> call setFunctions#GenerateTags()
 
-
-function! GotoDefinition()
-    let line = line('.')
-    let col = col('.')
-    let searchString = '\<\cdefine\>\([\n \t]\+\w\+[\n \t]\+\w\+,\([\n \t]*\)*\)*[\n \t]\+\<' . expand('<cword>') . '\>'
-    let returnLine =  SearchNotCommentLineNumber(searchString, line, col, line, col)
-    call cursor(returnLine, 1)
-endfunction
+nnoremap <F12> : call setFunctions#GotoDefinition()<CR>
 
 
-
-
-call g:setFunctions#Test()
