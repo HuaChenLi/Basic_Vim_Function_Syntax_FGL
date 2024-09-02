@@ -19,11 +19,10 @@ endfunction
 " This sets the directory to be the same directory, which I think is fine
 let s:script_dir = fnamemodify(resolve(expand('<sfile>', ':p')), ':h')
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-function! setFunctions#GenerateTags()
+function! setFunctions#GenerateTags(filePath)
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     set tags=.temp_tags
     let fileContent = getline(1, '$')
-    let filePath = expand('%:p')
 
     " removes the .temp_tags file when vim is opened for the tags
     " could change in the future where it doesn't need to delete the .temp_tags
@@ -42,4 +41,21 @@ import vim_syntax_in_python
 vim_syntax_in_python.generateTags(vim.eval('fileContent'), vim.eval('filePath'))
 EOF
 
+endfunction
+
+
+
+" Allows the '.' to be used as a keyword temporarily for searching for 200 milliseconds
+function! setFunctions#CWordWithKey(key) abort
+    let s:saved_iskeyword = &iskeyword
+    let s:saved_updatetime = &updatetime
+    if &updatetime > 200 | let &updatetime = 200 | endif
+    augroup CWordWithKeyAuGroup
+        autocmd CursorHold,CursorHoldI <buffer>
+                    \ let &updatetime = s:saved_updatetime |
+                    \ let &iskeyword = s:saved_iskeyword |
+                    \ autocmd! CWordWithKeyAuGroup
+    augroup END
+    execute 'set iskeyword+='.a:key
+    return expand('<cword>')
 endfunction
