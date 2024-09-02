@@ -29,7 +29,11 @@ def generateTags(inputString, currentFile):
 	currentDirectory = os.path.dirname(currentFile)
 	importFilePath = currentDirectory
 
+	previousToken = None
+	token = None
+
 	for tokenBlock in tokenList:
+		previousToken = token
 		token = tokenBlock[0]
 		lineNumber = tokenBlock[1]
 
@@ -44,27 +48,14 @@ def generateTags(inputString, currentFile):
 			isNewLineNeeded = False
 			continue
 
-		if isClosedCurlyBracketNeeded and token != "}":
-			continue
-		elif isClosedCurlyBracketNeeded and token == "}":
-			isClosedCurlyBracketNeeded = False
-			continue
-
 		# with the quotes, need to also account for escape character "\"
-		if isSingleQuoteNeeded and (token == "\\"):
-			isPreviousTokenBackslash = True
-		elif isSingleQuoteNeeded and (token != "'" or isPreviousTokenBackslash):
-			isPreviousTokenBackslash = False
+		if isSingleQuoteNeeded and (token != "'" or previousToken == "\\"):
 			continue
 		elif isSingleQuoteNeeded and token == "'":
 			isSingleQuoteNeeded = False
-			isPreviousTokenBackslash = False
 			continue
 
-
-		if isDoubleQuotesNeeded and (token == "\\"):
-			isPreviousTokenBackslash = True
-		elif isDoubleQuotesNeeded and (token != '"' or isPreviousTokenBackslash):
+		if isDoubleQuotesNeeded and (token != '"' or previousToken == "\\"):
 			continue
 		elif isDoubleQuotesNeeded and token == '"':
 			isDoubleQuotesNeeded = False
@@ -77,12 +68,18 @@ def generateTags(inputString, currentFile):
 			continue
 
 		# Comments
-		if token == "#" or token == "--":
+		if token == "#" or (token == "-" and previousToken == "-"):
 			isNewLineNeeded = True
 			continue
 
 		if token == "{":
 			isClosedCurlyBracketNeeded = True
+			continue
+
+		if isClosedCurlyBracketNeeded and token != "}":
+			continue
+		elif isClosedCurlyBracketNeeded and token == "}":
+			isClosedCurlyBracketNeeded = False
 			continue
 
 		# Strings
@@ -206,7 +203,11 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 
 	tagsLinesList = []
 
+	previousToken = None
+	token = None
+
 	for tokenBlock in tokenList:
+			previousToken = token
 			token = tokenBlock[0]
 			lineNumber = tokenBlock[1]
 
@@ -221,27 +222,14 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 				isNewLineNeeded = False
 				continue
 
-			if isClosedCurlyBracketNeeded and token != "}":
-				continue
-			elif isClosedCurlyBracketNeeded and token == "}":
-				isClosedCurlyBracketNeeded = False
-				continue
-
 			# with the quotes, need to also account for escape character "\"
-			if isSingleQuoteNeeded and (token == "\\"):
-				isPreviousTokenBackslash = True
-			elif isSingleQuoteNeeded and (token != "'" or isPreviousTokenBackslash):
-				isPreviousTokenBackslash = False
+			if isSingleQuoteNeeded and (token != "'" or previousToken == "\\"):
 				continue
 			elif isSingleQuoteNeeded and token == "'":
 				isSingleQuoteNeeded = False
-				isPreviousTokenBackslash = False
 				continue
 
-
-			if isDoubleQuotesNeeded and (token == "\\"):
-				isPreviousTokenBackslash = True
-			elif isDoubleQuotesNeeded and (token != '"' or isPreviousTokenBackslash):
+			if isDoubleQuotesNeeded and (token != '"' or previousToken == "\\"):
 				continue
 			elif isDoubleQuotesNeeded and token == '"':
 				isDoubleQuotesNeeded = False
@@ -254,12 +242,18 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 				continue
 
 			# Comments
-			if token == "#" or token == "--":
+			if token == "#" or (token == "-" and previousToken == "-"):
 				isNewLineNeeded = True
 				continue
 
 			if token == "{":
 				isClosedCurlyBracketNeeded = True
+				continue
+
+			if isClosedCurlyBracketNeeded and token != "}":
+				continue
+			elif isClosedCurlyBracketNeeded and token == "}":
+				isClosedCurlyBracketNeeded = False
 				continue
 
 			# Strings
@@ -305,7 +299,7 @@ def tokenizeString(inputString):
 	# basically, the massive line of regex code repeats, so we will grab all printable characters (since all printable characters are between ! to ~ except white spaces)
 	# the repeating section contains all the special characters in Genero
 	# probably can create a regex that is smart enough to do the whole thing by itself, but can probably just handle it in the python code afterwards
-	tokenBlock = re.findall(r"(?:(?!\.|,|'|`|\"\||\(|\)|#|{|}|\[|\]|<|>|--|!|$|\\|\n)[!-~])+|\.|,|'|`|\"\||\(|\)|#|{|}|\[|\]|<|>|--|!|$|\\|\n", inputString)
+	tokenBlock = re.findall(r"(?:(?!\.|,|'|`|\"\||\(|\)|#|{|}|\[|\]|<|>|-|!|$|\\|\n)[!-~])+|\.|,|'|`|\"\||\(|\)|#|{|}|\[|\]|<|>|-|!|$|\\|\n", inputString)
 	return tokenBlock
 
 
@@ -325,7 +319,10 @@ def findVariableDefinition(buffer):
 	isBackQuoteNeeded = False # back tick / backtick
 	isPreviousTokenBackslash = False
 
+	previousToken = None
+	token = None
 	for tokenBlock in tokenList:
+		previousToken = token
 		token = tokenBlock[0]
 		lineNumber = tokenBlock[1]
 
@@ -340,27 +337,14 @@ def findVariableDefinition(buffer):
 			isNewLineNeeded = False
 			continue
 
-		if isClosedCurlyBracketNeeded and token != "}":
-			continue
-		elif isClosedCurlyBracketNeeded and token == "}":
-			isClosedCurlyBracketNeeded = False
-			continue
-
 		# with the quotes, need to also account for escape character "\"
-		if isSingleQuoteNeeded and (token == "\\"):
-			isPreviousTokenBackslash = True
-		elif isSingleQuoteNeeded and (token != "'" or isPreviousTokenBackslash):
-			isPreviousTokenBackslash = False
+		if isSingleQuoteNeeded and (token != "'" or previousToken == "\\"):
 			continue
 		elif isSingleQuoteNeeded and token == "'":
 			isSingleQuoteNeeded = False
-			isPreviousTokenBackslash = False
 			continue
 
-
-		if isDoubleQuotesNeeded and (token == "\\"):
-			isPreviousTokenBackslash = True
-		elif isDoubleQuotesNeeded and (token != '"' or isPreviousTokenBackslash):
+		if isDoubleQuotesNeeded and (token != '"' or previousToken == "\\"):
 			continue
 		elif isDoubleQuotesNeeded and token == '"':
 			isDoubleQuotesNeeded = False
@@ -375,6 +359,12 @@ def findVariableDefinition(buffer):
 		# Comments
 		if token == "#" or token == "--":
 			isNewLineNeeded = True
+			continue
+
+		if isClosedCurlyBracketNeeded and token != "}":
+			continue
+		elif isClosedCurlyBracketNeeded and token == "}":
+			isClosedCurlyBracketNeeded = False
 			continue
 
 		if token == "{":
