@@ -2,6 +2,10 @@ let TRUE = 1
 let FALSE = 0
 
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" This sets the directory to be the same directory, which I think is fine
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let s:script_dir = fnamemodify(resolve(expand('<sfile>', ':p')), ':h')
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "The entire below section is for jumping to variable definition
@@ -9,18 +13,36 @@ let FALSE = 0
 function! setFunctions#GotoDefinition()
     let line = line('.')
     let col = col('.')
-    let searchString = '\<\cdefine\>\([\n \t]\+\w\+[\n \t]\+\w\+,\([\n \t]*\)*\)*[\n \t]\+\<' . expand('<cword>') . '\>'
-    let returnLine =  SearchNotCommentLineNumber(searchString, line, col, line, col)
-    call cursor(returnLine, 1)
+    let fileContent = getline(1, line)
+    " I'd rather pass everything into a python script and find the define that way
+
+python << EOF
+import sys
+import vim
+
+script_dir = vim.eval('s:script_dir')
+sys.path.insert(0, script_dir)
+
+import vim_syntax_in_python
+
+s = 10
+vim.command("let sInVim = '%s'"% s)
+
+
+
+lineNumber = vim_syntax_in_python.findVariableDefinition(vim.eval('fileContent'))
+vim.command("let lineNumber = '%s'"% lineNumber)
+EOF
+    echo lineNumber
+   " let searchString = '\<\cdefine\>\([\n \t]\+\w\+[\n \t]\+\w\+,\([\n \t]*\)*\)*[\n \t]\+\<' . expand('<cword>') . '\>'
+   " let returnLine =  SearchNotCommentLineNumber(searchString, line, col, line, col)
+    call cursor(lineNumber, 1)
 endfunction
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " This is the wrapper function of the python script
-" This sets the directory to be the same directory, which I think is fine
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let s:script_dir = fnamemodify(resolve(expand('<sfile>', ':p')), ':h')
-
 function! setFunctions#GenerateTags(filePath)
     set tags=.temp_tags
     let fileContent = getline(1, '$')

@@ -5,11 +5,7 @@ TAGS_FILE = ".temp_tags"
 FGL_SUFFIX = ".4gl"
 
 def generateTags(inputString, currentFile):
-	tokenList = []
-	for lineNumber, line in enumerate(inputString, start=1):
-		tokenBlock = tokenizeString(line)
-		tokenBlock.append("\n")
-		tokenList.extend([(token,lineNumber) for token in tokenBlock])
+	tokenList = tokenizeLinesOfFiles(inputString)
 
 	# This is the part where we want to loop through and find the function definitions
 	# We need to first set a couple of flags when we're ignoring sections
@@ -190,12 +186,7 @@ def writeTagsFile(tagsLinesList):
 def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 	file = open(importFilePath, "r")
 
-	tokenList = []
-	for lineNumber, line in enumerate(file, start=1):
-		tokenBlock = tokenizeString(line)
-		tokenBlock.append("\n")
-		tokenList.extend([(token,lineNumber) for token in tokenBlock])
-
+	tokenList = tokenizeLinesOfFiles(file)
 
 	# This is copy and pasted from function printTokens() but with a few changes
 
@@ -316,3 +307,16 @@ def tokenizeString(inputString):
 	# probably can create a regex that is smart enough to do the whole thing by itself, but can probably just handle it in the python code afterwards
 	tokenBlock = re.findall(r"(?:(?!\.|,|'|`|\"\||\(|\)|#|{|}|\[|\]|<|>|--|!|$|\\|\n)[!-~])+|\.|,|'|`|\"\||\(|\)|#|{|}|\[|\]|<|>|--|!|$|\\|\n", inputString)
 	return tokenBlock
+
+
+def findVariableDefinition(something):
+	return 100
+
+
+def tokenizeLinesOfFiles(file):
+	tokenList = []
+	for lineNumber, line in enumerate(file, start=1):
+		tokenBlock = tokenizeString(line)
+		tokenBlock.append("\n")
+		tokenList.extend([(token,lineNumber) for token in tokenBlock])
+	return tokenList
