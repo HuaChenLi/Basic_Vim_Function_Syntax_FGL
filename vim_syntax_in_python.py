@@ -123,8 +123,6 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 
 	tokenList = tokenizeLinesOfFiles(file)
 
-	# This is copy and pasted from function printTokens() but with a few changes
-
 	# This is the part where we want to loop through and find the function definitions
 
 	tagsLinesList = []
