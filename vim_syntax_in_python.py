@@ -102,13 +102,13 @@ def generateTags(inputString, currentFile):
 			isBackQuoteNeeded = True
 			continue
 
-		if (re.fullmatch("function", token, flags=re.IGNORECASE) or re.fullmatch("report", token, flags=re.IGNORECASE)) and not isPreviousTokenEnd:
+		if (re.match("^function$", token, flags=re.IGNORECASE) or re.match("^report$", token, flags=re.IGNORECASE)) and not isPreviousTokenEnd:
 			isPreviousTokenFunction = True
 			continue
-		elif (re.fullmatch("function", token, flags=re.IGNORECASE) or re.fullmatch("report", token, flags=re.IGNORECASE)) and isPreviousTokenEnd:
+		elif (re.match("^function$", token, flags=re.IGNORECASE) or re.match("^report$", token, flags=re.IGNORECASE)) and isPreviousTokenEnd:
 			isPreviousTokenEnd = False
 
-		if re.fullmatch("end", token, flags=re.IGNORECASE):
+		if re.match("^end$", token, flags=re.IGNORECASE):
 			isPreviousTokenEnd = True
 			continue
 
@@ -118,13 +118,13 @@ def generateTags(inputString, currentFile):
 			# We create the list of the function tags
 			tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=currentFile, fileAlias=currentFile, currentDirectory=currentDirectory))
 
-		if re.fullmatch("import", token, flags=re.IGNORECASE) and isPreviousTokenNewLine:
+		if re.match("^import$", token, flags=re.IGNORECASE) and isPreviousTokenNewLine:
 			# we need to check that Import is at the start of the line
 			isPreviousTokenNewLine = False
 			isImportingLibrary = True
 			continue
 
-		if isImportingLibrary and token != "." and token != "\n" and not re.fullmatch("as", token, flags=re.IGNORECASE) and not isPreviousTokenAs:
+		if isImportingLibrary and token != "." and token != "\n" and not re.match("^as$", token, flags=re.IGNORECASE) and not isPreviousTokenAs:
 			importFilePath = os.path.join(importFilePath, token)
 			continue
 
@@ -146,7 +146,7 @@ def generateTags(inputString, currentFile):
 			importFilePath = currentDirectory
 
 
-		if isImportingLibrary and re.fullmatch("as", token, flags=re.IGNORECASE):
+		if isImportingLibrary and re.match("^as$", token, flags=re.IGNORECASE):
 			isPreviousTokenAs = True
 			importFilePath = importFilePath + FGL_SUFFIX
 			continue
@@ -284,19 +284,19 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 				isBackQuoteNeeded = True
 				continue
 
-			if re.fullmatch("private", token, flags=re.IGNORECASE):
+			if re.match("^private$", token, flags=re.IGNORECASE):
 				isPreviousTokenPrivate = True
 				continue
 
-			if (re.fullmatch("function", token, flags=re.IGNORECASE) or re.fullmatch("report", token, flags=re.IGNORECASE)) and not isPreviousTokenEnd and not isPreviousTokenPrivate:
+			if (re.match("^function$", token, flags=re.IGNORECASE) or re.match("^report$", token, flags=re.IGNORECASE)) and not isPreviousTokenEnd and not isPreviousTokenPrivate:
 				isPreviousTokenFunction = True
 				isPreviousTokenPrivate = False
 				continue
-			elif (re.fullmatch("function", token, flags=re.IGNORECASE) or re.fullmatch("report", token, flags=re.IGNORECASE)) and isPreviousTokenEnd:
+			elif (re.match("^function$", token, flags=re.IGNORECASE) or re.match("^report$", token, flags=re.IGNORECASE)) and isPreviousTokenEnd:
 				isPreviousTokenEnd = False
 				isPreviousTokenPrivate = False
 
-			if re.fullmatch("end", token, flags=re.IGNORECASE):
+			if re.match("^end$", token, flags=re.IGNORECASE):
 				isPreviousTokenEnd = True
 				isPreviousTokenPrivate = False
 				continue

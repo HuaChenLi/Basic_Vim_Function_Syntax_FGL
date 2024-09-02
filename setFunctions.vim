@@ -30,7 +30,7 @@ function! setFunctions#GenerateTags(filePath)
     call delete('.temp_tags')
 
     " python for 2, python3 for 3
-python3 << EOF
+python << EOF
 import sys
 import vim
 
