@@ -9,6 +9,7 @@ syntax_test.hua
 *.pyc
 .hua*
 .syntax*
+.setFunctions*
 other_python.py
 
 same_directory.4gl
