@@ -20,12 +20,13 @@ endfunction
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " This is the wrapper function of the python script
 " This sets the directory to be the same directory, which I think is fine
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let s:script_dir = fnamemodify(resolve(expand('<sfile>', ':p')), ':h')
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
 function! setFunctions#GenerateTags(filePath)
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     set tags=.temp_tags
     let fileContent = getline(1, '$')
 
@@ -49,11 +50,10 @@ EOF
 endfunction
 
 
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Allows the '.' to be used as a keyword temporarily for searching for 200 milliseconds
-function! setFunctions#CWordWithKey(key) abort
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+function! setFunctions#CWordWithKey(key) abort
     let s:saved_iskeyword = &iskeyword
     let s:saved_updatetime = &updatetime
     if &updatetime > 200 | let &updatetime = 200 | endif
@@ -66,7 +66,6 @@ function! setFunctions#CWordWithKey(key) abort
     execute 'set iskeyword+='.a:key
     return expand('<cword>')
 endfunction
-
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
