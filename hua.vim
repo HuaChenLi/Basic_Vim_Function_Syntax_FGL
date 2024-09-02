@@ -465,3 +465,8 @@ function! GotoDefinition()
     let returnLine =  SearchNotCommentLineNumber(searchString, line, col, line, col)
     call cursor(returnLine, 1)
 endfunction
+
+
+
+
+call g:setFunctions#Test()
