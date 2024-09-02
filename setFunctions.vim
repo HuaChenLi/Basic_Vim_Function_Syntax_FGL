@@ -1,3 +1,8 @@
+let TRUE = 1
+let FALSE = 0
+
+
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "The entire below section is for jumping to variable definition
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -64,7 +69,6 @@ endfunction
 
 
 
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! setFunctions#ShowFuncName(newLine, newColumn, originalLine, originalColumn)
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -119,7 +123,7 @@ endfunction
 
 function! IsComment(currentLine, comparedString)
     " will need to update so that it doesn't need a comparedString and can just recognise if the position is a comment
-    let isComment = v:true
+    let isComment = g:TRUE
     " still can't quite get the comment in {}
 
     let hashCommentString = '\#.*\c' . a:comparedString
@@ -128,23 +132,23 @@ function! IsComment(currentLine, comparedString)
     let singleQuoteString = "'.*\\c" . a:comparedString
     let backTickQuoteString = '`.*\c' . a:comparedString
     if match(a:currentLine, hashCommentString) < 0 && match(a:currentLine, doubleDashString) < 0 && match(a:currentLine, doubleQuoteString) < 0 && match(a:currentLine, singleQuoteString) < 0 && match(a:currentLine, backTickQuoteString) < 0
-        let isComment = v:false
+        let isComment = g:FALSE
     endif
 return isComment
 endfunction
 
 function! IsEndOfFunction(statusMessage)
-    let isEndOfFunction = v:false
+    let isEndOfFunction = g:FALSE
     if match(a:statusMessage, '\c\<END\>\s*\<FUNCTION\>') >= 0
-	let isEndOfFunction = v:true
+	let isEndOfFunction = g:TRUE
     endif
     return isEndOfFunction
 endfunction
 
 function! IsEndOfReport(statusMessage)
-    let isEndOfFunction = v:false
+    let isEndOfFunction = g:FALSE
     if match(a:statusMessage, '\c\<END\>\s*\<REPORT\>') >= 0
-	let isEndOfFunction = v:true
+	let isEndOfFunction = g:TRUE
     endif
     return isEndOfFunction
 endfunction
