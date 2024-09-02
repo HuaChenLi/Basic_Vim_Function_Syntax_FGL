@@ -15,8 +15,8 @@ def generateTags(inputString, currentFile):
 	isSingleQuoteNeeded = False
 	isDoubleQuotesNeeded = False
 	isBackQuoteNeeded = False # back tick / backtick
-
 	isPreviousTokenBackslash = False
+
 	isPreviousTokenFunction = False
 	isPreviousTokenEnd = False
 
@@ -198,8 +198,8 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 	isSingleQuoteNeeded = False
 	isDoubleQuotesNeeded = False
 	isBackQuoteNeeded = False # back tick / backtick
-
 	isPreviousTokenBackslash = False
+
 	isPreviousTokenFunction = False
 	isPreviousTokenEnd = False
 	isPreviousTokenPrivate = False
@@ -309,8 +309,92 @@ def tokenizeString(inputString):
 	return tokenBlock
 
 
-def findVariableDefinition(something):
-	return 100
+def findVariableDefinition(buffer):
+	tokenList = tokenizeLinesOfFiles(buffer)
+
+	# This is copy and pasted from function printTokens() but with a few changes
+
+	# This is the part where we want to loop through and find the function definitions
+	# We need to first set a couple of flags when we're ignoring sections
+
+	isNewLineNeeded = False
+	isClosedCurlyBracketNeeded = False
+
+	isSingleQuoteNeeded = False
+	isDoubleQuotesNeeded = False
+	isBackQuoteNeeded = False # back tick / backtick
+	isPreviousTokenBackslash = False
+
+	for tokenBlock in tokenList:
+		token = tokenBlock[0]
+		lineNumber = tokenBlock[1]
+
+		# occasionally there are blank tokens
+		if token == "":
+			continue
+
+		# Skip booleans
+		if isNewLineNeeded and token != "\n":
+			continue
+		elif isNewLineNeeded and token == "\n":
+			isNewLineNeeded = False
+			continue
+
+		if isClosedCurlyBracketNeeded and token != "}":
+			continue
+		elif isClosedCurlyBracketNeeded and token == "}":
+			isClosedCurlyBracketNeeded = False
+			continue
+
+		# with the quotes, need to also account for escape character "\"
+		if isSingleQuoteNeeded and (token == "\\"):
+			isPreviousTokenBackslash = True
+		elif isSingleQuoteNeeded and (token != "'" or isPreviousTokenBackslash):
+			isPreviousTokenBackslash = False
+			continue
+		elif isSingleQuoteNeeded and token == "'":
+			isSingleQuoteNeeded = False
+			isPreviousTokenBackslash = False
+			continue
+
+
+		if isDoubleQuotesNeeded and (token == "\\"):
+			isPreviousTokenBackslash = True
+		elif isDoubleQuotesNeeded and (token != '"' or isPreviousTokenBackslash):
+			continue
+		elif isDoubleQuotesNeeded and token == '"':
+			isDoubleQuotesNeeded = False
+			continue
+
+		if isBackQuoteNeeded and token != "`":
+			continue
+		elif isBackQuoteNeeded and token == "`": 			# I believe the back quote can't be escaped in Genero
+			isBackQuoteNeeded = False
+			continue
+
+		# Comments
+		if token == "#" or token == "--":
+			isNewLineNeeded = True
+			continue
+
+		if token == "{":
+			isClosedCurlyBracketNeeded = True
+			continue
+
+		# Strings
+		if token == '"':
+			isDoubleQuotesNeeded = True
+			continue
+
+		if token == "'":
+			isSingleQuoteNeeded = True
+			continue
+
+		if token == "`":
+			isBackQuoteNeeded = True
+			continue
+
+
 
 
 def tokenizeLinesOfFiles(file):
