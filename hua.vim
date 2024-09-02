@@ -411,13 +411,15 @@ endfunction
 
 nnoremap <buffer> <silent> <C-]> :execute 'tag '.CWordWithKey(46)<CR>
 
+" Grabs the filepath of the buffer
+let filePath = expand('%:p')
 " Run the GenerateTags() on vim startup
-call setFunctions#GenerateTags()
+call setFunctions#GenerateTags(filePath)
 
 " This runs the GenerateTags() whenever a buffer is switched to
 " This could potentially get pretty heavy depending on the number of files there are
-autocmd BufNew <buffer> call setFunctions#GenerateTags()
-autocmd InsertLeave <buffer> call setFunctions#GenerateTags()
+autocmd BufNew <buffer> call setFunctions#GenerateTags(filePath)
+autocmd InsertLeave <buffer> call setFunctions#GenerateTags(filePath)
 
 nnoremap <F12> : call setFunctions#GotoDefinition()<CR>
 

@@ -30,7 +30,7 @@ def generateTags(inputString, currentFile):
 	isImportingLibrary = False
 	isPreviousTokenAs = False
 
-	currentDirectory = os.path.dirname(__file__)
+	currentDirectory = os.path.dirname(currentFile)
 	importFilePath = currentDirectory
 
 	for tokenBlock in tokenList:
