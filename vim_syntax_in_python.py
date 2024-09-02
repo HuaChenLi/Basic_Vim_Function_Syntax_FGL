@@ -8,13 +8,6 @@ def generateTags(inputString, currentFile):
 	tokenList = tokenizeLinesOfFiles(inputString)
 
 	# This is the part where we want to loop through and find the function definitions
-	# We need to first set a couple of flags when we're ignoring sections
-	isNewLineNeeded = False
-	isClosedCurlyBracketNeeded = False
-
-	isSingleQuoteNeeded = False
-	isDoubleQuotesNeeded = False
-	isBackQuoteNeeded = False # back tick / backtick
 
 	tagsLinesList = []
 
@@ -22,6 +15,8 @@ def generateTags(inputString, currentFile):
 
 	currentDirectory = os.path.dirname(currentFile)
 	importFilePath = currentDirectory
+
+	requiredToken = ""
 
 	prevPrevToken = ""
 	prevToken = ""
@@ -37,59 +32,18 @@ def generateTags(inputString, currentFile):
 		if token == "":
 			continue
 
-		# Skip booleans
-		if isNewLineNeeded and token != "\n":
-			continue
-		elif isNewLineNeeded and token == "\n":
-			isNewLineNeeded = False
-			continue
+		# this section is all about skipping based on strings and comments
+		if token == "-" and prevToken == "-":
+			token = "--"
 
-		# with the quotes, need to also account for escape character "\"
-		if isSingleQuoteNeeded and (token != "'" or prevToken == "\\"):
+		if requiredToken == "":
+			requiredToken = getRequiredToken(token)
+		elif token != requiredToken:
 			continue
-		elif isSingleQuoteNeeded and token == "'":
-			isSingleQuoteNeeded = False
+		elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and prevToken == "\\":
 			continue
-
-		if isDoubleQuotesNeeded and (token != '"' or prevToken == "\\"):
-			continue
-		elif isDoubleQuotesNeeded and token == '"':
-			isDoubleQuotesNeeded = False
-			continue
-
-		if isBackQuoteNeeded and token != "`":
-			continue
-		elif isBackQuoteNeeded and token == "`": 			# I believe the back quote can't be escaped in Genero
-			isBackQuoteNeeded = False
-			continue
-
-		# Comments
-		if token == "#" or (token == "-" and prevToken == "-"):
-			isNewLineNeeded = True
-			continue
-
-		if token == "{":
-			isClosedCurlyBracketNeeded = True
-			continue
-
-		if isClosedCurlyBracketNeeded and token != "}":
-			continue
-		elif isClosedCurlyBracketNeeded and token == "}":
-			isClosedCurlyBracketNeeded = False
-			continue
-
-		# Strings
-		if token == '"':
-			isDoubleQuotesNeeded = True
-			continue
-
-		if token == "'":
-			isSingleQuoteNeeded = True
-			continue
-
-		if token == "`":
-			isBackQuoteNeeded = True
-			continue
+		elif token == requiredToken:
+			requiredToken = ""
 
 		isPrevPrevTokenEnd = re.match("^end$", prevPrevToken, flags=re.IGNORECASE)
 		isPreviousTokenFunctionOrReport = (re.match("^function$", prevToken, flags=re.IGNORECASE) or re.match("^report$", prevToken, flags=re.IGNORECASE))
@@ -172,110 +126,45 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 	# This is copy and pasted from function printTokens() but with a few changes
 
 	# This is the part where we want to loop through and find the function definitions
-	# We need to first set a couple of flags when we're ignoring sections
-	isNewLineNeeded = False
-	isClosedCurlyBracketNeeded = False
-
-	isSingleQuoteNeeded = False
-	isDoubleQuotesNeeded = False
-	isBackQuoteNeeded = False # back tick / backtick
-
-	isPreviousTokenFunction = False
-	isPreviousTokenEnd = False
-	isPreviousTokenPrivate = False
 
 	tagsLinesList = []
 
-	previousToken = ""
-	token = ""
+	requiredToken = ""
+
+	prevPrevToken = ""
+	prevToken = ""
+	token = "\n"
 
 	for tokenBlock in tokenList:
-			previousToken = token
-			token = tokenBlock[0]
-			lineNumber = tokenBlock[1]
+		prevPrevToken = prevToken
+		prevToken = token
+		token = tokenBlock[0]
+		lineNumber = tokenBlock[1]
 
-			# occasionally there are blank tokens
-			if token == "":
-				continue
+		# occasionally there are blank tokens
+		if token == "":
+			continue
 
-			# Skip booleans
-			if isNewLineNeeded and token != "\n":
-				continue
-			elif isNewLineNeeded and token == "\n":
-				isNewLineNeeded = False
-				continue
+		# this section is all about skipping based on strings and comments
+		if token == "-" and prevToken == "-":
+			token = "--"
 
-			# with the quotes, need to also account for escape character "\"
-			if isSingleQuoteNeeded and (token != "'" or previousToken == "\\"):
-				continue
-			elif isSingleQuoteNeeded and token == "'":
-				isSingleQuoteNeeded = False
-				continue
+		if requiredToken == "":
+			requiredToken = getRequiredToken(token)
+		elif token != requiredToken:
+			continue
+		elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and prevToken == "\\":
+			continue
+		elif token == requiredToken:
+			requiredToken = ""
 
-			if isDoubleQuotesNeeded and (token != '"' or previousToken == "\\"):
-				continue
-			elif isDoubleQuotesNeeded and token == '"':
-				isDoubleQuotesNeeded = False
-				continue
+		isPrevPrevTokenEnd = re.match("^end$", prevPrevToken, flags=re.IGNORECASE)
+		isPrevPrevTokenPrivate = re.match("^private$", prevPrevToken, flags=re.IGNORECASE)
+		isPreviousTokenFunctionOrReport = (re.match("^function$", prevToken, flags=re.IGNORECASE) or re.match("^report$", prevToken, flags=re.IGNORECASE))
 
-			if isBackQuoteNeeded and token != "`":
-				continue
-			elif isBackQuoteNeeded and token == "`": 			# I believe the back quote can't be escaped in Genero
-				isBackQuoteNeeded = False
-				continue
-
-			# Comments
-			if token == "#" or (token == "-" and previousToken == "-"):
-				isNewLineNeeded = True
-				continue
-
-			if token == "{":
-				isClosedCurlyBracketNeeded = True
-				continue
-
-			if isClosedCurlyBracketNeeded and token != "}":
-				continue
-			elif isClosedCurlyBracketNeeded and token == "}":
-				isClosedCurlyBracketNeeded = False
-				continue
-
-			# Strings
-			if token == '"':
-				isDoubleQuotesNeeded = True
-				continue
-
-			if token == "'":
-				isSingleQuoteNeeded = True
-				continue
-
-			if token == "`":
-				isBackQuoteNeeded = True
-				continue
-
-
-			isPreviousTokenEnd = re.match("^end$", previousToken, flags=re.IGNORECASE)
-			isPreviousTokenFunctionOrReport = (re.match("^function$", previousToken, flags=re.IGNORECASE) or re.match("^report$", previousToken, flags=re.IGNORECASE))
-
-
-			if re.match("^private$", token, flags=re.IGNORECASE):
-				isPreviousTokenPrivate = True
-				continue
-
-			if (re.match("^function$", token, flags=re.IGNORECASE) or re.match("^report$", token, flags=re.IGNORECASE)) and not isPreviousTokenEnd and not isPreviousTokenPrivate:
-				isPreviousTokenFunction = True
-				isPreviousTokenPrivate = False
-				continue
-			elif (re.match("^function$", token, flags=re.IGNORECASE) or re.match("^report$", token, flags=re.IGNORECASE)) and isPreviousTokenEnd:
-				isPreviousTokenPrivate = False
-
-			if re.match("^end$", token, flags=re.IGNORECASE):
-				isPreviousTokenPrivate = False
-				continue
-
-			if isPreviousTokenFunction and not isPreviousTokenEnd:
-				isPreviousTokenFunction = False
-				# We create the list of the function tags
-				tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=importFilePath, fileAlias=fileAlias, currentDirectory=workingDirectory))
+		if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate:
+			# We create the list of the function tags
+			tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=importFilePath, fileAlias=fileAlias, currentDirectory=workingDirectory))
 
 	return tagsLinesList
 
@@ -378,3 +267,15 @@ def tokenizeLinesOfFiles(file):
 		tokenBlock.append("\n")
 		tokenList.extend([(token,lineNumber) for token in tokenBlock])
 	return tokenList
+
+
+def getRequiredToken(inputToken):
+	tokenDictionary = {
+		"'" : "'",
+		'"' : '"',
+		"`" : "`",
+		"#" : "\n",
+		"--" : "\n",
+		"{" : "}"
+	}
+	return tokenDictionary.get(inputToken, "")
