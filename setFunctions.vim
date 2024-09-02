@@ -25,11 +25,6 @@ sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
 
-s = 10
-vim.command("let sInVim = '%s'"% s)
-
-
-
 lineNumber = vim_syntax_in_python.findVariableDefinition(vim.eval('fileContent'))
 vim.command("let lineNumber = '%s'"% lineNumber)
 EOF
