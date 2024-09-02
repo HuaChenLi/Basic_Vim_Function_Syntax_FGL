@@ -15,25 +15,21 @@ def generateTags(inputString, currentFile):
 	isSingleQuoteNeeded = False
 	isDoubleQuotesNeeded = False
 	isBackQuoteNeeded = False # back tick / backtick
-	isPreviousTokenBackslash = False
-
-	isPreviousTokenFunction = False
-	isPreviousTokenEnd = False
 
 	tagsLinesList = []
 
-	isPreviousTokenNewLine = True
 	isImportingLibrary = False
-	isPreviousTokenAs = False
 
 	currentDirectory = os.path.dirname(currentFile)
 	importFilePath = currentDirectory
 
-	previousToken = None
-	token = None
+	prevPrevToken = ""
+	prevToken = ""
+	token = "\n"
 
 	for tokenBlock in tokenList:
-		previousToken = token
+		prevPrevToken = prevToken
+		prevToken = token
 		token = tokenBlock[0]
 		lineNumber = tokenBlock[1]
 
@@ -49,13 +45,13 @@ def generateTags(inputString, currentFile):
 			continue
 
 		# with the quotes, need to also account for escape character "\"
-		if isSingleQuoteNeeded and (token != "'" or previousToken == "\\"):
+		if isSingleQuoteNeeded and (token != "'" or prevToken == "\\"):
 			continue
 		elif isSingleQuoteNeeded and token == "'":
 			isSingleQuoteNeeded = False
 			continue
 
-		if isDoubleQuotesNeeded and (token != '"' or previousToken == "\\"):
+		if isDoubleQuotesNeeded and (token != '"' or prevToken == "\\"):
 			continue
 		elif isDoubleQuotesNeeded and token == '"':
 			isDoubleQuotesNeeded = False
@@ -68,7 +64,7 @@ def generateTags(inputString, currentFile):
 			continue
 
 		# Comments
-		if token == "#" or (token == "-" and previousToken == "-"):
+		if token == "#" or (token == "-" and prevToken == "-"):
 			isNewLineNeeded = True
 			continue
 
@@ -95,52 +91,40 @@ def generateTags(inputString, currentFile):
 			isBackQuoteNeeded = True
 			continue
 
-		if (re.match("^function$", token, flags=re.IGNORECASE) or re.match("^report$", token, flags=re.IGNORECASE)) and not isPreviousTokenEnd:
-			isPreviousTokenFunction = True
-			continue
-		elif (re.match("^function$", token, flags=re.IGNORECASE) or re.match("^report$", token, flags=re.IGNORECASE)) and isPreviousTokenEnd:
-			isPreviousTokenEnd = False
+		isPrevPrevTokenEnd = re.match("^end$", prevPrevToken, flags=re.IGNORECASE)
+		isPreviousTokenFunctionOrReport = (re.match("^function$", prevToken, flags=re.IGNORECASE) or re.match("^report$", prevToken, flags=re.IGNORECASE))
 
-		if re.match("^end$", token, flags=re.IGNORECASE):
-			isPreviousTokenEnd = True
-			continue
-
-		if isPreviousTokenFunction and not isPreviousTokenEnd:
-			isPreviousTokenEnd = False
-			isPreviousTokenFunction = False
+		if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd:
 			# We create the list of the function tags
 			tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=currentFile, fileAlias=currentFile, currentDirectory=currentDirectory))
 
-		if re.match("^import$", token, flags=re.IGNORECASE) and isPreviousTokenNewLine:
+		if re.match("^import$", token, flags=re.IGNORECASE) and prevToken == "\n":
 			# we need to check that Import is at the start of the line
-			isPreviousTokenNewLine = False
 			isImportingLibrary = True
 			continue
+
+		isPreviousTokenAs = re.match("^as$", prevToken, flags=re.IGNORECASE)
 
 		if isImportingLibrary and token != "." and token != "\n" and not re.match("^as$", token, flags=re.IGNORECASE) and not isPreviousTokenAs:
 			importFilePath = os.path.join(importFilePath, token)
 			continue
 
-
 		# When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
 		# The functionName is the AS file, while the file is the path to the file
 
 		if isImportingLibrary and token == "\n" and not isPreviousTokenAs:
-			isPreviousTokenNewLine = True
 			isImportingLibrary = False
 			importFilePath = importFilePath + FGL_SUFFIX
 			tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, importFilePath, currentDirectory))
 			importFilePath = currentDirectory
 			continue
 		elif isImportingLibrary and isPreviousTokenAs:
-			isPreviousTokenNewLine = True 			# I don't like this line, because it's technically a lie
 			isImportingLibrary = False
 			tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, token, currentDirectory))
 			importFilePath = currentDirectory
 
 
 		if isImportingLibrary and re.match("^as$", token, flags=re.IGNORECASE):
-			isPreviousTokenAs = True
 			importFilePath = importFilePath + FGL_SUFFIX
 			continue
 
@@ -195,7 +179,6 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 	isSingleQuoteNeeded = False
 	isDoubleQuotesNeeded = False
 	isBackQuoteNeeded = False # back tick / backtick
-	isPreviousTokenBackslash = False
 
 	isPreviousTokenFunction = False
 	isPreviousTokenEnd = False
@@ -203,8 +186,8 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 
 	tagsLinesList = []
 
-	previousToken = None
-	token = None
+	previousToken = ""
+	token = ""
 
 	for tokenBlock in tokenList:
 			previousToken = token
@@ -269,6 +252,11 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 				isBackQuoteNeeded = True
 				continue
 
+
+			isPreviousTokenEnd = re.match("^end$", previousToken, flags=re.IGNORECASE)
+			isPreviousTokenFunctionOrReport = (re.match("^function$", previousToken, flags=re.IGNORECASE) or re.match("^report$", previousToken, flags=re.IGNORECASE))
+
+
 			if re.match("^private$", token, flags=re.IGNORECASE):
 				isPreviousTokenPrivate = True
 				continue
@@ -278,16 +266,13 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 				isPreviousTokenPrivate = False
 				continue
 			elif (re.match("^function$", token, flags=re.IGNORECASE) or re.match("^report$", token, flags=re.IGNORECASE)) and isPreviousTokenEnd:
-				isPreviousTokenEnd = False
 				isPreviousTokenPrivate = False
 
 			if re.match("^end$", token, flags=re.IGNORECASE):
-				isPreviousTokenEnd = True
 				isPreviousTokenPrivate = False
 				continue
 
 			if isPreviousTokenFunction and not isPreviousTokenEnd:
-				isPreviousTokenEnd = False
 				isPreviousTokenFunction = False
 				# We create the list of the function tags
 				tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=importFilePath, fileAlias=fileAlias, currentDirectory=workingDirectory))
@@ -317,10 +302,9 @@ def findVariableDefinition(buffer):
 	isSingleQuoteNeeded = False
 	isDoubleQuotesNeeded = False
 	isBackQuoteNeeded = False # back tick / backtick
-	isPreviousTokenBackslash = False
 
-	previousToken = None
-	token = None
+	previousToken = ""
+	token = ""
 	for tokenBlock in tokenList:
 		previousToken = token
 		token = tokenBlock[0]
