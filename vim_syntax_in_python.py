@@ -77,14 +77,13 @@ def generateTags(inputString, currentFile):
 		if isImportingLibrary and token == "\n" and not isPreviousTokenAs:
 			isImportingLibrary = False
 			importFilePath = importFilePath + FGL_SUFFIX
-			# need to make 
 			tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, importFilePath, currentDirectory, packagePaths))
-			importFilePath = currentDirectory
+			importFilePath = ""
 			continue
 		elif isImportingLibrary and isPreviousTokenAs:
 			isImportingLibrary = False
 			tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, token, currentDirectory, packagePaths))
-			importFilePath = currentDirectory
+			importFilePath = ""
 
 
 		if isImportingLibrary and re.match("^as$", token, flags=re.IGNORECASE):
