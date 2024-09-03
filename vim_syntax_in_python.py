@@ -5,6 +5,15 @@ TAGS_FILE = ".temp_tags"
 FGL_SUFFIX = ".4gl"
 
 def generateTags(inputString, currentFile):
+	currentDirectory = os.path.dirname(currentFile)
+	packagePaths = [currentDirectory]
+	try:
+		# allows the environment variable to be split depending on the os
+		packagePaths.extend(os.environ['FGLLDPATH'].split(os.pathsep))
+	except:
+		# this is in case the FGLLDPATH doesn't exist
+		pass
+
 	tokenList = tokenizeLinesOfFiles(inputString)
 
 	# This is the part where we want to loop through and find the function definitions
@@ -13,8 +22,7 @@ def generateTags(inputString, currentFile):
 
 	isImportingLibrary = False
 
-	currentDirectory = os.path.dirname(currentFile)
-	importFilePath = currentDirectory
+	importFilePath = ""
 
 	requiredToken = ""
 
@@ -69,12 +77,13 @@ def generateTags(inputString, currentFile):
 		if isImportingLibrary and token == "\n" and not isPreviousTokenAs:
 			isImportingLibrary = False
 			importFilePath = importFilePath + FGL_SUFFIX
-			tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, importFilePath, currentDirectory))
+			# need to make 
+			tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, importFilePath, currentDirectory, packagePaths))
 			importFilePath = currentDirectory
 			continue
 		elif isImportingLibrary and isPreviousTokenAs:
 			isImportingLibrary = False
-			tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, token, currentDirectory))
+			tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, token, currentDirectory, packagePaths))
 			importFilePath = currentDirectory
 
 
@@ -118,8 +127,19 @@ def writeTagsFile(tagsLinesList):
 	file.close()
 
 
-def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
-	file = open(importFilePath, "r")
+def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, packagePaths):
+	isExistingPackageFile = False
+
+	for package in packagePaths:
+		packageFile = os.path.join(package, importFilePath)
+		if os.path.isfile(packageFile):
+			isExistingPackageFile = True
+			break
+
+	if not isExistingPackageFile:
+		return []
+
+	file = open(packageFile, "r")
 
 	tokenList = tokenizeLinesOfFiles(file)
 
@@ -162,7 +182,7 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory):
 
 		if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate:
 			# We create the list of the function tags
-			tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=importFilePath, fileAlias=fileAlias, currentDirectory=workingDirectory))
+			tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=packageFile, fileAlias=fileAlias, currentDirectory=workingDirectory))
 
 	return tagsLinesList
 
