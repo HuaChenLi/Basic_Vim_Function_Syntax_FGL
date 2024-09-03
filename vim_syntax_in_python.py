@@ -138,6 +138,9 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
 	if not isExistingPackageFile:
 		return []
 
+	if fileAlias == importFilePath:
+		packageFile
+
 	file = open(packageFile, "r")
 
 	tokenList = tokenizeLinesOfFiles(file)
