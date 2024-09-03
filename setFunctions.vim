@@ -108,19 +108,18 @@ function! setFunctions#ShowFuncName(newLine, newColumn, originalLine, originalCo
        	call cursor(a:originalLine, a:originalColumn)
 
        	let statusMessage = substitute(currentLine, '\s', '\\ ', 'g')
-       	execute "set statusline=" . statusMessage
 
 	if IsEndOfFunction(currentLine)
 	    let statusMessage = "end of function"
 	    let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
-	    execute "set statusline=" . statusMessage
 	endif
 
 	if IsEndOfReport(currentLine)
 	    let statusMessage = "end of report"
 	    let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
-	    execute "set statusline=" . statusMessage
 	endif
+
+	execute "set statusline=" . statusMessage . "%=%p%%"
 
 	if tempLineOpenCurlyNumber > tempLineCloseCurlyNumber
 	    call setFunctions#ShowFuncName(tempLineOpenCurlyNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
