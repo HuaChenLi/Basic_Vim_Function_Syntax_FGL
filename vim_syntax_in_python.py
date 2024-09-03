@@ -52,6 +52,7 @@ def generateTags(inputString, currentFile):
 			continue
 		elif token == requiredToken:
 			requiredToken = ""
+			continue
 
 		isPrevPrevTokenEnd = re.match("^end$", prevPrevToken, flags=re.IGNORECASE)
 		isPreviousTokenFunctionOrReport = (re.match("^function$", prevToken, flags=re.IGNORECASE) or re.match("^report$", prevToken, flags=re.IGNORECASE))
