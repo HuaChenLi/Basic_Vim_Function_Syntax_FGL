@@ -23,6 +23,7 @@ def generateTags(inputString, currentFile):
     isImportingLibrary = False
 
     importFilePath = ""
+    fileAlias = ""
 
     requiredToken = ""
 
@@ -66,10 +67,22 @@ def generateTags(inputString, currentFile):
             isImportingLibrary = True
             continue
 
+        if isImportingLibrary and re.match("^import$", prevToken, flags=re.IGNORECASE) and re.match("^fgl$", token, flags=re.IGNORECASE):
+            continue
+        elif isImportingLibrary and re.match("^import$", prevToken, flags=re.IGNORECASE) and not re.match("^fgl$", token, flags=re.IGNORECASE):
+            # for when importing not an FGL library
+            isImportingLibrary = False
+            continue
+
         isPreviousTokenAs = re.match("^as$", prevToken, flags=re.IGNORECASE)
 
         if isImportingLibrary and token != "." and token != "\n" and not re.match("^as$", token, flags=re.IGNORECASE) and not isPreviousTokenAs:
             importFilePath = os.path.join(importFilePath, token)
+            if fileAlias == "":
+                fileAlias = token
+            else:
+                fileAlias = fileAlias + "." + token
+
             continue
 
         # When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
@@ -78,13 +91,16 @@ def generateTags(inputString, currentFile):
         if isImportingLibrary and token == "\n" and not isPreviousTokenAs:
             isImportingLibrary = False
             importFilePath = importFilePath + FGL_SUFFIX
-            tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, importFilePath, currentDirectory, packagePaths))
+            tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, fileAlias, currentDirectory, packagePaths))
             importFilePath = ""
+            fileAlias = ""
             continue
         elif isImportingLibrary and isPreviousTokenAs:
             isImportingLibrary = False
             tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, token, currentDirectory, packagePaths))
             importFilePath = ""
+            fileAlias = ""
+            continue
 
 
         if isImportingLibrary and re.match("^as$", token, flags=re.IGNORECASE):
@@ -138,9 +154,6 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
 
     if not isExistingPackageFile:
         return []
-
-    if fileAlias == importFilePath:
-        packageFile
 
     file = open(packageFile, "r")
 
