@@ -22,7 +22,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
     tokenList = tokenizeLinesOfFiles(inputString)
 
-    # This is the part where we want to loop through and find the function definitions
+    # This is the part where we want to loop through and find the function definitions in the current file
 
     tagsLinesList = []
 
@@ -30,14 +30,16 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
     importFilePath = ""
     fileAlias = ""
-
     requiredToken = ""
-
     prevPrevToken = ""
     prevToken = ""
     token = "\n"
 
-    for tokenBlock in tokenList:
+    for index, tokenBlock in enumerate(tokenList):
+        # I don't get why it doesn't duplicate by putting it in the for loop instead of outside the for loop :(
+        if index == 0:
+            tagsLinesList.extend(getMakefileFunctions(currentDirectory))
+
         prevPrevToken = prevToken
         prevToken = token
         token = tokenBlock[0]
@@ -113,7 +115,6 @@ def generateTags(inputString, currentFile, pid, bufNum):
             importFilePath = importFilePath + FGL_SUFFIX
             continue
 
-
     writeTagsFile(tagsLinesList, pid, bufNum)
 
 def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDirectory):
@@ -174,7 +175,6 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
     tagsLinesList = []
 
     requiredToken = ""
-
     prevPrevToken = ""
     prevToken = ""
     token = "\n"
@@ -330,3 +330,41 @@ def removeTempTags(pid, bufNum):
         os.remove(tagsFile)
     except OSError:
         pass
+
+def getMakefileFunctions(currentDirectory):
+    makeFile = os.path.join(currentDirectory, "Makefile")
+    if not os.path.isfile(makeFile):
+        return []
+    file = open(makeFile, "r")
+    tokenList = tokenizeLinesOfFiles(file)
+
+    tagsList = []
+
+    isImportingObjectFiles = False
+    prevToken = ""
+    token = "\n"
+
+    for tokenBlock in tokenList:
+        if tokenBlock[0] == "":
+            continue
+
+        prevToken = token
+        token = tokenBlock[0]
+        lineNumber = tokenBlock[1]
+
+        packagePaths = [currentDirectory]
+
+        if re.match("^OBJFILES$", token):
+            isImportingObjectFiles = True
+
+        # This feels like the weakest syntax check
+        if isImportingObjectFiles and token == ".":
+            continue
+        elif isImportingObjectFiles and prevToken == "=":
+            file = token + FGL_SUFFIX
+            tagsList.extend(getPublicFunctionsFromLibrary(file, token, currentDirectory, packagePaths))
+            continue
+        elif isImportingObjectFiles and token == "\n" and prevToken != "\\":
+            isImportingObjectFiles = False
+
+    return tagsList
