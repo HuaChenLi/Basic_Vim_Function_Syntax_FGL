@@ -39,6 +39,7 @@ endfunction
 " This is the wrapper function of the python script
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! setFunctions#GenerateTags(filePath, pid)
+    echo bufnr('%')
     execute 'set tags=~/.temp_tags.' . a:pid
     let fileContent = getline(1, '$')
 

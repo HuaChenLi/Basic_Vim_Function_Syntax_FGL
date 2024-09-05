@@ -7,7 +7,6 @@ TAGS_FILE_BASE = os.path.join(HOME, ".temp_tags")
 FGL_SUFFIX = ".4gl"
 
 def generateTags(inputString, currentFile, pid):
-    print("pid: " + pid)
     currentDirectory = os.path.dirname(currentFile)
     packagePaths = [currentDirectory]
     try:
