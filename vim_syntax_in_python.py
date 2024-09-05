@@ -3,10 +3,11 @@ import os
 from os.path import expanduser
 
 HOME = expanduser("~")
-TAGS_FILE = os.path.join(HOME, ".temp_tags")
+TAGS_FILE_BASE = os.path.join(HOME, ".temp_tags")
 FGL_SUFFIX = ".4gl"
 
-def generateTags(inputString, currentFile):
+def generateTags(inputString, currentFile, pid):
+    print("pid: " + pid)
     currentDirectory = os.path.dirname(currentFile)
     packagePaths = [currentDirectory]
     try:
@@ -110,7 +111,7 @@ def generateTags(inputString, currentFile):
             continue
 
 
-    writeTagsFile(tagsLinesList)
+    writeTagsFile(tagsLinesList, pid)
 
 def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDirectory):
     # this is interesting, I would need to, for each separation, create a tagLine
@@ -139,10 +140,11 @@ def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDi
     return tagsLinesList
 
 
-def writeTagsFile(tagsLinesList):
+def writeTagsFile(tagsLinesList, pid):
     # The tags file needs to be sorted alphabetically (by ASCII code) in order to work
     tagsLinesList.sort()
-    file = open(TAGS_FILE, "a")
+    tagsFile = TAGS_FILE_BASE + "." + pid
+    file = open(tagsFile, "a")
     for line in tagsLinesList:
         file.write(line)
     file.close()
@@ -319,8 +321,9 @@ def getRequiredToken(inputToken):
     }
     return tokenDictionary.get(inputToken, "")
 
-def removeTempTags():
+def removeTempTags(pid):
     try:
-        os.remove(TAGS_FILE)
+        tagsFile = TAGS_FILE_BASE + "." + pid
+        os.remove(tagsFile)
     except OSError:
         pass
