@@ -52,6 +52,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
         # this section is all about skipping based on strings and comments
         if token == "-" and prevToken == "-":
             token = "--"
+            continue
 
         if requiredToken == "":
             requiredToken = getRequiredToken(token)
@@ -90,7 +91,6 @@ def generateTags(inputString, currentFile, pid, bufNum):
                 fileAlias = token
             else:
                 fileAlias = fileAlias + "." + token
-
             continue
 
         # When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
@@ -201,6 +201,7 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
             continue
         elif token == requiredToken:
             requiredToken = ""
+            continue
 
         isPrevPrevTokenEnd = re.match("^end$", prevPrevToken, flags=re.IGNORECASE)
         isPrevPrevTokenPrivate = re.match("^private$", prevPrevToken, flags=re.IGNORECASE)
