@@ -305,7 +305,7 @@ call setFunctions#GenerateTags(filePath, getpid(), bufnr('%'))
 " This runs the GenerateTags() whenever a buffer is switched to
 " This could potentially get pretty heavy depending on the number of files there are
 autocmd BufNew <buffer> call setFunctions#GenerateTags(filePath, getpid(), bufnr('%'))
-autocmd InsertLeave <buffer> call setFunctions#GenerateTags(filePath, getpid(), bufnr('%'))
+"autocmd InsertLeave <buffer> call setFunctions#GenerateTags(filePath, getpid(), bufnr('%'))
 
 " Maybe figure out a way to delete the tags in the future, but having a record of the tags isn't the worst, even if they aren't being used
 "autocmd BufDelete <buffer> call setFunctions#DeleteTempTags(getpid(), bufnr('%'))

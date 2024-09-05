@@ -239,13 +239,13 @@ def findVariableDefinition(buffer):
     previousToken = ""
     token = ""
     for tokenBlock in tokenList:
+        # occasionally there are blank tokens
+        if tokenBlock[0] == "":
+            continue
+
         previousToken = token
         token = tokenBlock[0]
         lineNumber = tokenBlock[1]
-
-        # occasionally there are blank tokens
-        if token == "":
-            continue
 
         # Skip booleans
         if isNewLineNeeded and token != "\n":
