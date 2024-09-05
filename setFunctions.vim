@@ -39,12 +39,10 @@ endfunction
 " This is the wrapper function of the python script
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! setFunctions#GenerateTags(filePath)
-    set tags=.temp_tags
+    set tags=~/.temp_tags
     let fileContent = getline(1, '$')
 
-    " removes the .temp_tags file when vim is opened for the tags
-    " could change in the future where it doesn't need to delete the .temp_tags
-    call delete('.temp_tags')
+    call setFunctions#DeleteTempTags()
 
     " python for 2, python3 for 3
 python << EOF
@@ -174,4 +172,20 @@ function! SearchNotCommentLineNumber(searchString, currentLineNumber, currentCol
 	call cursor(a:originalLine, a:originalColumn)
     endif
     return returnLine
+endfunction
+
+function! setFunctions#DeleteTempTags()
+
+python << EOF
+import sys
+import vim
+
+script_dir = vim.eval('s:script_dir')
+sys.path.insert(0, script_dir)
+
+import vim_syntax_in_python
+
+vim_syntax_in_python.removeTempTags()
+EOF
+
 endfunction

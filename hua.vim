@@ -306,6 +306,7 @@ call setFunctions#GenerateTags(filePath)
 " This could potentially get pretty heavy depending on the number of files there are
 autocmd BufNew <buffer> call setFunctions#GenerateTags(filePath)
 autocmd InsertLeave <buffer> call setFunctions#GenerateTags(filePath)
+autocmd BufUnload <buffer> call setFunctions#DeleteTempTags()
 
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

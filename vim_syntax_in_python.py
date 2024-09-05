@@ -1,7 +1,9 @@
 import re
 import os
+from os.path import expanduser
 
-TAGS_FILE = ".temp_tags"
+HOME = expanduser("~")
+TAGS_FILE = os.path.join(HOME, ".temp_tags")
 FGL_SUFFIX = ".4gl"
 
 def generateTags(inputString, currentFile):
@@ -316,3 +318,9 @@ def getRequiredToken(inputToken):
         "{" : "}"
     }
     return tokenDictionary.get(inputToken, "")
+
+def removeTempTags():
+    try:
+        os.remove(TAGS_FILE)
+    except OSError:
+        pass
