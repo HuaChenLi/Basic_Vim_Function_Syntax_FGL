@@ -113,9 +113,9 @@ def generateTags(inputString, currentFile):
 def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDirectory):
     # this is interesting, I would need to, for each separation, create a tagLine
     tagsLinesList = []
-    functionCallRoot = currentFile.replace(currentDirectory + "\\", "")
+    functionCallRoot = currentFile.replace(currentDirectory + os.sep, "")
     functionCallRoot = functionCallRoot.replace(FGL_SUFFIX, "")
-    functionTokens = functionCallRoot.split("\\")
+    functionTokens = functionCallRoot.split(os.sep)
 
     tagLine = functionName + "\t" + currentFile + "\t" + str(lineNumber) + "\n"
     tagsLinesList.append(tagLine)
@@ -127,7 +127,7 @@ def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDi
         tagsLinesList.append(tagLine)
 
     # check if the Alias is already in the file path (this means we didn't actually alias)
-    isAliasInFilePath = re.search(fileAlias, currentFile.replace("\\", "."), flags=re.IGNORECASE)
+    isAliasInFilePath = re.search(fileAlias, currentFile.replace(os.sep, "."), flags=re.IGNORECASE)
 
     if fileAlias != currentFile and isAliasInFilePath is  None:
         aliasFunctionName = fileAlias + "." + functionName
