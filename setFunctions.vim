@@ -38,12 +38,11 @@ endfunction
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " This is the wrapper function of the python script
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-function! setFunctions#GenerateTags(filePath, pid)
-    echo bufnr('%')
-    execute 'set tags=~/.temp_tags.' . a:pid
+function! setFunctions#GenerateTags(filePath, pid, bufNum)
+    execute 'set tags=~/.temp_tags/.temp_tags.' . a:pid . '.' . a:bufNum
     let fileContent = getline(1, '$')
 
-    call setFunctions#DeleteTempTags(a:pid)
+    "call setFunctions#DeleteTempTags(a:pid, a:bufNum)
 
     " python for 2, python3 for 3
 python << EOF
@@ -55,7 +54,7 @@ sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
 
-vim_syntax_in_python.generateTags(vim.eval('fileContent'), vim.eval('a:filePath'), vim.eval('a:pid'))
+vim_syntax_in_python.generateTags(vim.eval('fileContent'), vim.eval('a:filePath'), vim.eval('a:pid'), vim.eval('a:bufNum'))
 EOF
 
 endfunction
@@ -175,7 +174,7 @@ function! SearchNotCommentLineNumber(searchString, currentLineNumber, currentCol
     return returnLine
 endfunction
 
-function! setFunctions#DeleteTempTags(pid)
+function! setFunctions#DeleteTempTags(pid, bufNum)
 
 python << EOF
 import sys
@@ -186,7 +185,7 @@ sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
 
-vim_syntax_in_python.removeTempTags(vim.eval('a:pid'))
+vim_syntax_in_python.removeTempTags(vim.eval('a:pid'), vim.eval('a:bufNum'))
 EOF
 
 endfunction

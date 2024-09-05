@@ -3,10 +3,14 @@ import os
 from os.path import expanduser
 
 HOME = expanduser("~")
-TAGS_FILE_BASE = os.path.join(HOME, ".temp_tags")
+TAGS_FILE_DIRECTORY = os.path.join(HOME, ".temp_tags")
+TAGS_FILE_BASE = os.path.join(HOME, ".temp_tags",".temp_tags")
 FGL_SUFFIX = ".4gl"
 
-def generateTags(inputString, currentFile, pid):
+def generateTags(inputString, currentFile, pid, bufNum):
+    if not os.path.exists(TAGS_FILE_DIRECTORY):
+        os.makedirs(TAGS_FILE_DIRECTORY)
+
     currentDirectory = os.path.dirname(currentFile)
     packagePaths = [currentDirectory]
     try:
@@ -110,7 +114,7 @@ def generateTags(inputString, currentFile, pid):
             continue
 
 
-    writeTagsFile(tagsLinesList, pid)
+    writeTagsFile(tagsLinesList, pid, bufNum)
 
 def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDirectory):
     # this is interesting, I would need to, for each separation, create a tagLine
@@ -139,10 +143,10 @@ def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDi
     return tagsLinesList
 
 
-def writeTagsFile(tagsLinesList, pid):
+def writeTagsFile(tagsLinesList, pid, bufNum):
     # The tags file needs to be sorted alphabetically (by ASCII code) in order to work
     tagsLinesList.sort()
-    tagsFile = TAGS_FILE_BASE + "." + pid
+    tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum
     file = open(tagsFile, "a")
     for line in tagsLinesList:
         file.write(line)
@@ -320,9 +324,9 @@ def getRequiredToken(inputToken):
     }
     return tokenDictionary.get(inputToken, "")
 
-def removeTempTags(pid):
+def removeTempTags(pid, bufNum):
     try:
-        tagsFile = TAGS_FILE_BASE + "." + pid
+        tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum
         os.remove(tagsFile)
     except OSError:
         pass
