@@ -129,7 +129,7 @@ def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDi
     # check if the Alias is already in the file path (this means we didn't actually alias)
     isAliasInFilePath = re.search(fileAlias, currentFile.replace(os.sep, "."), flags=re.IGNORECASE)
 
-    if fileAlias != currentFile and isAliasInFilePath is  None:
+    if fileAlias != currentFile and isAliasInFilePath is None:
         aliasFunctionName = fileAlias + "." + functionName
         tagLine = aliasFunctionName + "\t" + currentFile + "\t" + str(lineNumber) + "\n"
         tagsLinesList.append(tagLine)
