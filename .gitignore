@@ -14,5 +14,6 @@ syntax_test.hua
 other_python.py
 
 same_directory.4gl
+prep.4gl
 
 Makefile
