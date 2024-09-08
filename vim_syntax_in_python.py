@@ -40,15 +40,13 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if index == 0:
             tagsLinesList.extend(getMakefileFunctions(currentDirectory))
 
+        # occasionally there are blank tokens
+        if tokenBlock[0] == "":
+            continue
+
         prevPrevToken = prevToken
         prevToken = token
         token = tokenBlock[0]
-        lineNumber = tokenBlock[1]
-
-        # occasionally there are blank tokens
-        if token == "":
-            continue
-
         # this section is all about skipping based on strings and comments
         if token == "-" and prevToken == "-":
             token = "--"
