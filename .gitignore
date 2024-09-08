@@ -18,5 +18,6 @@ same_directory.4gl
 prep.4gl
 globals.4gl
 *.4gl
+*.4gl.*
 
 Makefile
