@@ -47,6 +47,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
         prevPrevToken = prevToken
         prevToken = token
         token = tokenBlock[0]
+        lineNumber = tokenBlock[1]
+
         # this section is all about skipping based on strings and comments
         if token == "-" and prevToken == "-":
             token = "--"
