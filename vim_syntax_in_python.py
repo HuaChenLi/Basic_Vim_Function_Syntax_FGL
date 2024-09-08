@@ -78,8 +78,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         if isImportingLibrary and re.match("^import$", prevToken, flags=re.IGNORECASE) and re.match("^fgl$", token, flags=re.IGNORECASE):
             continue
-        elif isImportingLibrary and re.match("^import$", prevToken, flags=re.IGNORECASE) and not re.match("^fgl$", token, flags=re.IGNORECASE):
-            # for when importing not an FGL library
+        elif isImportingLibrary and re.match("^import$", prevToken, flags=re.IGNORECASE) and not re.match("^fgl$", token, flags=re.IGNORECASE) and prevPrevToken == "\n":
             isImportingLibrary = False
             continue
 
