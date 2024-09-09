@@ -348,6 +348,7 @@ def getMakefileFunctions(currentDirectory):
         if tokenBlock[0] == "":
             continue
 
+        prevPrevToken = prevToken
         prevToken = token
         token = tokenBlock[0]
         lineNumber = tokenBlock[1]
@@ -360,7 +361,7 @@ def getMakefileFunctions(currentDirectory):
         # This feels like the weakest syntax check
         if isImportingObjectFiles and token == ".":
             continue
-        elif isImportingObjectFiles and prevToken == "=":
+        elif isImportingObjectFiles and prevToken == "=" or (prevToken == "\n" and prevPrevToken == "\\"):
             file = token + FGL_SUFFIX
             tagsList.extend(getPublicFunctionsFromLibrary(file, token, currentDirectory, packagePaths))
             continue
