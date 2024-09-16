@@ -1,13 +1,19 @@
 import re
 import os
+import time
 from os.path import expanduser
+from datetime import datetime
 
 HOME = expanduser("~")
 TAGS_FILE_DIRECTORY = os.path.join(HOME, ".temp_tags")
 TAGS_FILE_BASE = os.path.join(HOME, ".temp_tags",".temp_tags")
 FGL_SUFFIX = ".4gl"
+LOG_DIRECTORY = os.path.join(HOME, "fgl_syntax_log")
 
 def generateTags(inputString, currentFile, pid, bufNum):
+    start = time.time()
+    writeSingleLineToLog("vim syntax start")
+
     if not os.path.exists(TAGS_FILE_DIRECTORY):
         os.makedirs(TAGS_FILE_DIRECTORY)
 
@@ -115,6 +121,10 @@ def generateTags(inputString, currentFile, pid, bufNum):
             continue
 
     writeTagsFile(tagsLinesList, pid, bufNum)
+
+    end = time.time()
+    length = end - start
+    writeSingleLineToLog("vim syntax took " + str(length) + " seconds")
 
 def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDirectory):
     # this is interesting, I would need to, for each separation, create a tagLine
@@ -369,3 +379,15 @@ def getMakefileFunctions(currentDirectory):
             isImportingObjectFiles = False
 
     return tagsList
+
+def writeSingleLineToLog(inputString):
+    if not os.path.exists(LOG_DIRECTORY):
+        os.makedirs(LOG_DIRECTORY)
+
+    fileToday = datetime.today().strftime('%Y-%m-%d')
+    logFile = os.path.join(LOG_DIRECTORY, fileToday + ".log")
+
+    file = open(logFile, "a")
+    currentTime = datetime.today().strftime('%Y-%m-%d-%H:%M:%S.%f')
+    outputString = currentTime + ": " + inputString + "\n"
+    file.write(outputString)
