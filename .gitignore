@@ -13,5 +13,6 @@ syntax_test.hua
 .setFunctions*
 other_python.py
 *.4gl
+*.4gl.*
 
 Makefile

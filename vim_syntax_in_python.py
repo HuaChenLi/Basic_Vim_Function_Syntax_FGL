@@ -40,14 +40,14 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if index == 0:
             tagsLinesList.extend(getMakefileFunctions(currentDirectory))
 
+        # occasionally there are blank tokens
+        if tokenBlock[0] == "":
+            continue
+
         prevPrevToken = prevToken
         prevToken = token
         token = tokenBlock[0]
         lineNumber = tokenBlock[1]
-
-        # occasionally there are blank tokens
-        if token == "":
-            continue
 
         # this section is all about skipping based on strings and comments
         if token == "-" and prevToken == "-":
@@ -78,8 +78,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         if isImportingLibrary and re.match("^import$", prevToken, flags=re.IGNORECASE) and re.match("^fgl$", token, flags=re.IGNORECASE):
             continue
-        elif isImportingLibrary and re.match("^import$", prevToken, flags=re.IGNORECASE) and not re.match("^fgl$", token, flags=re.IGNORECASE):
-            # for when importing not an FGL library
+        elif isImportingLibrary and re.match("^import$", prevToken, flags=re.IGNORECASE) and not re.match("^fgl$", token, flags=re.IGNORECASE) and prevPrevToken == "\n":
             isImportingLibrary = False
             continue
 
@@ -349,6 +348,7 @@ def getMakefileFunctions(currentDirectory):
         if tokenBlock[0] == "":
             continue
 
+        prevPrevToken = prevToken
         prevToken = token
         token = tokenBlock[0]
         lineNumber = tokenBlock[1]
@@ -361,7 +361,7 @@ def getMakefileFunctions(currentDirectory):
         # This feels like the weakest syntax check
         if isImportingObjectFiles and token == ".":
             continue
-        elif isImportingObjectFiles and prevToken == "=":
+        elif isImportingObjectFiles and prevToken == "=" or (prevToken == "\n" and prevPrevToken == "\\"):
             file = token + FGL_SUFFIX
             tagsList.extend(getPublicFunctionsFromLibrary(file, token, currentDirectory, packagePaths))
             continue
