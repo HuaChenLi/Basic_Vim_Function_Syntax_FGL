@@ -9,4 +9,4 @@ set FGLLDPATH=C:\Users\hua-c\vimfiles\syntax\packages;C:\Users\hua-c\vimfiles\sy
 
 Run this command on my Windows Machine
 
-cd %HOMEPATH% & del vimfiles\syntax\vim_syntax_in_python.py & del vimfiles\syntax\setFunctions.vim & mklink /H vimfiles\syntax\vim_syntax_in_python.py vimfiles\autoload\vim_syntax_in_python.py & mklink /H vimfiles\syntax\setFunctions.vim vimfiles\autoload\setFunctions.vim
+cd %HOMEPATH% & del vimfiles\autoload\vim_syntax_in_python.py & del vimfiles\autoload\setFunctions.vim & mklink /H vimfiles\autoload\vim_syntax_in_python.py vimfiles\syntax\vim_syntax_in_python.py & mklink /H vimfiles\autoload\setFunctions.vim vimfiles\syntax\setFunctions.vim
