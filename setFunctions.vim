@@ -41,6 +41,7 @@ endfunction
 function! setFunctions#GenerateTags(filePath, pid, bufNum)
     execute 'set tags=~/.temp_tags/.temp_tags.' . a:pid . '.' . a:bufNum
     let fileContent = getline(1, '$')
+    echo ".temp_tags." . a:pid . "." . a:bufNum
 
     "call setFunctions#DeleteTempTags(a:pid, a:bufNum)
 
@@ -66,7 +67,7 @@ endfunction
 function! setFunctions#CWordWithKey(key) abort
     let s:saved_iskeyword = &iskeyword
     let s:saved_updatetime = &updatetime
-    if &updatetime > 200 | let &updatetime = 200 | endif
+    if &updatetime > 2 | let &updatetime = 2 | endif
     augroup CWordWithKeyAuGroup
         autocmd CursorHold,CursorHoldI <buffer>
                     \ let &updatetime = s:saved_updatetime |
