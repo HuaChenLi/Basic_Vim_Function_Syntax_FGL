@@ -31,6 +31,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
     # This is the part where we want to loop through and find the function definitions in the current file
 
     tagsLinesList = []
+    librariesList = []
 
     isImportingLibrary = False
 
@@ -105,13 +106,13 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if isImportingLibrary and token == "\n" and not isPreviousTokenAs:
             isImportingLibrary = False
             importFilePath = importFilePath + FGL_SUFFIX
-            tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, fileAlias, currentDirectory, packagePaths))
+            librariesList.append((importFilePath, fileAlias))
             importFilePath = ""
             fileAlias = ""
             continue
         elif isImportingLibrary and isPreviousTokenAs:
             isImportingLibrary = False
-            tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, token, currentDirectory, packagePaths))
+            librariesList.append((importFilePath, token))
             importFilePath = ""
             fileAlias = ""
             continue
@@ -120,6 +121,12 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if isImportingLibrary and re.match("^as$", token, flags=re.IGNORECASE):
             importFilePath = importFilePath + FGL_SUFFIX
             continue
+
+    for lib in librariesList:
+        print(lib[0])
+        importFilePath = lib[0]
+        fileAlias = lib[1]
+        tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, fileAlias, currentDirectory, packagePaths))
 
     writeTagsFile(tagsLinesList, pid, bufNum)
 
