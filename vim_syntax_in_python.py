@@ -123,7 +123,6 @@ def generateTags(inputString, currentFile, pid, bufNum):
             continue
 
     for lib in librariesList:
-        print(lib[0])
         importFilePath = lib[0]
         fileAlias = lib[1]
         tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, fileAlias, currentDirectory, packagePaths))
