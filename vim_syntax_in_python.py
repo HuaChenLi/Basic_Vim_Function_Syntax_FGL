@@ -385,7 +385,7 @@ def getMakefileFunctions(currentDirectory):
 
         packagePaths = [currentDirectory]
 
-        if re.match("^OBJFILES$", token):
+        if token == "OBJFILES":
             isImportingObjectFiles = True
 
         # This feels like the weakest syntax check
