@@ -182,6 +182,7 @@ def writeTagsFile(tagsLinesList, pid, bufNum):
 
 
 def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, packagePaths):
+    writeSingleLineToLog("finding file " + importFilePath)
     isExistingPackageFile = False
 
     for package in packagePaths:
@@ -191,6 +192,7 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
             break
 
     if not isExistingPackageFile:
+        writeSingleLineToLog("couldn't find file " + importFilePath)
         return []
 
     file = open(packageFile, "r")
@@ -377,32 +379,53 @@ def getMakefileFunctions(currentDirectory):
 
     tagsList = []
 
+    isImportingLibFiles = False
     isImportingObjectFiles = False
+    prevPrevToken = ""
     prevToken = ""
     token = "\n"
+
+    packagePaths = []
+    try:
+        # allows the environment variable to be split depending on the os
+        packagePaths.extend(os.environ['FGLLDPATH'].split(os.pathsep))
+    except:
+        # this is in case the FGLLDPATH doesn't exist
+        pass
 
     for tokenBlock in tokenList:
         if tokenBlock[0] == "":
             continue
 
+        prevPrevToken = prevToken
         prevToken = token
         token = tokenBlock[0]
         lineNumber = tokenBlock[1]
 
-        packagePaths = [currentDirectory]
+        curDir = [currentDirectory]
 
-        if token == "OBJFILES":
+        if token == "=" and prevToken == "OBJFILES":
             isImportingObjectFiles = True
 
-        # This feels like the weakest syntax check
-        if isImportingObjectFiles and token == ".":
-            continue
-        elif isImportingObjectFiles and prevToken == "=":
-            file = token + FGL_SUFFIX
-            tagsList.extend(getPublicFunctionsFromLibrary(file, token, currentDirectory, packagePaths))
-            continue
-        elif isImportingObjectFiles and token == "\n" and prevToken != "\\":
+        if token == "=" and prevToken != "OBJFILES":
             isImportingObjectFiles = False
+
+        if isImportingObjectFiles and token == "o" and prevToken == ".":
+            file = prevPrevToken + FGL_SUFFIX
+            writeSingleLineToLog(file)
+            tagsList.extend(getPublicFunctionsFromLibrary(file, prevPrevToken, currentDirectory, curDir))
+
+
+        if token == "=" and prevToken == "CUSTLIBS":
+            isImportingLibFiles = True
+
+        if token == "=" and prevToken != "CUSTLIBS":
+            isImportingLibFiles = False
+
+        if isImportingLibFiles and token == "o" and prevToken == ".":
+            file = prevPrevToken + FGL_SUFFIX
+            writeSingleLineToLog(file)
+            tagsList.extend(getPublicFunctionsFromLibrary(file, prevPrevToken, currentDirectory, packagePaths))
 
     return tagsList
 
