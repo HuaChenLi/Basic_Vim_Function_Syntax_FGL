@@ -122,10 +122,16 @@ def generateTags(inputString, currentFile, pid, bufNum):
             importFilePath = importFilePath + FGL_SUFFIX
             continue
 
+    startTime = time.time()
+
     for lib in librariesList:
         importFilePath = lib[0]
         fileAlias = lib[1]
         tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, fileAlias, currentDirectory, packagePaths))
+
+    endTime = time.time()
+    lengthTime = endTime - startTime
+    writeSingleLineToLog("getting public functions took " + str(lengthTime) + " seconds")
 
     writeTagsFile(tagsLinesList, pid, bufNum)
 
@@ -195,6 +201,10 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
     prevToken = ""
     token = "\n"
 
+    writeSingleLineToLog("the number of tokens is " + str(len(tokenList)))
+
+    startTime = time.time()
+
     for tokenBlock in tokenList:
         # occasionally there are blank tokens
         if tokenBlock[0] == "":
@@ -219,13 +229,17 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
             requiredToken = ""
             continue
 
-        isPrevPrevTokenEnd = re.match("^end$", prevPrevToken, flags=re.IGNORECASE)
-        isPrevPrevTokenPrivate = re.match("^private$", prevPrevToken, flags=re.IGNORECASE)
-        isPreviousTokenFunctionOrReport = (re.match("^function$", prevToken, flags=re.IGNORECASE) or re.match("^report$", prevToken, flags=re.IGNORECASE))
+        isPrevPrevTokenEnd = prevPrevToken.lower() == "end"
+        isPrevPrevTokenPrivate = prevPrevToken.lower() == "end"
+        isPreviousTokenFunctionOrReport = (prevToken.lower() == "function") or (prevToken.lower() == "report")
 
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate:
             # We create the list of the function tags
             tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=packageFile, fileAlias=fileAlias, currentDirectory=workingDirectory))
+
+    endTime = time.time()
+    length = endTime - startTime
+    writeSingleLineToLog("If statements took " + str(length) + " seconds")
 
     return tagsLinesList
 
