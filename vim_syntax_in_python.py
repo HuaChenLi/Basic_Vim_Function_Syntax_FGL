@@ -71,28 +71,28 @@ def generateTags(inputString, currentFile, pid, bufNum):
             requiredToken = ""
             continue
 
-        isPrevPrevTokenEnd = re.match("^end$", prevPrevToken, flags=re.IGNORECASE)
-        isPreviousTokenFunctionOrReport = (re.match("^function$", prevToken, flags=re.IGNORECASE) or re.match("^report$", prevToken, flags=re.IGNORECASE))
+        isPrevPrevTokenEnd = prevPrevToken.lower() == "end"
+        isPreviousTokenFunctionOrReport = (prevToken.lower() == "function") or (prevToken.lower() == "report")
 
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd:
             # We create the list of the function tags
             tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=currentFile, fileAlias=currentFile, currentDirectory=currentDirectory))
 
-        if re.match("^import$", token, flags=re.IGNORECASE) and prevToken == "\n":
+        if token.lower() == "import" and prevToken == "\n":
             # we need to check that Import is at the start of the line
             isImportingLibrary = True
             continue
 
-        if isImportingLibrary and re.match("^import$", prevToken, flags=re.IGNORECASE) and re.match("^fgl$", token, flags=re.IGNORECASE):
+        if isImportingLibrary and prevToken.lower() == "import" and token.lower() == "fgl":
             continue
-        elif isImportingLibrary and re.match("^import$", prevToken, flags=re.IGNORECASE) and not re.match("^fgl$", token, flags=re.IGNORECASE):
+        elif isImportingLibrary and prevToken.lower() == "import" and not token.lower() == "fgl":
             # for when importing not an FGL library
             isImportingLibrary = False
             continue
 
-        isPreviousTokenAs = re.match("^as$", prevToken, flags=re.IGNORECASE)
+        isPreviousTokenAs = prevToken.lower() == "as"
 
-        if isImportingLibrary and token != "." and token != "\n" and not re.match("^as$", token, flags=re.IGNORECASE) and not isPreviousTokenAs:
+        if isImportingLibrary and token != "." and token != "\n" and not token == "as" and not isPreviousTokenAs:
             importFilePath = os.path.join(importFilePath, token)
             if fileAlias == "":
                 fileAlias = token
@@ -118,7 +118,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
             continue
 
 
-        if isImportingLibrary and re.match("^as$", token, flags=re.IGNORECASE):
+        if isImportingLibrary and token.lower() == "as":
             importFilePath = importFilePath + FGL_SUFFIX
             continue
 
