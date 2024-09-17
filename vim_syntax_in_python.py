@@ -63,7 +63,6 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         if requiredToken == "":
             requiredToken = getRequiredToken(token)
-            pass
         elif token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and prevToken == "\\":
@@ -232,12 +231,10 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
             requiredToken = ""
             continue
 
-        # below section is about 0.15 seconds
         isPrevPrevTokenEnd = prevPrevToken.lower() == "end"
         isPrevPrevTokenPrivate = prevPrevToken.lower() == "end"
         isPreviousTokenFunctionOrReport = (prevToken.lower() == "function") or (prevToken.lower() == "report")
 
-        # below section is about 0.035 seconds
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate:
             # We create the list of the function tags
             tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=packageFile, fileAlias=fileAlias, currentDirectory=workingDirectory))
@@ -347,7 +344,6 @@ def tokenizeLinesOfFiles(file):
         tokenBlock.append("\n")
         tokenList.extend([(token,lineNumber) for token in tokenBlock])
     return tokenList
-
 
 def getRequiredToken(inputToken):
     tokenDictionary = {
