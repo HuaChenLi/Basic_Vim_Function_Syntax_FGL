@@ -190,7 +190,11 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
 
     file = open(packageFile, "r")
 
+    startTime = time.time()
     tokenList = tokenizeLinesOfFiles(file)
+    endTime = time.time()
+    length = endTime - startTime
+    writeSingleLineToLog("tokenizing " + importFilePath + " took " + str(length) + " seconds")
 
     # This is the part where we want to loop through and find the function definitions
 
