@@ -17,6 +17,11 @@ def generateTags(inputString, currentFile, pid, bufNum):
     if not os.path.exists(TAGS_FILE_DIRECTORY):
         os.makedirs(TAGS_FILE_DIRECTORY)
 
+    tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum
+    if os.path.exists(tagsFile):
+        writeSingleLineToLog("vim tags file: " + tagsFile + " exists, exiting")
+        return
+
     currentDirectory = os.path.dirname(currentFile)
     packagePaths = [currentDirectory]
     try:
