@@ -41,9 +41,6 @@ endfunction
 function! setFunctions#GenerateTags(filePath, pid, bufNum)
     execute 'set tags=~/.temp_tags/.temp_tags.' . a:pid . '.' . a:bufNum
     let fileContent = getline(1, '$')
-    echo ".temp_tags." . a:pid . "." . a:bufNum
-
-    "call setFunctions#DeleteTempTags(a:pid, a:bufNum)
 
     " python for 2, python3 for 3
 python << EOF
@@ -64,7 +61,7 @@ endfunction
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Allows the '.' to be used as a keyword temporarily for searching for 200 milliseconds
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-function! setFunctions#CWordWithKey(key) abort
+function! setFunctions#CWordWithKey(key, filePath, pid, bufNum) abort
     let s:saved_iskeyword = &iskeyword
     let s:saved_updatetime = &updatetime
     if &updatetime > 2 | let &updatetime = 2 | endif
@@ -75,6 +72,7 @@ function! setFunctions#CWordWithKey(key) abort
                     \ autocmd! CWordWithKeyAuGroup
     augroup END
     execute 'set iskeyword+='.a:key
+    call setFunctions#GenerateTags(a:filePath, a:pid, a:bufNum)
     return expand('<cword>')
 endfunction
 

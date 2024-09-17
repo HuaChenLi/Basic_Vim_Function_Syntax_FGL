@@ -293,10 +293,6 @@ hi StatusLine ctermfg=black ctermbg=yellow
 autocmd CursorMoved <buffer> call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
 autocmd CursorMovedI <buffer> call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
 
-" The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-nnoremap <buffer> <silent> <C-]> :execute 'tag '.setFunctions#CWordWithKey(46)<CR>
-
 " Grabs the filepath of the buffer
 let filePath = expand('%:p')
 " Run the GenerateTags() on vim startup
@@ -306,9 +302,9 @@ let filePath = expand('%:p')
 " This could potentially get pretty heavy depending on the number of files there are
 autocmd! BufEnter <buffer> call setFunctions#GenerateTags(filePath, getpid(), bufnr('%'))
 
-" Maybe figure out a way to delete the tags in the future, but having a record of the tags isn't the worst, even if they aren't being used
-"autocmd BufDelete <buffer> call setFunctions#DeleteTempTags(getpid(), bufnr('%'))
-
+" The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+nnoremap <buffer> <silent> <C-]> :execute 'tag '.setFunctions#CWordWithKey(46, filePath, getpid(), bufnr('%'))<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " The below section allows the user to jump to the definition of a variable (still in progress)
