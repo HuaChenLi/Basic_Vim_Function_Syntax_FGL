@@ -140,13 +140,13 @@ def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDi
     functionCallRoot = functionCallRoot.replace(FGL_SUFFIX, "")
     functionTokens = functionCallRoot.split(os.sep)
 
-    tagLine = functionName + "\t" + currentFile + "\t" + str(lineNumber) + "\n"
+    tagLine = "{0}\t{1}\t{2}\n".format(functionName, currentFile, lineNumber)
     tagsLinesList.append(tagLine)
 
     functionNameString = functionName
     for token in reversed(functionTokens):
         functionNameString = token + "." + functionNameString
-        tagLine = functionNameString + "\t" + currentFile + "\t" + str(lineNumber) + "\n"
+        tagLine = "{0}\t{1}\t{2}\n".format(functionNameString, currentFile, lineNumber)
         tagsLinesList.append(tagLine)
 
     # check if the Alias is already in the file path (this means we didn't actually alias)
@@ -154,7 +154,7 @@ def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDi
 
     if fileAlias != currentFile and isAliasInFilePath is None:
         aliasFunctionName = fileAlias + "." + functionName
-        tagLine = aliasFunctionName + "\t" + currentFile + "\t" + str(lineNumber) + "\n"
+        tagLine = "{0}\t{1}\t{2}\n".format(aliasFunctionName, currentFile, lineNumber)
         tagsLinesList.append(tagLine)
 
     return tagsLinesList
@@ -234,7 +234,7 @@ def tokenizeString(inputString):
     # basically, the massive line of regex code repeats, so we will grab all printable characters (since all printable characters are between ! to ~ except white spaces)
     # the repeating section contains all the special characters in Genero
     # probably can create a regex that is smart enough to do the whole thing by itself, but can probably just handle it in the python code afterwards
-    tokenBlock = re.findall(r"(?:(?!\.|,|'|`|\"|\||\(|\)|#|{|}|\[|\]|<|>|-|!|$|\\|\n)[!-~])+|\.|,|'|`|\"|\||\(|\)|#|{|}|\[|\]|<|>|-|!|$|\\|\n", inputString)
+    tokenBlock = re.findall(r"(?:(?!\.|,|'|`|\"|\||\(|\)|#|{|}|\[|\]|<|>|-|!|$|\\|=)[!-~])+|\.|,|'|`|\"|\||\(|\)|#|{|}|\[|\]|<|>|-|!|$|\\|=", inputString)
     return tokenBlock
 
 
