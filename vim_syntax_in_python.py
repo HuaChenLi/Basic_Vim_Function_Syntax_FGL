@@ -239,7 +239,7 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
             continue
 
         isPrevPrevTokenEnd = prevPrevToken.lower() == "end"
-        isPrevPrevTokenPrivate = prevPrevToken.lower() == "end"
+        isPrevPrevTokenPrivate = prevPrevToken.lower() == "private"
         isPreviousTokenFunctionOrReport = (prevToken.lower() == "function") or (prevToken.lower() == "report")
 
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate:
@@ -342,6 +342,42 @@ def findVariableDefinition(buffer):
             continue
 
 
+def findFunctionWrapper(buffer):
+    tokenList = tokenizeLinesOfFiles(buffer)
+    requiredToken = ""
+    prevToken = ""
+    token = "\n"
+
+    latestFunctionLineNumber = 0
+
+    for tokenBlock in tokenList:
+        # occasionally there are blank tokens
+        if tokenBlock[0] == "":
+            continue
+
+        prevToken = token
+        token = tokenBlock[0]
+        lineNumber = tokenBlock[1]
+
+        # this section is all about skipping based on strings and comments
+        if token == "-" and prevToken == "-":
+            token = "--"
+
+        if requiredToken == "":
+            requiredToken = getRequiredToken(token)
+        elif token != requiredToken:
+            continue
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and prevToken == "\\":
+            continue
+        elif token == requiredToken:
+            requiredToken = ""
+            continue
+
+        if token.lower() == "function" or token.lower() == "report":
+            writeSingleLineToLog(token)
+            latestFunctionLineNumber = lineNumber
+
+    return latestFunctionLineNumber
 
 
 def tokenizeLinesOfFiles(file):

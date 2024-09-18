@@ -74,100 +74,30 @@ endfunction
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-function! setFunctions#ShowFuncName(newLine, newColumn, originalLine, originalColumn)
+function! ShowFunctionName()
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    call cursor(a:newLine, a:newColumn)
+    let fileContent = getline(1, line('.'))
 
-    let tempFunctionLineNumber = SearchNotCommentLineNumber('\c\<FUNCTION\>', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
+python << EOF
+import sys
+import vim
 
-    let tempReportLineNumber = SearchNotCommentLineNumber('\c\<REPORT\>', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
+script_dir = vim.eval('s:script_dir')
+sys.path.insert(0, script_dir)
 
-    if tempFunctionLineNumber < tempReportLineNumber
-    let tempFunctionLineNumber = tempReportLineNumber
-    endif
+import vim_syntax_in_python
 
-    let tempLineCloseCurlyNumber = SearchNotCommentLineNumber('}', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
+lineNumber = vim_syntax_in_python.findFunctionWrapper(vim.eval('fileContent'))
 
+vim.command("let line=" + str(lineNumber))
+EOF
 
-    if tempFunctionLineNumber >= tempLineCloseCurlyNumber
-    " check that there is a closed curly bracket before the Function anywhere or there is no open curly brack before the Function
-    let tempLineOpenCurlyNumber = 0
-    if tempFunctionLineNumber != 0
-        let tempLineOpenCurlyNumber = SearchNotCommentLineNumber('{', a:newLine - 1, a:newColumn, a:originalLine, a:originalColumn)
-    endif
-
-    let currentLine = getline(tempFunctionLineNumber)
-
-           call cursor(a:originalLine, a:originalColumn)
-
-        let statusMessage = substitute("line " . tempFunctionLineNumber . ": " . currentLine, '\s', '\\ ', 'g')
-
-    if IsEndOfFunction(currentLine)
-        let statusMessage = "end of function"
-        let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
-    endif
-
-    if IsEndOfReport(currentLine)
-        let statusMessage = "end of report"
-        let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
-    endif
-
+    let statusMessage = getline(line)
+    let statusMessage = substitute("line " . line . ": " . statusMessage, '\s', '\\ ', 'g')
     execute "set statusline=" . statusMessage . "%=%p%%"
 
-    if tempLineOpenCurlyNumber > tempLineCloseCurlyNumber
-        call setFunctions#ShowFuncName(tempLineOpenCurlyNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
-    endif
-
-    else
-    let newLineNumber = SearchNotCommentLineNumber('{', tempLineCloseCurlyNumber, a:newColumn, a:originalLine, a:originalColumn)
-    call setFunctions#ShowFuncName(newLineNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
-    endif
 endfunction
 
-function! IsComment(currentLine, comparedString)
-    " will need to update so that it doesn't need a comparedString and can just recognise if the position is a comment
-    let isComment = g:TRUE
-    " still can't quite get the comment in {}
-
-    let hashCommentString = '\#.*\c' . a:comparedString
-    let doubleDashString = '\--.*\c' . a:comparedString
-    let doubleQuoteString = '\".*\c' . a:comparedString
-    let singleQuoteString = "'.*\\c" . a:comparedString
-    let backTickQuoteString = '`.*\c' . a:comparedString
-    if match(a:currentLine, hashCommentString) < 0 && match(a:currentLine, doubleDashString) < 0 && match(a:currentLine, doubleQuoteString) < 0 && match(a:currentLine, singleQuoteString) < 0 && match(a:currentLine, backTickQuoteString) < 0
-        let isComment = g:FALSE
-    endif
-return isComment
-endfunction
-
-function! IsEndOfFunction(statusMessage)
-    let isEndOfFunction = g:FALSE
-    if match(a:statusMessage, '\c\<END\>\s*\<FUNCTION\>') >= 0
-    let isEndOfFunction = g:TRUE
-    endif
-    return isEndOfFunction
-endfunction
-
-function! IsEndOfReport(statusMessage)
-    let isEndOfFunction = g:FALSE
-    if match(a:statusMessage, '\c\<END\>\s*\<REPORT\>') >= 0
-    let isEndOfFunction = g:TRUE
-    endif
-    return isEndOfFunction
-endfunction
-
-function! SearchNotCommentLineNumber(searchString, currentLineNumber, currentColumnNumber, originalLine, originalColumn)
-    call cursor(a:currentLineNumber, a:currentColumnNumber)
-    let returnLine = search(a:searchString, 'bnW', 'g')
-    let currentLine = getline(returnLine)
-    if IsComment(currentLine, a:searchString)
-    call cursor(a:currentLineNumber, a:currentColumnNumber)
-    let returnLine = SearchNotCommentLineNumber(a:searchString, returnLine - 1, a:currentColumnNumber, a:originalLine, a:originalColumn)
-    else
-    call cursor(a:originalLine, a:originalColumn)
-    endif
-    return returnLine
-endfunction
 
 function! setFunctions#DeleteTempTags(pid, bufNum)
 
@@ -194,7 +124,7 @@ function! setFunctions#Setup()
     " You can change the colour of the Status Line
     hi StatusLine ctermfg=black ctermbg=yellow
 
-    nnoremap <F11> : call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))<CR>
+    nnoremap <F11> : call ShowFunctionName()<CR>
 
     " Grabs the filepath of the buffer
     let g:filePath = expand('%:p')
