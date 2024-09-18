@@ -87,44 +87,44 @@ function! setFunctions#ShowFuncName(newLine, newColumn, originalLine, originalCo
     let tempReportLineNumber = SearchNotCommentLineNumber('\c\<REPORT\>', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
 
     if tempFunctionLineNumber < tempReportLineNumber
-	let tempFunctionLineNumber = tempReportLineNumber
+    let tempFunctionLineNumber = tempReportLineNumber
     endif
 
     let tempLineCloseCurlyNumber = SearchNotCommentLineNumber('}', a:newLine, a:newColumn, a:originalLine, a:originalColumn)
 
 
     if tempFunctionLineNumber >= tempLineCloseCurlyNumber
-	" check that there is a closed curly bracket before the Function anywhere or there is no open curly brack before the Function
-	let tempLineOpenCurlyNumber = 0
-	if tempFunctionLineNumber != 0
-	    let tempLineOpenCurlyNumber = SearchNotCommentLineNumber('{', a:newLine - 1, a:newColumn, a:originalLine, a:originalColumn)
-	endif
+    " check that there is a closed curly bracket before the Function anywhere or there is no open curly brack before the Function
+    let tempLineOpenCurlyNumber = 0
+    if tempFunctionLineNumber != 0
+        let tempLineOpenCurlyNumber = SearchNotCommentLineNumber('{', a:newLine - 1, a:newColumn, a:originalLine, a:originalColumn)
+    endif
 
-	let currentLine = getline(tempFunctionLineNumber)
+    let currentLine = getline(tempFunctionLineNumber)
 
-       	call cursor(a:originalLine, a:originalColumn)
+           call cursor(a:originalLine, a:originalColumn)
 
         let statusMessage = substitute("line " . tempFunctionLineNumber . ": " . currentLine, '\s', '\\ ', 'g')
 
-	if IsEndOfFunction(currentLine)
-	    let statusMessage = "end of function"
-	    let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
-	endif
+    if IsEndOfFunction(currentLine)
+        let statusMessage = "end of function"
+        let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
+    endif
 
-	if IsEndOfReport(currentLine)
-	    let statusMessage = "end of report"
-	    let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
-	endif
+    if IsEndOfReport(currentLine)
+        let statusMessage = "end of report"
+        let statusMessage = substitute(statusMessage, '\s', '\\ ', 'g')
+    endif
 
-	execute "set statusline=" . statusMessage . "%=%p%%"
+    execute "set statusline=" . statusMessage . "%=%p%%"
 
-	if tempLineOpenCurlyNumber > tempLineCloseCurlyNumber
-	    call setFunctions#ShowFuncName(tempLineOpenCurlyNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
-	endif
+    if tempLineOpenCurlyNumber > tempLineCloseCurlyNumber
+        call setFunctions#ShowFuncName(tempLineOpenCurlyNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
+    endif
 
     else
-	let newLineNumber = SearchNotCommentLineNumber('{', tempLineCloseCurlyNumber, a:newColumn, a:originalLine, a:originalColumn)
-	call setFunctions#ShowFuncName(newLineNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
+    let newLineNumber = SearchNotCommentLineNumber('{', tempLineCloseCurlyNumber, a:newColumn, a:originalLine, a:originalColumn)
+    call setFunctions#ShowFuncName(newLineNumber - 1, a:newColumn, a:originalLine, a:originalColumn)
     endif
 endfunction
 
@@ -147,7 +147,7 @@ endfunction
 function! IsEndOfFunction(statusMessage)
     let isEndOfFunction = g:FALSE
     if match(a:statusMessage, '\c\<END\>\s*\<FUNCTION\>') >= 0
-	let isEndOfFunction = g:TRUE
+    let isEndOfFunction = g:TRUE
     endif
     return isEndOfFunction
 endfunction
@@ -155,7 +155,7 @@ endfunction
 function! IsEndOfReport(statusMessage)
     let isEndOfFunction = g:FALSE
     if match(a:statusMessage, '\c\<END\>\s*\<REPORT\>') >= 0
-	let isEndOfFunction = g:TRUE
+    let isEndOfFunction = g:TRUE
     endif
     return isEndOfFunction
 endfunction
@@ -165,10 +165,10 @@ function! SearchNotCommentLineNumber(searchString, currentLineNumber, currentCol
     let returnLine = search(a:searchString, 'bnW', 'g')
     let currentLine = getline(returnLine)
     if IsComment(currentLine, a:searchString)
-	call cursor(a:currentLineNumber, a:currentColumnNumber)
-	let returnLine = SearchNotCommentLineNumber(a:searchString, returnLine - 1, a:currentColumnNumber, a:originalLine, a:originalColumn)
+    call cursor(a:currentLineNumber, a:currentColumnNumber)
+    let returnLine = SearchNotCommentLineNumber(a:searchString, returnLine - 1, a:currentColumnNumber, a:originalLine, a:originalColumn)
     else
-	call cursor(a:originalLine, a:originalColumn)
+    call cursor(a:originalLine, a:originalColumn)
     endif
     return returnLine
 endfunction
