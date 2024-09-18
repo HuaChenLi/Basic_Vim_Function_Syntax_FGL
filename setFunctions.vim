@@ -104,7 +104,7 @@ function! setFunctions#ShowFuncName(newLine, newColumn, originalLine, originalCo
 
        	call cursor(a:originalLine, a:originalColumn)
 
-       	let statusMessage = substitute(currentLine, '\s', '\\ ', 'g')
+        let statusMessage = substitute("line " . tempFunctionLineNumber . ": " . currentLine, '\s', '\\ ', 'g')
 
 	if IsEndOfFunction(currentLine)
 	    let statusMessage = "end of function"
@@ -198,7 +198,7 @@ function! setFunctions#Setup()
     " You can change the colour of the Status Line
     hi StatusLine ctermfg=black ctermbg=yellow
 
-    nnoremap <F10> : call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
+    nnoremap <F11> : call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))<CR>
 
     " Grabs the filepath of the buffer
     let g:filePath = expand('%:p')
@@ -208,7 +208,7 @@ function! setFunctions#Setup()
     autocmd! BufEnter <buffer> silent! call setFunctions#GenerateTags(g:filePath, getpid(), bufnr('%'))
 
     " The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
-    nnoremap <buffer> <silent> <C-]> :execute 'tag '.setFunctions#CWordWithKey(46, g:filePath, getpid(), bufnr('%'))<CR>
+    nnoremap <buffer> <silent> <C-]> : execute 'tag '.setFunctions#CWordWithKey(46, g:filePath, getpid(), bufnr('%'))<CR>
 
     " The below section allows the user to jump to the definition of a variable (still in progress)
     nnoremap <F12> : call setFunctions#GotoDefinition()<CR>
