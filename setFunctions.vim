@@ -59,21 +59,17 @@ endfunction
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Allows the '.' to be used as a keyword temporarily for searching for 200 milliseconds
+function! setFunctions#CWordWithKey(filePath, pid, bufNum) abort
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-function! setFunctions#CWordWithKey(key, filePath, pid, bufNum) abort
-    let s:saved_iskeyword = &iskeyword
-    let s:saved_updatetime = &updatetime
-    if &updatetime > 200 | let &updatetime = 200 | endif
-    augroup CWordWithKeyAuGroup
-        autocmd CursorHold,CursorHoldI <buffer>
-                    \ let &updatetime = s:saved_updatetime |
-                    \ let &iskeyword = s:saved_iskeyword |
-                    \ autocmd! CWordWithKeyAuGroup
-    augroup END
-    execute 'set iskeyword+='.a:key
+    " Allows the '.' to be used as a keyword temporarily
+    execute 'set iskeyword+=46'
+    let selectedWord = expand('<cword>')
+    execute 'set iskeyword-=46'
+
+    " Generates the tags when jumping to another file
     call setFunctions#GenerateTags(a:filePath, a:pid, a:bufNum)
-    return expand('<cword>')
+
+    return selectedWord
 endfunction
 
 
@@ -208,7 +204,7 @@ function! setFunctions#Setup()
     autocmd! BufEnter <buffer> silent! call setFunctions#GenerateTags(g:filePath, getpid(), bufnr('%'))
 
     " The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
-    nnoremap <buffer> <silent> <C-]> : execute 'tag '.setFunctions#CWordWithKey(46, g:filePath, getpid(), bufnr('%'))<CR>
+    nnoremap <buffer> <silent> <C-]> : execute 'tag '.setFunctions#CWordWithKey(g:filePath, getpid(), bufnr('%'))<CR>
 
     " The below section allows the user to jump to the definition of a variable (still in progress)
     nnoremap <F12> : call setFunctions#GotoDefinition()<CR>
