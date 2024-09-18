@@ -257,7 +257,7 @@ def tokenizeString(inputString):
     # basically, the massive line of regex code repeats, so we will grab all printable characters (since all printable characters are between ! to ~ except white spaces)
     # the repeating section contains all the special characters in Genero
     # probably can create a regex that is smart enough to do the whole thing by itself, but can probably just handle it in the python code afterwards
-    tokenBlock = re.findall(r"(?:(?!\.|,|'|`|\"|\||\(|\)|#|{|}|\[|\]|<|>|-|!|$|\\|=)[!-~])+|\.|,|'|`|\"|\||\(|\)|#|{|}|\[|\]|<|>|-|!|$|\\|=", inputString)
+    tokenBlock = re.findall(r"(?:(?!\.|,|'|`|\"|\||\(|\)|#|{|}|\[|\]|<|>|-|!|$|\\|=|\*)[!-~])+|\.|,|'|`|\"|\||\(|\)|#|{|}|\[|\]|<|>|-|!|$|\\|=|\*", inputString)
     return tokenBlock
 
 
@@ -283,62 +283,22 @@ def findVariableDefinition(buffer):
         if tokenBlock[0] == "":
             continue
 
-        previousToken = token
+        prevToken = token
         token = tokenBlock[0]
         lineNumber = tokenBlock[1]
 
-        # Skip booleans
-        if isNewLineNeeded and token != "\n":
-            continue
-        elif isNewLineNeeded and token == "\n":
-            isNewLineNeeded = False
-            continue
+        # this section is all about skipping based on strings and comments
+        if token == "-" and prevToken == "-":
+            token = "--"
 
-        # with the quotes, need to also account for escape character "\"
-        if isSingleQuoteNeeded and (token != "'" or previousToken == "\\"):
+        if requiredToken == "":
+            requiredToken = getRequiredToken(token)
+        elif token != requiredToken:
             continue
-        elif isSingleQuoteNeeded and token == "'":
-            isSingleQuoteNeeded = False
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and prevToken == "\\":
             continue
-
-        if isDoubleQuotesNeeded and (token != '"' or previousToken == "\\"):
-            continue
-        elif isDoubleQuotesNeeded and token == '"':
-            isDoubleQuotesNeeded = False
-            continue
-
-        if isBackQuoteNeeded and token != "`":
-            continue
-        elif isBackQuoteNeeded and token == "`":             # I believe the back quote can't be escaped in Genero
-            isBackQuoteNeeded = False
-            continue
-
-        # Comments
-        if token == "#" or token == "--":
-            isNewLineNeeded = True
-            continue
-
-        if isClosedCurlyBracketNeeded and token != "}":
-            continue
-        elif isClosedCurlyBracketNeeded and token == "}":
-            isClosedCurlyBracketNeeded = False
-            continue
-
-        if token == "{":
-            isClosedCurlyBracketNeeded = True
-            continue
-
-        # Strings
-        if token == '"':
-            isDoubleQuotesNeeded = True
-            continue
-
-        if token == "'":
-            isSingleQuoteNeeded = True
-            continue
-
-        if token == "`":
-            isBackQuoteNeeded = True
+        elif token == requiredToken:
+            requiredToken = ""
             continue
 
 
@@ -374,7 +334,6 @@ def findFunctionWrapper(buffer):
             continue
 
         if token.lower() == "function" or token.lower() == "report":
-            writeSingleLineToLog(token)
             latestFunctionLineNumber = lineNumber
 
     return latestFunctionLineNumber
