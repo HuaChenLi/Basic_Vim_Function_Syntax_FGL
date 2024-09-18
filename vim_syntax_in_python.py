@@ -79,7 +79,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd:
             # We create the list of the function tags
-            tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=currentFile, fileAlias=currentFile, currentDirectory=currentDirectory))
+            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=currentFile, fileAlias=fileWithoutExtension))
 
         if token.lower() == "import" and prevToken == "\n":
             # we need to check that Import is at the start of the line
@@ -142,12 +143,10 @@ def generateTags(inputString, currentFile, pid, bufNum):
     length = end - start
     writeSingleLineToLog("vim syntax took " + str(length) + " seconds")
 
-def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDirectory):
+def createListOfTags(functionName, lineNumber, currentFile, fileAlias):
     # this is interesting, I would need to, for each separation, create a tagLine
     tagsLinesList = []
-    functionCallRoot = currentFile.replace(currentDirectory + os.sep, "")
-    functionCallRoot = functionCallRoot.replace(FGL_SUFFIX, "")
-    functionTokens = functionCallRoot.split(os.sep)
+    functionTokens = fileAlias.split(".")
 
     tagLine = "{0}\t{1}\t{2}\n".format(functionName, currentFile, lineNumber)
     tagsLinesList.append(tagLine)
@@ -156,14 +155,6 @@ def createListOfTags(functionName, lineNumber, currentFile, fileAlias, currentDi
     for token in reversed(functionTokens):
         functionNameString = token + "." + functionNameString
         tagLine = "{0}\t{1}\t{2}\n".format(functionNameString, currentFile, lineNumber)
-        tagsLinesList.append(tagLine)
-
-    # check if the Alias is already in the file path (this means we didn't actually alias)
-    isAliasInFilePath = re.search(fileAlias, currentFile.replace(os.sep, "."), flags=re.IGNORECASE)
-
-    if fileAlias != currentFile and isAliasInFilePath is None:
-        aliasFunctionName = fileAlias + "." + functionName
-        tagLine = "{0}\t{1}\t{2}\n".format(aliasFunctionName, currentFile, lineNumber)
         tagsLinesList.append(tagLine)
 
     return tagsLinesList
@@ -240,7 +231,7 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
 
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate:
             # We create the list of the function tags
-            tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=packageFile, fileAlias=fileAlias, currentDirectory=workingDirectory))
+            tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=packageFile, fileAlias=fileAlias))
 
     endTime = time.time()
     length = endTime - startTime
