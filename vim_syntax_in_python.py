@@ -264,20 +264,8 @@ def tokenizeString(inputString):
 def findVariableDefinition(buffer):
     tokenList = tokenizeLinesOfFiles(buffer)
 
-    # This is copy and pasted from function printTokens() but with a few changes
-
-    # This is the part where we want to loop through and find the function definitions
-    # We need to first set a couple of flags when we're ignoring sections
-
-    isNewLineNeeded = False
-    isClosedCurlyBracketNeeded = False
-
-    isSingleQuoteNeeded = False
-    isDoubleQuotesNeeded = False
-    isBackQuoteNeeded = False # back tick / backtick
-
-    previousToken = ""
-    token = ""
+    prevToken = ""
+    token = "\n"
     for tokenBlock in tokenList:
         # occasionally there are blank tokens
         if tokenBlock[0] == "":
