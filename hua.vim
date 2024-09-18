@@ -282,33 +282,5 @@ endfunction
 set includeexpr=LoadModule(v:fname)
 
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" The below section sets the Status Line to show the current function
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-set laststatus=2
-
-" You can change the colour of the Status Line
-hi StatusLine ctermfg=black ctermbg=yellow
-
-autocmd CursorMoved <buffer> call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
-autocmd CursorMovedI <buffer> call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
-
-" Grabs the filepath of the buffer
-let filePath = expand('%:p')
-" Run the GenerateTags() on vim startup
-"call setFunctions#GenerateTags(filePath, getpid(), bufnr('%'))
-
-" This runs the GenerateTags() whenever a buffer is switched to
-" This could potentially get pretty heavy depending on the number of files there are
-autocmd! BufEnter <buffer> call setFunctions#GenerateTags(filePath, getpid(), bufnr('%'))
-
-" The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-nnoremap <buffer> <silent> <C-]> :execute 'tag '.setFunctions#CWordWithKey(46, filePath, getpid(), bufnr('%'))<CR>
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" The below section allows the user to jump to the definition of a variable (still in progress)
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-nnoremap <F12> : call setFunctions#GotoDefinition()<CR>
-
+call setFunctions#Setup()
 

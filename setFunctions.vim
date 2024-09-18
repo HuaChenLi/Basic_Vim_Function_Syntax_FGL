@@ -64,7 +64,7 @@ endfunction
 function! setFunctions#CWordWithKey(key, filePath, pid, bufNum) abort
     let s:saved_iskeyword = &iskeyword
     let s:saved_updatetime = &updatetime
-    if &updatetime > 2 | let &updatetime = 2 | endif
+    if &updatetime > 200 | let &updatetime = 200 | endif
     augroup CWordWithKeyAuGroup
         autocmd CursorHold,CursorHoldI <buffer>
                     \ let &updatetime = s:saved_updatetime |
@@ -188,3 +188,33 @@ vim_syntax_in_python.removeTempTags(vim.eval('a:pid'), vim.eval('a:bufNum'))
 EOF
 
 endfunction
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+function! setFunctions#Setup()
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " The below section sets the Status Line to show the current function
+    set laststatus=2
+
+    " You can change the colour of the Status Line
+    hi StatusLine ctermfg=black ctermbg=yellow
+
+"    autocmd CursorMoved <buffer> call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
+"    autocmd CursorMovedI <buffer> call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
+
+    nnoremap <F10> : call setFunctions#ShowFuncName(line('.') + 1, col('.'), line('.'), col('.'))
+
+    " Grabs the filepath of the buffer
+    let g:filePath = expand('%:p')
+
+    " This runs the GenerateTags() whenever a buffer is switched to
+    " This could potentially get pretty heavy depending on the number of files there are
+    autocmd! BufEnter <buffer> silent! call setFunctions#GenerateTags(g:filePath, getpid(), bufnr('%'))
+
+    " The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
+    nnoremap <buffer> <silent> <C-]> :execute 'tag '.setFunctions#CWordWithKey(46, g:filePath, getpid(), bufnr('%'))<CR>
+
+    " The below section allows the user to jump to the definition of a variable (still in progress)
+    nnoremap <F12> : call setFunctions#GotoDefinition()<CR>
+
+endfunction
+
