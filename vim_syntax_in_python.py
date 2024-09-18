@@ -159,7 +159,6 @@ def createListOfTags(functionName, lineNumber, currentFile, fileAlias):
 
     return tagsLinesList
 
-
 def writeTagsFile(tagsLinesList, pid, bufNum):
     # The tags file needs to be sorted alphabetically (by ASCII code) in order to work
     tagsLinesList.sort()
@@ -168,7 +167,6 @@ def writeTagsFile(tagsLinesList, pid, bufNum):
     for line in tagsLinesList:
         file.write(line)
     file.close()
-
 
 def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, packagePaths):
     writeSingleLineToLog("finding file " + importFilePath)
@@ -239,14 +237,12 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
 
     return tagsLinesList
 
-
 def tokenizeString(inputString):
     # basically, the massive line of regex code repeats, so we will grab all printable characters (since all printable characters are between ! to ~ except white spaces)
     # the repeating section contains all the special characters in Genero
     # probably can create a regex that is smart enough to do the whole thing by itself, but can probably just handle it in the python code afterwards
     tokenBlock = re.findall(r"(?:(?!\.|,|'|`|\"|\||\(|\)|#|{|}|\[|\]|<|>|-|!|$|\\|=|\*)[!-~])+|\.|,|'|`|\"|\||\(|\)|#|{|}|\[|\]|<|>|-|!|$|\\|=|\*", inputString)
     return tokenBlock
-
 
 def findVariableDefinition(buffer):
     tokenList = tokenizeLinesOfFiles(buffer)
@@ -275,7 +271,6 @@ def findVariableDefinition(buffer):
         elif token == requiredToken:
             requiredToken = ""
             continue
-
 
 def findFunctionWrapper(buffer):
     tokenList = tokenizeLinesOfFiles(buffer)
@@ -311,7 +306,6 @@ def findFunctionWrapper(buffer):
             latestFunctionLineNumber = lineNumber
 
     return latestFunctionLineNumber
-
 
 def tokenizeLinesOfFiles(file):
     tokenList = []
