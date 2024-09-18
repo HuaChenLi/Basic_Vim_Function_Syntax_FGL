@@ -52,9 +52,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if index == 0:
             tagsLinesList.extend(getMakefileFunctions(currentDirectory))
 
-        prevPrevToken = prevToken
-        prevToken = token
-        token = tokenBlock[0]
+        token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
         lineNumber = tokenBlock[1]
 
         # occasionally there are blank tokens
@@ -219,9 +217,7 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
         if tokenBlock[0] == "":
             continue
 
-        prevPrevToken = prevToken
-        prevToken = token
-        token = tokenBlock[0]
+        token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
@@ -303,8 +299,7 @@ def findFunctionWrapper(buffer):
         if tokenBlock[0] == "":
             continue
 
-        prevToken = token
-        token = tokenBlock[0]
+        token, prevToken = tokenBlock[0], token
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
@@ -380,9 +375,7 @@ def getMakefileFunctions(currentDirectory):
         if tokenBlock[0] == "":
             continue
 
-        prevPrevToken = prevToken
-        prevToken = token
-        token = tokenBlock[0]
+        token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
         lineNumber = tokenBlock[1]
 
         curDir = [currentDirectory]
