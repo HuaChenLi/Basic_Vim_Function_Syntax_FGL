@@ -8,7 +8,7 @@ HOME = expanduser("~")
 TAGS_FILE_DIRECTORY = os.path.join(HOME, ".temp_tags")
 TAGS_FILE_BASE = os.path.join(HOME, ".temp_tags",".temp_tags")
 FGL_SUFFIX = ".4gl"
-LOG_DIRECTORY = os.path.join(HOME, "fgl_syntax_log")
+LOG_DIRECTORY = os.path.join(TAGS_FILE_DIRECTORY, "fgl_syntax_log")
 
 def generateTags(inputString, currentFile, pid, bufNum):
     start = time.time()
