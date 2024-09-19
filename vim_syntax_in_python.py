@@ -82,7 +82,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd:
             # We create the list of the function tags
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
-            tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=currentFile, fileAlias=fileWithoutExtension))
+            tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=currentFile, functionTokens=[fileWithoutExtension]))
 
         if token.lower() == "import" and prevToken == "\n":
             # we need to check that Import is at the start of the line
@@ -132,8 +132,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
     for lib in librariesList:
         importFilePath = lib[0]
-        fileAlias = lib[1]
-        tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, fileAlias, currentDirectory, packagePaths))
+        fileAlias = lib[1].split(".")
+        tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths))
 
     endTime = time.time()
     lengthTime = endTime - startTime
@@ -145,10 +145,9 @@ def generateTags(inputString, currentFile, pid, bufNum):
     length = end - start
     writeSingleLineToLog("vim syntax took " + str(length) + " seconds")
 
-def createListOfTags(functionName, lineNumber, currentFile, fileAlias):
+def createListOfTags(functionName, lineNumber, currentFile, functionTokens):
     # this is interesting, I would need to, for each separation, create a tagLine
     tagsLinesList = []
-    functionTokens = fileAlias.split(".")
 
     tagLine = "{0}\t{1}\t{2}\n".format(functionName, currentFile, lineNumber)
     tagsLinesList.append(tagLine)
@@ -170,7 +169,7 @@ def writeTagsFile(tagsLinesList, pid, bufNum):
         file.write(line)
     file.close()
 
-def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, packagePaths):
+def getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths):
     writeSingleLineToLog("finding file " + importFilePath)
     isExistingPackageFile = False
 
@@ -231,7 +230,7 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, workingDirectory, p
 
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate:
             # We create the list of the function tags
-            tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=packageFile, fileAlias=fileAlias))
+            tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=packageFile, functionTokens=fileAlias))
 
     endTime = time.time()
     length = endTime - startTime
@@ -376,7 +375,7 @@ def getMakefileFunctions(currentDirectory):
         if isImportingObjectFiles and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
             writeSingleLineToLog(file)
-            tagsList.extend(getPublicFunctionsFromLibrary(file, prevPrevToken, currentDirectory, curDir))
+            tagsList.extend(getPublicFunctionsFromLibrary(file, [prevPrevToken], curDir))
 
 
         if token == "=" and prevToken == "CUSTLIBS":
@@ -388,7 +387,7 @@ def getMakefileFunctions(currentDirectory):
         if isImportingLibFiles and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
             writeSingleLineToLog(file)
-            tagsList.extend(getPublicFunctionsFromLibrary(file, prevPrevToken, currentDirectory, packagePaths))
+            tagsList.extend(getPublicFunctionsFromLibrary(file, [prevPrevToken], packagePaths))
 
     return tagsList
 
