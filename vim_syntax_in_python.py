@@ -19,7 +19,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
     if not os.path.exists(TAGS_FILE_DIRECTORY):
         os.makedirs(TAGS_FILE_DIRECTORY)
 
-    tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum
+    tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".ctags"
     if os.path.exists(tagsFile):
         writeSingleLineToLog("vim tags file: " + tagsFile + " exists, exiting")
         return
@@ -163,7 +163,7 @@ def createListOfTags(functionName, lineNumber, currentFile, functionTokens):
 def writeTagsFile(tagsLinesList, pid, bufNum):
     # The tags file needs to be sorted alphabetically (by ASCII code) in order to work
     tagsLinesList.sort()
-    tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum
+    tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".ctags"
     file = open(tagsFile, "a")
     for line in tagsLinesList:
         file.write(line)
@@ -329,7 +329,7 @@ def getRequiredToken(inputToken):
 
 def removeTempTags(pid, bufNum):
     try:
-        tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum
+        tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".ctags"
         os.remove(tagsFile)
     except OSError:
         pass
