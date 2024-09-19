@@ -52,7 +52,11 @@ def generateTags(inputString, currentFile, pid, bufNum):
     for index, tokenBlock in enumerate(tokenList):
         # I don't get why it doesn't duplicate by putting it in the for loop instead of outside the for loop :(
         if index == 0:
+            startTime = time.time()
             tagsLinesList.extend(getMakefileFunctions(currentDirectory))
+            endTime = time.time()
+            lengthTime = endTime - startTime
+            writeSingleLineToLog("getting Makefile Functions took " + str(lengthTime) + " seconds")
 
         token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
         lineNumber = tokenBlock[1]
@@ -170,7 +174,6 @@ def writeTagsFile(tagsLinesList, pid, bufNum):
     file.close()
 
 def getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths):
-    writeSingleLineToLog("finding file " + importFilePath)
     isExistingPackageFile = False
 
     for package in packagePaths:
