@@ -12,7 +12,9 @@ LOG_DIRECTORY = os.path.join(TAGS_FILE_DIRECTORY, "fgl_syntax_log")
 
 def generateTags(inputString, currentFile, pid, bufNum):
     start = time.time()
-    writeSingleLineToLog("vim syntax start")
+    writeSingleLineToLog("=========================================================")
+    writeSingleLineToLog("vim syntax start for file: " + currentFile)
+    writeSingleLineToLog("=========================================================")
 
     if not os.path.exists(TAGS_FILE_DIRECTORY):
         os.makedirs(TAGS_FILE_DIRECTORY)
