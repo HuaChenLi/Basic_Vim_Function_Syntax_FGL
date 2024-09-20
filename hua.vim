@@ -28,8 +28,8 @@ syntax region commentRegion start=/#/ end=/\n/
 syntax region commentRegion start=/--/ end=/\n/
 syntax region commentRegion start=/{/ end=/}/
 
-syntax region stringRegion start=/\"/ skip=/\\"/ end=/\"/
-syntax region stringRegion start=/\'/ skip=/\\'/ end=/\'/
+syntax region stringRegion start=/"/ skip=/\(\\\)\@<!\(\\\\\)*\\"/ end=/"/
+syntax region stringRegion start=/'/ skip=/\(\\\)\@<!\(\\\\\)*\\'/ end=/'/
 syntax region stringRegion start=/`/ end=/`/
 
 
