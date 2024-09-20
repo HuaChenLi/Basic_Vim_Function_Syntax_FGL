@@ -174,7 +174,7 @@ def writeTagsFile(tagsLinesList, pid, bufNum):
     file.close()
 
 def getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths):
-    writeSingleLineToLog("getting functions from " + file)
+    writeSingleLineToLog("getting functions from " + importFilePath)
     isExistingPackageFile = False
 
     for package in packagePaths:
