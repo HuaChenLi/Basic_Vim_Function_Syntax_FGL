@@ -174,6 +174,7 @@ def writeTagsFile(tagsLinesList, pid, bufNum):
     file.close()
 
 def getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths):
+    writeSingleLineToLog("getting functions from " + file)
     isExistingPackageFile = False
 
     for package in packagePaths:
@@ -379,7 +380,6 @@ def getMakefileFunctions(currentDirectory):
 
         if isImportingObjectFiles and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
-            writeSingleLineToLog(file)
             tagsList.extend(getPublicFunctionsFromLibrary(file, [prevPrevToken], curDir))
 
 
@@ -391,7 +391,6 @@ def getMakefileFunctions(currentDirectory):
 
         if isImportingLibFiles and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
-            writeSingleLineToLog(file)
             tagsList.extend(getPublicFunctionsFromLibrary(file, [prevPrevToken], packagePaths))
 
     return tagsList
