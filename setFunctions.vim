@@ -131,7 +131,7 @@ function! setFunctions#Setup()
 
     " This runs the GenerateTags() whenever a buffer is switched to
     " This could potentially get pretty heavy depending on the number of files there are
-    autocmd! BufEnter <buffer> silent! call setFunctions#GenerateTags(g:filePath, getpid(), bufnr('%'))
+    autocmd! BufEnter <buffer> silent! call setFunctions#GenerateTags(g:filePath, getpid(), bufnr('%')) &
 
     " The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
     nnoremap <buffer> <silent> <C-]> : execute 'tag '.setFunctions#CWordWithKey(g:filePath, getpid(), bufnr('%'))<CR>
