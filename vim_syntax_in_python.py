@@ -7,6 +7,7 @@ from datetime import datetime
 HOME = expanduser("~")
 TAGS_FILE_DIRECTORY = os.path.join(HOME, ".temp_tags")
 TAGS_FILE_BASE = os.path.join(HOME, ".temp_tags",".temp_tags")
+FGL_DIRECTORY_SUFFIX = ".4gs"
 FGL_SUFFIX = ".4gl"
 LOG_DIRECTORY = os.path.join(TAGS_FILE_DIRECTORY, "fgl_syntax_log")
 
@@ -173,18 +174,18 @@ def writeTagsFile(tagsLinesList, pid, bufNum):
         file.write(line)
     file.close()
 
-def getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths):
-    writeSingleLineToLog("getting functions from " + importFilePath)
+def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths):
+    writeSingleLineToLog("getting functions from " + importFile)
     isExistingPackageFile = False
 
     for package in packagePaths:
-        packageFile = os.path.join(package, importFilePath)
+        packageFile = os.path.join(package, importFile)
         if os.path.isfile(packageFile):
             isExistingPackageFile = True
             break
 
     if not isExistingPackageFile:
-        writeSingleLineToLog("couldn't find file " + importFilePath)
+        writeSingleLineToLog("couldn't find file " + importFile)
         return []
 
     file = open(packageFile, "r")
@@ -193,7 +194,7 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths):
     tokenList = tokenizeLinesOfFiles(file)
     endTime = time.time()
     length = endTime - startTime
-    writeSingleLineToLog("tokenizing " + importFilePath + " took " + str(length) + " seconds and the number of tokens is " + str(len(tokenList)))
+    writeSingleLineToLog("tokenizing " + importFile + " took " + str(length) + " seconds and the number of tokens is " + str(len(tokenList)))
 
     # This is the part where we want to loop through and find the function definitions
 
@@ -349,11 +350,14 @@ def getMakefileFunctions(currentDirectory):
 
     tagsList = []
 
-    isImportingLibFiles = False
+    isImportingCustLibFiles = False
     isImportingObjectFiles = False
+    isImportingLibFiles = False
     prevPrevToken = ""
     prevToken = ""
     token = "\n"
+
+    custLibFilePath = ""
 
     packagePaths = []
     try:
@@ -370,8 +374,6 @@ def getMakefileFunctions(currentDirectory):
         token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
         lineNumber = tokenBlock[1]
 
-        curDir = [currentDirectory]
-
         if token == "=" and prevToken == "OBJFILES":
             isImportingObjectFiles = True
 
@@ -380,18 +382,40 @@ def getMakefileFunctions(currentDirectory):
 
         if isImportingObjectFiles and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
-            tagsList.extend(getPublicFunctionsFromLibrary(file, [prevPrevToken], curDir))
+            tagsList.extend(getPublicFunctionsFromLibrary(file, [prevPrevToken], [currentDirectory]))
 
 
         if token == "=" and prevToken == "CUSTLIBS":
-            isImportingLibFiles = True
+            isImportingCustLibFiles = True
 
         if token == "=" and prevToken != "CUSTLIBS":
-            isImportingLibFiles = False
+            isImportingCustLibFiles = False
 
-        if isImportingLibFiles and token == "o" and prevToken == ".":
+        if isImportingCustLibFiles and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
             tagsList.extend(getPublicFunctionsFromLibrary(file, [prevPrevToken], packagePaths))
+
+        if token == "=" and prevToken == "LIBFILES":
+            isImportingLibFiles = True
+
+        if token == "=" and prevToken != "LIBFILES":
+            isImportingLibFiles = False
+
+        if isImportingLibFiles and token == "a" and prevToken == ".":
+            custLibFilePath = custLibFilePath + FGL_DIRECTORY_SUFFIX
+            onlyfiles = [f for f in os.listdir(custLibFilePath) if os.path.isfile(os.path.join(custLibFilePath, f))]
+            for f in onlyfiles:
+                tagsList.extend(getPublicFunctionsFromLibrary(f, [os.path.splitext(os.path.basename(f))[0]], [custLibFilePath]))
+
+        if isImportingLibFiles and (prevPrevToken == "$" and prevToken == "(") or (prevToken == "$" and token != "("):
+            try:
+                # allows the environment variable to be split depending on the os
+                custLibFilePath = os.environ[token]
+            except:
+                # this is in case the FGLLDPATH doesn't exist
+                pass
+        elif isImportingLibFiles and token != "a" and prevToken == "/":
+            custLibFilePath = os.path.join(custLibFilePath, token)
 
     return tagsList
 
