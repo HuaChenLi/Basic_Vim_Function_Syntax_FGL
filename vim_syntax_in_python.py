@@ -74,7 +74,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
             continue
-        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and prevToken == "\\":
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)+$", prevToken):
             continue
         elif token == requiredToken:
             requiredToken = ""
@@ -221,7 +221,7 @@ def getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths):
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
             continue
-        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and prevToken == "\\":
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)+$", prevToken):
             continue
         elif token == requiredToken:
             requiredToken = ""
@@ -246,10 +246,8 @@ def tokenizeString(inputString):
     # the repeating section contains all the special characters in Genero
     # probably can create a regex that is smart enough to do the whole thing by itself, but can probably just handle it in the python code afterwards
 
-    # these regex are quite a bit more efficient
-    # I'm not sure which one is actually better, so I'm leaving both of them in
-    # tokenBlock = re.findall(r"\w+|[!-\\]|[:-@]|[\[-`]|[{-~]", inputString)
-    tokenBlock = re.findall(r"\w+|!|\"|#|\$|%|&|'|\(|\)|\*|\+|,|-|\/|\.|:|;|<|=|>|\?|@|\[|\\|\]|\^|`|{|\||}|~", inputString)
+    # this regex is a bit more efficient than before, not sure if it can be even more efficient
+    tokenBlock = re.findall(r"\w+|!|\"|#|\$|%|&|'|\(|\)|\*|\+|,|-|\/|\.|:|;|<|=|>|\?|@|\[|\\+|\]|\^|`|{|\||}|~", inputString)
     return tokenBlock
 
 def findVariableDefinition(buffer):
@@ -274,7 +272,7 @@ def findVariableDefinition(buffer):
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
             continue
-        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and prevToken == "\\":
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)+$", prevToken):
             continue
         elif token == requiredToken:
             requiredToken = ""
@@ -304,7 +302,7 @@ def findFunctionWrapper(buffer):
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
             continue
-        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and prevToken == "\\":
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)+$", prevToken):
             continue
         elif token == requiredToken:
             requiredToken = ""
