@@ -6,6 +6,7 @@
 
 
 set FGLLDPATH=C:\Users\hua-c\vimfiles\syntax\packages;C:\Users\hua-c\vimfiles\syntax\packages2
+set fg=C:\Users\hua-c\FG
 
 Run this command on my Windows Machine
 
