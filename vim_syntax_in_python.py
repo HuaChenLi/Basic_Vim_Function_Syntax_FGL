@@ -471,7 +471,6 @@ def createImportLibraryTag(importFilePath, concatenatedImportString, packagePath
 
     for package in packagePaths:
         packageFile = os.path.join(package, importFilePath)
-        writeSingleLineToLog(packageFile)
         if os.path.isfile(packageFile):
             isExistingPackageFile = True
             break
