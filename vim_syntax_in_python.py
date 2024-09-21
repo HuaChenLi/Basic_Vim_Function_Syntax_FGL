@@ -360,6 +360,7 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     objFileList = []
     custLibFileList = []
     libFileList = []
+    globalFileList = []
 
     importingFileType = ""
 
@@ -410,6 +411,9 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
                     pass
             elif token != "a" and prevToken == "/":
                 libFilePath = os.path.join(libFilePath, token)
+        if importingFileType == "GLOBALS" and token == "o" and prevToken == ".":
+            file = prevPrevToken + FGL_SUFFIX
+            globalFileList.append((file, prevPrevToken))
 
     startTime = time.time()
     for obj in objFileList:
@@ -434,6 +438,12 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
         tagsList.extend(tmpTuple[0])
     endTime = time.time()
     writeSingleLineToLog("LIBFILES took " + str(lengthTime) + " seconds")
+
+    startTime = time.time()
+    for globalFile in globalFileList:
+        tagsList.extend(getPublicConstantsFromLibrary(globalFile[0], [globalFile[1]], [currentDirectory]))
+    endTime = time.time()
+    writeSingleLineToLog("GLOBALS took " + str(lengthTime) + " seconds")
 
     return tagsList
 
@@ -468,3 +478,69 @@ def createImportLibraryTag(importFilePath, concatenatedImportString, packagePath
         tagsLineList.append(createSingleTagLine(fileAlias, packageFile, 1))
 
     return tagsLineList
+
+def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
+    writeSingleLineToLog("getting constants from " + importFile)
+    isExistingPackageFile = False
+
+    for package in packagePaths:
+        packageFile = os.path.join(package, importFile)
+        if os.path.isfile(packageFile):
+            isExistingPackageFile = True
+            break
+
+    if not isExistingPackageFile:
+        writeSingleLineToLog("couldn't find file " + importFile)
+        return []
+
+    file = open(packageFile, "r")
+
+    startTime = time.time()
+    tokenList = tokenizeLinesOfFiles(file)
+    endTime = time.time()
+    length = endTime - startTime
+    writeSingleLineToLog("tokenizing " + importFile + " took " + str(length) + " seconds and the number of tokens is " + str(len(tokenList)))
+
+    tagsLinesList = []
+
+    requiredToken = ""
+    prevPrevToken = ""
+    prevToken = ""
+    token = "\n"
+
+    startTime = time.time()
+
+    for tokenBlock in tokenList:
+        # occasionally there are blank tokens
+        if tokenBlock[0] == "":
+            continue
+
+        token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
+        lineNumber = tokenBlock[1]
+
+        # this section is all about skipping based on strings and comments
+        if token == "-" and prevToken == "-":
+            token = "--"
+
+        if requiredToken == "":
+            requiredToken = getRequiredToken(token)
+        elif token != requiredToken:
+            continue
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)+$", prevToken):
+            continue
+        elif token == requiredToken:
+            requiredToken = ""
+            continue
+
+        isPrevPrevTokenPublic = prevPrevToken.lower() == "public"
+        isPrevTokenConstant = (prevToken.lower() == "constant")
+
+        if isPrevTokenConstant and isPrevPrevTokenPublic:
+            # We create the list of the function tags
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias))
+
+    endTime = time.time()
+    length = endTime - startTime
+    writeSingleLineToLog("if statements took " + str(length) + " seconds")
+
+    return tagsLinesList
