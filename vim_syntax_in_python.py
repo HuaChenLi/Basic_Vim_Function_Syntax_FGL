@@ -72,9 +72,9 @@ def generateTags(inputString, currentFile, pid, bufNum):
             isImportingGlobal = False
             tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory]))
 
-        if requiredToken == "":
+        if token in tokenDictionary and requiredToken == "":
             requiredToken = getRequiredToken(token)
-        elif token != requiredToken:
+        elif requiredToken != "" and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
@@ -227,10 +227,9 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
         token, prevToken, prevPrevToken = tokenBlock[0], token.lower(), prevToken
         lineNumber = tokenBlock[1]
 
-        # this section is all about skipping based on strings and comments
-        if requiredToken == "":
+        if token in tokenDictionary and requiredToken == "":
             requiredToken = getRequiredToken(token)
-        elif token != requiredToken:
+        elif requiredToken != "" and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
@@ -280,9 +279,9 @@ def findVariableDefinition(buffer):
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
-        if requiredToken == "":
+        if token in tokenDictionary and requiredToken == "":
             requiredToken = getRequiredToken(token)
-        elif token != requiredToken:
+        elif requiredToken != "" and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
@@ -303,9 +302,9 @@ def findFunctionWrapper(buffer):
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
-        if requiredToken == "":
+        if token in tokenDictionary and requiredToken == "":
             requiredToken = getRequiredToken(token)
-        elif token != requiredToken:
+        elif requiredToken != "" and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
@@ -502,9 +501,9 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
-        if requiredToken == "":
+        if token in tokenDictionary and requiredToken == "":
             requiredToken = getRequiredToken(token)
-        elif token != requiredToken:
+        elif requiredToken != "" and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
