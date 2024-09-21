@@ -361,9 +361,8 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     custLibFileList = []
     libFileList = []
 
-    isImportingObjectFiles = False
-    isImportingCustLibFiles = False
-    isImportingLibFiles = False
+    importingFileType = ""
+
     prevPrevToken = ""
     prevToken = ""
     token = "\n"
@@ -385,48 +384,32 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
         token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
         lineNumber = tokenBlock[1]
 
-        if token == "=" and prevToken == "OBJFILES":
-            isImportingObjectFiles = True
+        if token == "=":
+            importingFileType = prevToken
+            continue
 
-        if token == "=" and prevToken != "OBJFILES":
-            isImportingObjectFiles = False
-
-        if isImportingObjectFiles and token == "o" and prevToken == ".":
+        if importingFileType == "OBJFILES" and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
             objFileList.append((file, prevPrevToken))
-
-        if token == "=" and prevToken == "CUSTLIBS":
-            isImportingCustLibFiles = True
-
-        if token == "=" and prevToken != "CUSTLIBS":
-            isImportingCustLibFiles = False
-
-        if isImportingCustLibFiles and token == "o" and prevToken == ".":
+        elif importingFileType == "CUSTLIBS" and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
             custLibFileList.append((file, prevPrevToken))
-
-        if token == "=" and prevToken == "LIBFILES":
-            isImportingLibFiles = True
-
-        if token == "=" and prevToken != "LIBFILES":
-            isImportingLibFiles = False
-
-        if isImportingLibFiles and token == "a" and prevToken == ".":
-            libFilePath = libFilePath + FGL_DIRECTORY_SUFFIX
-            if os.path.isdir(libFilePath):
-                libFileList = [f for f in os.listdir(libFilePath) if os.path.isfile(os.path.join(libFilePath, f))]
-            else:
-                writeSingleLineToLog("can't find " + libFilePath)
-
-        if isImportingLibFiles and (prevPrevToken == "$" and prevToken == "(") or (prevToken == "$" and token != "("):
-            try:
-                # allows the environment variable to be split depending on the os
-                libFilePath = os.environ[token]
-            except:
-                # this is in case the environment variable doesn't exist
-                pass
-        elif isImportingLibFiles and token != "a" and prevToken == "/":
-            libFilePath = os.path.join(libFilePath, token)
+        elif importingFileType == "LIBFILES":
+            if token == "a" and prevToken == ".":
+                libFilePath = libFilePath + FGL_DIRECTORY_SUFFIX
+                if os.path.isdir(libFilePath):
+                    libFileList = [f for f in os.listdir(libFilePath) if os.path.isfile(os.path.join(libFilePath, f))]
+                else:
+                    writeSingleLineToLog("can't find " + libFilePath)
+            elif (prevPrevToken == "$" and prevToken == "(") or (prevToken == "$" and token != "("):
+                try:
+                    # allows the environment variable to be split depending on the os
+                    libFilePath = os.environ[token]
+                except:
+                    # this is in case the environment variable doesn't exist
+                    pass
+            elif token != "a" and prevToken == "/":
+                libFilePath = os.path.join(libFilePath, token)
 
     startTime = time.time()
     for obj in objFileList:
