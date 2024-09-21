@@ -63,10 +63,6 @@ def generateTags(inputString, currentFile, pid, bufNum):
     globalFilePath = ""
 
     for tokenBlock in tokenList:
-        # occasionally there are blank tokens
-        if tokenBlock[0] == "":
-            continue
-
         tokenLower, token, prevToken, prevPrevToken = tokenBlock[0].lower(), tokenBlock[0], tokenLower, prevToken
         lineNumber = tokenBlock[1]
 
@@ -233,10 +229,6 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
     startTime = time.time()
 
     for tokenBlock in tokenList:
-        # occasionally there are blank tokens
-        if tokenBlock[0] == "":
-            continue
-
         token, prevToken, prevPrevToken = tokenBlock[0], token.lower(), prevToken
         lineNumber = tokenBlock[1]
 
@@ -291,10 +283,6 @@ def findVariableDefinition(buffer):
     prevToken = ""
     token = "\n"
     for tokenBlock in tokenList:
-        # occasionally there are blank tokens
-        if tokenBlock[0] == "":
-            continue
-
         prevToken = token
         token = tokenBlock[0]
         lineNumber = tokenBlock[1]
@@ -322,10 +310,6 @@ def findFunctionWrapper(buffer):
     latestFunctionLineNumber = 0
 
     for tokenBlock in tokenList:
-        # occasionally there are blank tokens
-        if tokenBlock[0] == "":
-            continue
-
         token, prevToken = tokenBlock[0].lower(), token
         lineNumber = tokenBlock[1]
 
@@ -528,10 +512,6 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
     startTime = time.time()
 
     for tokenBlock in tokenList:
-        # occasionally there are blank tokens
-        if tokenBlock[0] == "":
-            continue
-
         token, prevToken, prevPrevToken = tokenBlock[0], token.lower(), prevToken
         lineNumber = tokenBlock[1]
 
