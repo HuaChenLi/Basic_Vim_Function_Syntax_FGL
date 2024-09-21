@@ -58,6 +58,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
     prevPrevToken = ""
     prevToken = ""
     token = "\n"
+    isImportingGlobal = False
+    globalFilePath = ""
 
     for tokenBlock in tokenList:
         token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
@@ -66,6 +68,12 @@ def generateTags(inputString, currentFile, pid, bufNum):
         # occasionally there are blank tokens
         if token == "":
             continue
+
+        if isImportingGlobal and (requiredToken == '"' and token != '"' or requiredToken == "'" and token != "'" or requiredToken == "`" and token != "`"):
+            globalFilePath = globalFilePath + token
+        elif isImportingGlobal and(requiredToken == '"' and token == '"' or requiredToken == "'" and token == "'" or requiredToken == "`" and token == "`"):
+            isImportingGlobal = False
+            tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory]))
 
         # this section is all about skipping based on strings and comments
         if token == "-" and prevToken == "-":
@@ -135,6 +143,9 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if isImportingLibrary and token.lower() == "as":
             importFilePath = importFilePath + FGL_SUFFIX
             continue
+
+        if prevToken == "\n" and token.lower() == "globals":
+            isImportingGlobal = True
 
     startTime = time.time()
     for lib in librariesList:
@@ -538,7 +549,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             continue
 
         isPrevPrevTokenPublic = prevPrevToken.lower() == "public"
-        isPrevTokenConstant = (prevToken.lower() == "constant")
+        isPrevTokenConstant = prevToken.lower() == "constant"
 
         if isPrevTokenConstant and isPrevPrevTokenPublic:
             # We create the list of the function tags
