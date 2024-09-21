@@ -11,6 +11,15 @@ FGL_DIRECTORY_SUFFIX = ".4gs"
 FGL_SUFFIX = ".4gl"
 LOG_DIRECTORY = os.path.join(TAGS_FILE_DIRECTORY, "fgl_syntax_log")
 
+tokenDictionary = {
+    "'" : "'",
+    '"' : '"',
+    "`" : "`",
+    "#" : "\n",
+    "--" : "\n",
+    "{" : "}"
+}
+
 def generateTags(inputString, currentFile, pid, bufNum):
     vimSyntaxStart = time.time()
     writeSingleLineToLog("=========================================================")
@@ -331,14 +340,6 @@ def tokenizeLinesOfFiles(file):
     return tokenList
 
 def getRequiredToken(inputToken):
-    tokenDictionary = {
-        "'" : "'",
-        '"' : '"',
-        "`" : "`",
-        "#" : "\n",
-        "--" : "\n",
-        "{" : "}"
-    }
     return tokenDictionary.get(inputToken, "")
 
 def removeTempTags(pid, bufNum):
