@@ -404,7 +404,7 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
                     pass
             elif token != "a" and prevToken == "/":
                 libFilePath = os.path.join(libFilePath, token)
-        if importingFileType == "GLOBALS" and token == "o" and prevToken == ".":
+        elif importingFileType == "GLOBALS" and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
             globalFileList.append((file, prevPrevToken))
 
