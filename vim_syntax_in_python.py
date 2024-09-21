@@ -50,15 +50,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
     prevToken = ""
     token = "\n"
 
-    for index, tokenBlock in enumerate(tokenList):
-        # I don't get why it doesn't duplicate by putting it in the for loop instead of outside the for loop :(
-        if index == 0:
-            startTime = time.time()
-            tagsLinesList.extend(getMakefileFunctions(currentDirectory))
-            endTime = time.time()
-            lengthTime = endTime - startTime
-            writeSingleLineToLog("getting Makefile Functions took " + str(lengthTime) + " seconds")
-
+    for tokenBlock in tokenList:
         token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
         lineNumber = tokenBlock[1]
 
@@ -134,12 +126,16 @@ def generateTags(inputString, currentFile, pid, bufNum):
             continue
 
     startTime = time.time()
+    tagsLinesList.extend(getMakefileFunctions(currentDirectory))
+    endTime = time.time()
+    lengthTime = endTime - startTime
+    writeSingleLineToLog("getting Makefile Functions took " + str(lengthTime) + " seconds")
 
+    startTime = time.time()
     for lib in librariesList:
         importFilePath = lib[0]
         fileAlias = lib[1].split(".")
         tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths))
-
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting public functions took " + str(lengthTime) + " seconds")
@@ -403,9 +399,12 @@ def getMakefileFunctions(currentDirectory):
 
         if isImportingLibFiles and token == "a" and prevToken == ".":
             custLibFilePath = custLibFilePath + FGL_DIRECTORY_SUFFIX
-            onlyfiles = [f for f in os.listdir(custLibFilePath) if os.path.isfile(os.path.join(custLibFilePath, f))]
-            for f in onlyfiles:
-                tagsList.extend(getPublicFunctionsFromLibrary(f, [os.path.splitext(os.path.basename(f))[0]], [custLibFilePath]))
+            if os.path.isdir(custLibFilePath):
+                onlyfiles = [f for f in os.listdir(custLibFilePath) if os.path.isfile(os.path.join(custLibFilePath, f))]
+                for f in onlyfiles:
+                    tagsList.extend(getPublicFunctionsFromLibrary(f, [os.path.splitext(os.path.basename(f))[0]], [custLibFilePath]))
+            else:
+                writeSingleLineToLog("can't find " + custLibFilePath)
 
         if isImportingLibFiles and (prevPrevToken == "$" and prevToken == "(") or (prevToken == "$" and token != "("):
             try:
