@@ -236,7 +236,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
         if tokenBlock[0] == "":
             continue
 
-        token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
+        token, prevToken, prevPrevToken = tokenBlock[0], token.lower(), prevToken
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
@@ -253,9 +253,9 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
             requiredToken = ""
             continue
 
-        isPrevPrevTokenEnd = prevPrevToken.lower() == "end"
-        isPrevPrevTokenPrivate = prevPrevToken.lower() == "private"
-        isPreviousTokenFunctionOrReport = (prevToken.lower() == "function") or (prevToken.lower() == "report")
+        isPrevPrevTokenEnd = prevPrevToken == "end"
+        isPrevPrevTokenPrivate = prevPrevToken == "private"
+        isPreviousTokenFunctionOrReport = (prevToken == "function") or (prevToken == "report")
 
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate and token not in existingFunctionNames:
             # We create the list of the function tags
@@ -263,8 +263,8 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
             existingFunctionNames.add(token)
             continue
 
-        isPrevPrevTokenPublic = prevPrevToken.lower() == "public"
-        isPrevTokenConstant = prevToken.lower() == "constant"
+        isPrevPrevTokenPublic = prevPrevToken == "public"
+        isPrevTokenConstant = prevToken == "constant"
 
         if isPrevTokenConstant and isPrevPrevTokenPublic:
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias))
