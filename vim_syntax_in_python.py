@@ -46,7 +46,6 @@ def generateTags(inputString, currentFile, pid, bufNum):
     tokenList = tokenizeLinesOfFiles(inputString)
 
     # This is the part where we want to loop through and find the function definitions in the current file
-
     tagsLinesList = []
     librariesList = []
     existingFunctionNames = set()
@@ -132,7 +131,6 @@ def generateTags(inputString, currentFile, pid, bufNum):
             importFilePath = ""
             concatenatedImportString = ""
             continue
-
 
         if isImportingLibrary and token.lower() == "as":
             importFilePath = importFilePath + FGL_SUFFIX
