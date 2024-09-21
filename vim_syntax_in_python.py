@@ -45,7 +45,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
     isImportingLibrary = False
 
     importFilePath = ""
-    fileAlias = ""
+    concatenatedImportString = ""
     requiredToken = ""
     prevPrevToken = ""
     prevToken = ""
@@ -81,7 +81,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
             # We create the list of the function tags
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             existingFunctionNames.add(token)
-            tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=currentFile, functionTokens=[fileWithoutExtension]))
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension]))
 
         if token.lower() == "import" and prevToken == "\n":
             # we need to check that Import is at the start of the line
@@ -97,12 +97,12 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         isPreviousTokenAs = prevToken.lower() == "as"
 
-        if isImportingLibrary and token != "." and token != "\n" and not token == "as" and not isPreviousTokenAs:
+        if isImportingLibrary and token != "." and token != "\n" and not token.lower() == "as" and not isPreviousTokenAs:
             importFilePath = os.path.join(importFilePath, token)
-            if fileAlias == "":
-                fileAlias = token
+            if concatenatedImportString == "":
+                concatenatedImportString = token
             else:
-                fileAlias = fileAlias + "." + token
+                concatenatedImportString = concatenatedImportString + "." + token
             continue
 
         # When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
@@ -111,15 +111,17 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if isImportingLibrary and token == "\n" and not isPreviousTokenAs:
             isImportingLibrary = False
             importFilePath = importFilePath + FGL_SUFFIX
-            librariesList.append((importFilePath, fileAlias))
+            librariesList.append((importFilePath, concatenatedImportString))
+            tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, None))
             importFilePath = ""
-            fileAlias = ""
+            concatenatedImportString = ""
             continue
         elif isImportingLibrary and isPreviousTokenAs:
             isImportingLibrary = False
             librariesList.append((importFilePath, token))
+            tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, token))
             importFilePath = ""
-            fileAlias = ""
+            concatenatedImportString = ""
             continue
 
 
@@ -150,7 +152,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
     vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
     writeSingleLineToLog("vim syntax for " + currentFile + " took " + str(vimSyntaxLengthOfTime) + " seconds")
 
-def createListOfTags(functionName, lineNumber, currentFile, functionTokens):
+def createListOfTags(functionName, currentFile, lineNumber, functionTokens):
     # this is interesting, I would need to, for each separation, create a tagLine
     tagsLinesList = []
 
@@ -160,10 +162,12 @@ def createListOfTags(functionName, lineNumber, currentFile, functionTokens):
     functionNameString = functionName
     for token in reversed(functionTokens):
         functionNameString = token + "." + functionNameString
-        tagLine = "{0}\t{1}\t{2}\n".format(functionNameString, currentFile, lineNumber)
-        tagsLinesList.append(tagLine)
+        tagsLinesList.append(createSingleTagLine(functionNameString, currentFile, lineNumber))
 
     return tagsLinesList
+
+def createSingleTagLine(jumpToString, jumpToFile, lineNumber):
+    return "{0}\t{1}\t{2}\n".format(jumpToString, jumpToFile, lineNumber)
 
 def writeTagsFile(tagsLinesList, pid, bufNum):
     # The tags file needs to be sorted alphabetically (by ASCII code) in order to work
@@ -237,7 +241,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
 
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate and token not in existingFunctionNames:
             # We create the list of the function tags
-            tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=packageFile, functionTokens=fileAlias))
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias))
             existingFunctionNames.add(token)
 
     endTime = time.time()
@@ -460,3 +464,24 @@ def writeSingleLineToLog(inputString):
     currentTime = datetime.today().strftime('%Y-%m-%d-%H:%M:%S.%f')
     outputString = currentTime + ": " + inputString + "\n"
     file.write(outputString)
+
+def createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, fileAlias):
+    isExistingPackageFile = False
+
+    for package in packagePaths:
+        packageFile = os.path.join(package, importFilePath)
+        writeSingleLineToLog(packageFile)
+        if os.path.isfile(packageFile):
+            isExistingPackageFile = True
+            break
+
+    if not isExistingPackageFile:
+        writeSingleLineToLog("couldn't find file " + concatenatedImportString)
+        return []
+
+    tagsLineList = [createSingleTagLine(concatenatedImportString, packageFile, 1)]
+
+    if fileAlias is not None:
+        tagsLineList.append(createSingleTagLine(fileAlias, packageFile, 1))
+
+    return tagsLineList
