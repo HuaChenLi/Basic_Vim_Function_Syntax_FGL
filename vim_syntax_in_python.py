@@ -250,6 +250,13 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
             # We create the list of the function tags
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias))
             existingFunctionNames.add(token)
+            continue
+
+        isPrevPrevTokenPublic = prevPrevToken.lower() == "public"
+        isPrevTokenConstant = prevToken.lower() == "constant"
+
+        if isPrevTokenConstant and isPrevPrevTokenPublic:
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias))
 
     endTime = time.time()
     length = endTime - startTime
