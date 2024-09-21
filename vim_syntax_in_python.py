@@ -352,16 +352,16 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     tokenList = tokenizeLinesOfFiles(file)
 
     tagsList = []
-    custLibFileList = []
+    libFileList = []
 
-    isImportingCustLibFiles = False
     isImportingObjectFiles = False
+    isImportingCustLibFiles = False
     isImportingLibFiles = False
     prevPrevToken = ""
     prevToken = ""
     token = "\n"
 
-    custLibFilePath = ""
+    libFilePath = ""
 
     packagePaths = []
     try:
@@ -410,24 +410,24 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
             isImportingLibFiles = False
 
         if isImportingLibFiles and token == "a" and prevToken == ".":
-            custLibFilePath = custLibFilePath + FGL_DIRECTORY_SUFFIX
-            if os.path.isdir(custLibFilePath):
-                custLibFileList = [f for f in os.listdir(custLibFilePath) if os.path.isfile(os.path.join(custLibFilePath, f))]
+            libFilePath = libFilePath + FGL_DIRECTORY_SUFFIX
+            if os.path.isdir(libFilePath):
+                libFileList = [f for f in os.listdir(libFilePath) if os.path.isfile(os.path.join(libFilePath, f))]
             else:
-                writeSingleLineToLog("can't find " + custLibFilePath)
+                writeSingleLineToLog("can't find " + libFilePath)
 
         if isImportingLibFiles and (prevPrevToken == "$" and prevToken == "(") or (prevToken == "$" and token != "("):
             try:
                 # allows the environment variable to be split depending on the os
-                custLibFilePath = os.environ[token]
+                libFilePath = os.environ[token]
             except:
                 # this is in case the FGLLDPATH doesn't exist
                 pass
         elif isImportingLibFiles and token != "a" and prevToken == "/":
-            custLibFilePath = os.path.join(custLibFilePath, token)
+            libFilePath = os.path.join(libFilePath, token)
 
-    for f in custLibFileList:
-        tmpTuple = getPublicFunctionsFromLibrary(f, [os.path.splitext(os.path.basename(f))[0]], [custLibFilePath], existingFunctionNames)
+    for f in libFileList:
+        tmpTuple = getPublicFunctionsFromLibrary(f, [os.path.splitext(os.path.basename(f))[0]], [libFilePath], existingFunctionNames)
         tagsList.extend(tmpTuple[0])
 
     return tagsList
