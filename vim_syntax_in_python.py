@@ -40,6 +40,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
     tagsLinesList = []
     librariesList = []
+    existingFunctionNames = set()
 
     isImportingLibrary = False
 
@@ -79,6 +80,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd:
             # We create the list of the function tags
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            existingFunctionNames.add(token)
             tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=currentFile, functionTokens=[fileWithoutExtension]))
 
         if token.lower() == "import" and prevToken == "\n":
@@ -126,19 +128,21 @@ def generateTags(inputString, currentFile, pid, bufNum):
             continue
 
     startTime = time.time()
-    tagsLinesList.extend(getMakefileFunctions(currentDirectory))
-    endTime = time.time()
-    lengthTime = endTime - startTime
-    writeSingleLineToLog("getting Makefile Functions took " + str(lengthTime) + " seconds")
-
-    startTime = time.time()
     for lib in librariesList:
         importFilePath = lib[0]
         fileAlias = lib[1].split(".")
-        tagsLinesList.extend(getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths))
+        tmpTuple = getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths, existingFunctionNames)
+        tagsLinesList.extend(tmpTuple[0])
+        existingFunctionNames.update(tmpTuple[1])
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting public functions took " + str(lengthTime) + " seconds")
+
+    startTime = time.time()
+    tagsLinesList.extend(getMakefileFunctions(currentDirectory, existingFunctionNames))
+    endTime = time.time()
+    lengthTime = endTime - startTime
+    writeSingleLineToLog("getting Makefile Functions took " + str(lengthTime) + " seconds")
 
     writeTagsFile(tagsLinesList, pid, bufNum)
 
@@ -170,7 +174,9 @@ def writeTagsFile(tagsLinesList, pid, bufNum):
         file.write(line)
     file.close()
 
-def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths):
+def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingFunctionNames):
+    # I think Genero probably doesn't have overloading, but I think the priority for function scope goes
+    # Current File > Imported Library > OBJFILES > CUSTLIBS > LIBFILES
     writeSingleLineToLog("getting functions from " + importFile)
     isExistingPackageFile = False
 
@@ -182,7 +188,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths):
 
     if not isExistingPackageFile:
         writeSingleLineToLog("couldn't find file " + importFile)
-        return []
+        return [], set()
 
     file = open(packageFile, "r")
 
@@ -229,15 +235,16 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths):
         isPrevPrevTokenPrivate = prevPrevToken.lower() == "private"
         isPreviousTokenFunctionOrReport = (prevToken.lower() == "function") or (prevToken.lower() == "report")
 
-        if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate:
+        if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate and token not in existingFunctionNames:
             # We create the list of the function tags
             tagsLinesList.extend(createListOfTags(functionName=token, lineNumber=lineNumber, currentFile=packageFile, functionTokens=fileAlias))
+            existingFunctionNames.add(token)
 
     endTime = time.time()
     length = endTime - startTime
     writeSingleLineToLog("if statements took " + str(length) + " seconds")
 
-    return tagsLinesList
+    return tagsLinesList, existingFunctionNames
 
 def tokenizeString(inputString):
     # basically, the massive line of regex code repeats, so we will grab all printable characters (since all printable characters are between ! to ~ except white spaces)
@@ -337,7 +344,7 @@ def removeTempTags(pid, bufNum):
     except OSError:
         pass
 
-def getMakefileFunctions(currentDirectory):
+def getMakefileFunctions(currentDirectory, existingFunctionNames):
     makeFile = os.path.join(currentDirectory, "Makefile")
     if not os.path.isfile(makeFile):
         return []
@@ -345,6 +352,7 @@ def getMakefileFunctions(currentDirectory):
     tokenList = tokenizeLinesOfFiles(file)
 
     tagsList = []
+    custLibFileList = []
 
     isImportingCustLibFiles = False
     isImportingObjectFiles = False
@@ -378,7 +386,9 @@ def getMakefileFunctions(currentDirectory):
 
         if isImportingObjectFiles and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
-            tagsList.extend(getPublicFunctionsFromLibrary(file, [prevPrevToken], [currentDirectory]))
+            tmpTuple = getPublicFunctionsFromLibrary(file, [prevPrevToken], [currentDirectory], existingFunctionNames)
+            tagsList.extend(tmpTuple[0])
+            existingFunctionNames.update(tmpTuple[1])
 
 
         if token == "=" and prevToken == "CUSTLIBS":
@@ -389,7 +399,9 @@ def getMakefileFunctions(currentDirectory):
 
         if isImportingCustLibFiles and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
-            tagsList.extend(getPublicFunctionsFromLibrary(file, [prevPrevToken], packagePaths))
+            tmpTuple = getPublicFunctionsFromLibrary(file, [prevPrevToken], packagePaths, existingFunctionNames)
+            tagsList.extend(tmpTuple[0])
+            existingFunctionNames.update(tmpTuple[1])
 
         if token == "=" and prevToken == "LIBFILES":
             isImportingLibFiles = True
@@ -400,9 +412,7 @@ def getMakefileFunctions(currentDirectory):
         if isImportingLibFiles and token == "a" and prevToken == ".":
             custLibFilePath = custLibFilePath + FGL_DIRECTORY_SUFFIX
             if os.path.isdir(custLibFilePath):
-                onlyfiles = [f for f in os.listdir(custLibFilePath) if os.path.isfile(os.path.join(custLibFilePath, f))]
-                for f in onlyfiles:
-                    tagsList.extend(getPublicFunctionsFromLibrary(f, [os.path.splitext(os.path.basename(f))[0]], [custLibFilePath]))
+                custLibFileList = [f for f in os.listdir(custLibFilePath) if os.path.isfile(os.path.join(custLibFilePath, f))]
             else:
                 writeSingleLineToLog("can't find " + custLibFilePath)
 
@@ -415,6 +425,10 @@ def getMakefileFunctions(currentDirectory):
                 pass
         elif isImportingLibFiles and token != "a" and prevToken == "/":
             custLibFilePath = os.path.join(custLibFilePath, token)
+
+    for f in custLibFileList:
+        tmpTuple = getPublicFunctionsFromLibrary(f, [os.path.splitext(os.path.basename(f))[0]], [custLibFilePath], existingFunctionNames)
+        tagsList.extend(tmpTuple[0])
 
     return tagsList
 
