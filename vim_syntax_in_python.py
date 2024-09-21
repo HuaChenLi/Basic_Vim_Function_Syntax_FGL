@@ -63,12 +63,12 @@ def generateTags(inputString, currentFile, pid, bufNum):
     globalFilePath = ""
 
     for tokenBlock in tokenList:
+        # occasionally there are blank tokens
+        if tokenBlock[0] == "":
+            continue
+
         tokenLower, token, prevToken, prevPrevToken = tokenBlock[0].lower(), tokenBlock[0], tokenLower, prevToken
         lineNumber = tokenBlock[1]
-
-        # occasionally there are blank tokens
-        if token == "":
-            continue
 
         if isImportingGlobal and (requiredToken == '"' and token != '"' or requiredToken == "'" and token != "'" or requiredToken == "`" and token != "`"):
             globalFilePath = globalFilePath + token
