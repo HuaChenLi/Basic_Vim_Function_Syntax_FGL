@@ -57,12 +57,13 @@ def generateTags(inputString, currentFile, pid, bufNum):
     requiredToken = ""
     prevPrevToken = ""
     prevToken = ""
+    tokenLower = "\n"
     token = "\n"
     isImportingGlobal = False
     globalFilePath = ""
 
     for tokenBlock in tokenList:
-        token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
+        tokenLower, token, prevToken, prevPrevToken = tokenBlock[0].lower(), tokenBlock[0], tokenLower, prevToken
         lineNumber = tokenBlock[1]
 
         # occasionally there are blank tokens
@@ -90,8 +91,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
             requiredToken = ""
             continue
 
-        isPrevPrevTokenEnd = prevPrevToken.lower() == "end"
-        isPreviousTokenFunctionOrReport = (prevToken.lower() == "function") or (prevToken.lower() == "report")
+        isPrevPrevTokenEnd = prevPrevToken == "end"
+        isPreviousTokenFunctionOrReport = (prevToken == "function") or (prevToken == "report")
 
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd:
             # We create the list of the function tags
@@ -99,21 +100,21 @@ def generateTags(inputString, currentFile, pid, bufNum):
             existingFunctionNames.add(token)
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension]))
 
-        if token.lower() == "import" and prevToken == "\n":
+        if tokenLower == "import" and prevToken == "\n":
             # we need to check that Import is at the start of the line
             isImportingLibrary = True
             continue
 
-        if isImportingLibrary and prevToken.lower() == "import" and token.lower() == "fgl":
+        if isImportingLibrary and prevToken == "import" and tokenLower == "fgl":
             continue
-        elif isImportingLibrary and prevToken.lower() == "import" and not token.lower() == "fgl":
+        elif isImportingLibrary and prevToken == "import" and not tokenLower == "fgl":
             # for when importing not an FGL library
             isImportingLibrary = False
             continue
 
-        isPreviousTokenAs = prevToken.lower() == "as"
+        isPreviousTokenAs = prevToken == "as"
 
-        if isImportingLibrary and token != "." and token != "\n" and not token.lower() == "as" and not isPreviousTokenAs:
+        if isImportingLibrary and token != "." and token != "\n" and not tokenLower == "as" and not isPreviousTokenAs:
             importFilePath = os.path.join(importFilePath, token)
             if concatenatedImportString == "":
                 concatenatedImportString = token
