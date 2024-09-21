@@ -63,7 +63,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
     globalFilePath = ""
 
     for tokenBlock in tokenList:
-        tokenLower, token, prevToken, prevPrevToken = tokenBlock[0].lower(), tokenBlock[0], tokenLower, prevToken
+        tokenLower, token, prevToken, prevPrevToken = tokenBlock[0], tokenBlock[0], tokenLower, prevToken
         lineNumber = tokenBlock[1]
 
         if isImportingGlobal and (requiredToken == '"' and token != '"' or requiredToken == "'" and token != "'" or requiredToken == "`" and token != "`"):
@@ -81,6 +81,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
         elif token == requiredToken:
             requiredToken = ""
             continue
+
+        tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
         isPrevPrevTokenEnd = prevPrevToken == "end"
         isPreviousTokenFunctionOrReport = (prevToken == "function") or (prevToken == "report")
@@ -224,7 +226,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
     startTime = time.time()
 
     for tokenBlock in tokenList:
-        token, prevToken, prevPrevToken = tokenBlock[0], token.lower(), prevToken
+        token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
         lineNumber = tokenBlock[1]
 
         if token in tokenDictionary and requiredToken == "":
@@ -236,6 +238,8 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
         elif token == requiredToken:
             requiredToken = ""
             continue
+
+        prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
         isPrevPrevTokenEnd = prevPrevToken == "end"
         isPrevPrevTokenPrivate = prevPrevToken == "private"
@@ -298,7 +302,7 @@ def findFunctionWrapper(buffer):
     latestFunctionLineNumber = 0
 
     for tokenBlock in tokenList:
-        token, prevToken = tokenBlock[0].lower(), token
+        token, prevToken = tokenBlock[0], token
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
@@ -311,6 +315,8 @@ def findFunctionWrapper(buffer):
         elif token == requiredToken:
             requiredToken = ""
             continue
+
+        token = token.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
         if token == "function" or token == "report":
             latestFunctionLineNumber = lineNumber
@@ -497,7 +503,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
     startTime = time.time()
 
     for tokenBlock in tokenList:
-        token, prevToken, prevPrevToken = tokenBlock[0], token.lower(), prevToken
+        token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
@@ -510,6 +516,8 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
         elif token == requiredToken:
             requiredToken = ""
             continue
+
+        prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
         isPrevPrevTokenPublic = prevPrevToken == "public"
         isPrevTokenConstant = prevToken == "constant"
