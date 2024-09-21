@@ -531,7 +531,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
         if tokenBlock[0] == "":
             continue
 
-        token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
+        token, prevToken, prevPrevToken = tokenBlock[0], token.lower(), prevToken
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
@@ -548,8 +548,8 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             requiredToken = ""
             continue
 
-        isPrevPrevTokenPublic = prevPrevToken.lower() == "public"
-        isPrevTokenConstant = prevToken.lower() == "constant"
+        isPrevPrevTokenPublic = prevPrevToken == "public"
+        isPrevTokenConstant = prevToken == "constant"
 
         if isPrevTokenConstant and isPrevPrevTokenPublic:
             # We create the list of the function tags
