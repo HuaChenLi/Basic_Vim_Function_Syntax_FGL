@@ -66,11 +66,12 @@ def generateTags(inputString, currentFile, pid, bufNum):
         tokenLower, token, prevToken, prevPrevToken = tokenBlock[0], tokenBlock[0], tokenLower, prevToken
         lineNumber = tokenBlock[1]
 
-        if isImportingGlobal and (requiredToken == '"' and token != '"' or requiredToken == "'" and token != "'" or requiredToken == "`" and token != "`"):
-            globalFilePath = globalFilePath + token
-        elif isImportingGlobal and(requiredToken == '"' and token == '"' or requiredToken == "'" and token == "'" or requiredToken == "`" and token == "`"):
-            isImportingGlobal = False
-            tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory]))
+        if isImportingGlobal:
+            if (requiredToken == '"' and token != '"') or (requiredToken == "'" and token != "'") or (requiredToken == "`" and token != "`"):
+                globalFilePath = globalFilePath + token
+            elif (requiredToken == '"' and token == '"') or (requiredToken == "'" and token == "'") or (requiredToken == "`" and token == "`"):
+                isImportingGlobal = False
+                tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory]))
 
         if token in tokenDictionary and requiredToken == "":
             requiredToken = getRequiredToken(token)
