@@ -1,3 +1,4 @@
+syn match keywordGroup '\c\<AS\>'
 syn match keywordGroup '\c\<BOOLEAN\>'
 syn match keywordGroup '\c\<CALL\>'
 syn match keywordGroup '\c\<CONSTANT\>'
