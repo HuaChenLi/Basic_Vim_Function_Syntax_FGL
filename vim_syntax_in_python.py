@@ -72,11 +72,6 @@ def generateTags(inputString, currentFile, pid, bufNum):
             isImportingGlobal = False
             tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory]))
 
-        # this section is all about skipping based on strings and comments
-        if token == "-" and prevToken == "-":
-            token = "--"
-            continue
-
         if requiredToken == "":
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
@@ -233,9 +228,6 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
-        if token == "-" and prevToken == "-":
-            token = "--"
-
         if requiredToken == "":
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
@@ -274,7 +266,7 @@ def tokenizeString(inputString):
     # probably can create a regex that is smart enough to do the whole thing by itself, but can probably just handle it in the python code afterwards
 
     # this regex is a bit more efficient than before, not sure if it can be even more efficient
-    tokenBlock = re.findall(r"\w+|!|\"|#|\$|%|&|'|\(|\)|\*|\+|,|-|\/|\.|:|;|<|=|>|\?|@|\[|\\+|\]|\^|`|{|\||}|~", inputString)
+    tokenBlock = re.findall(r"\w+|!|\"|#|\$|%|&|'|\(|\)|\*|\+|,|--|-|\/|\.|:|;|<|=|>|\?|@|\[|\\+|\]|\^|`|{|\||}|~", inputString)
     return tokenBlock
 
 def findVariableDefinition(buffer):
@@ -288,9 +280,6 @@ def findVariableDefinition(buffer):
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
-        if token == "-" and prevToken == "-":
-            token = "--"
-
         if requiredToken == "":
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
@@ -314,9 +303,6 @@ def findFunctionWrapper(buffer):
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
-        if token == "-" and prevToken == "-":
-            token = "--"
-
         if requiredToken == "":
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
@@ -516,9 +502,6 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
-        if token == "-" and prevToken == "-":
-            token = "--"
-
         if requiredToken == "":
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
