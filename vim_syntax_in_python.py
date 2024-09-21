@@ -84,7 +84,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
             continue
-        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)+$", prevToken):
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
             requiredToken = ""
@@ -247,7 +247,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
             continue
-        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)+$", prevToken):
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
             requiredToken = ""
@@ -306,7 +306,7 @@ def findVariableDefinition(buffer):
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
             continue
-        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)+$", prevToken):
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
             requiredToken = ""
@@ -325,7 +325,7 @@ def findFunctionWrapper(buffer):
         if tokenBlock[0] == "":
             continue
 
-        token, prevToken = tokenBlock[0], token
+        token, prevToken = tokenBlock[0].lower(), token
         lineNumber = tokenBlock[1]
 
         # this section is all about skipping based on strings and comments
@@ -336,13 +336,13 @@ def findFunctionWrapper(buffer):
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
             continue
-        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)+$", prevToken):
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
             requiredToken = ""
             continue
 
-        if token.lower() == "function" or token.lower() == "report":
+        if token == "function" or token == "report":
             latestFunctionLineNumber = lineNumber
 
     return latestFunctionLineNumber
@@ -542,7 +542,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             requiredToken = getRequiredToken(token)
         elif token != requiredToken:
             continue
-        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)+$", prevToken):
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
             requiredToken = ""
