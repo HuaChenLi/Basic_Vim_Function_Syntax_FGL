@@ -12,7 +12,7 @@ FGL_SUFFIX = ".4gl"
 LOG_DIRECTORY = os.path.join(TAGS_FILE_DIRECTORY, "fgl_syntax_log")
 
 def generateTags(inputString, currentFile, pid, bufNum):
-    start = time.time()
+    vimSyntaxStart = time.time()
     writeSingleLineToLog("=========================================================")
     writeSingleLineToLog("vim syntax start for file: " + currentFile)
     writeSingleLineToLog("=========================================================")
@@ -146,9 +146,9 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
     writeTagsFile(tagsLinesList, pid, bufNum)
 
-    end = time.time()
-    length = end - start
-    writeSingleLineToLog("vim syntax took " + str(length) + " seconds")
+    vimSyntaxEnd = time.time()
+    vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
+    writeSingleLineToLog("vim syntax for " + currentFile + " took " + str(vimSyntaxLengthOfTime) + " seconds")
 
 def createListOfTags(functionName, lineNumber, currentFile, functionTokens):
     # this is interesting, I would need to, for each separation, create a tagLine
@@ -352,6 +352,8 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     tokenList = tokenizeLinesOfFiles(file)
 
     tagsList = []
+    objFileList = []
+    custLibFileList = []
     libFileList = []
 
     isImportingObjectFiles = False
@@ -386,10 +388,7 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
 
         if isImportingObjectFiles and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
-            tmpTuple = getPublicFunctionsFromLibrary(file, [prevPrevToken], [currentDirectory], existingFunctionNames)
-            tagsList.extend(tmpTuple[0])
-            existingFunctionNames.update(tmpTuple[1])
-
+            objFileList.append((file, prevPrevToken))
 
         if token == "=" and prevToken == "CUSTLIBS":
             isImportingCustLibFiles = True
@@ -399,9 +398,7 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
 
         if isImportingCustLibFiles and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
-            tmpTuple = getPublicFunctionsFromLibrary(file, [prevPrevToken], packagePaths, existingFunctionNames)
-            tagsList.extend(tmpTuple[0])
-            existingFunctionNames.update(tmpTuple[1])
+            custLibFileList.append((file, prevPrevToken))
 
         if token == "=" and prevToken == "LIBFILES":
             isImportingLibFiles = True
@@ -421,14 +418,34 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
                 # allows the environment variable to be split depending on the os
                 libFilePath = os.environ[token]
             except:
-                # this is in case the FGLLDPATH doesn't exist
+                # this is in case the environment variable doesn't exist
                 pass
         elif isImportingLibFiles and token != "a" and prevToken == "/":
             libFilePath = os.path.join(libFilePath, token)
 
-    for f in libFileList:
-        tmpTuple = getPublicFunctionsFromLibrary(f, [os.path.splitext(os.path.basename(f))[0]], [libFilePath], existingFunctionNames)
+    startTime = time.time()
+    for obj in objFileList:
+        tmpTuple = getPublicFunctionsFromLibrary(obj[0], [obj[1]], [currentDirectory], existingFunctionNames)
         tagsList.extend(tmpTuple[0])
+        existingFunctionNames.update(tmpTuple[1])
+    endTime = time.time()
+    lengthTime = endTime - startTime
+    writeSingleLineToLog("OBJFILES took " + str(lengthTime) + " seconds")
+
+    startTime = time.time()
+    for custLib in custLibFileList:
+        tmpTuple = getPublicFunctionsFromLibrary(custLib[0], [custLib[1]], packagePaths, existingFunctionNames)
+        tagsList.extend(tmpTuple[0])
+        existingFunctionNames.update(tmpTuple[1])
+    endTime = time.time()
+    writeSingleLineToLog("CUSTLIBS took " + str(lengthTime) + " seconds")
+
+    startTime = time.time()
+    for libFile in libFileList:
+        tmpTuple = getPublicFunctionsFromLibrary(libFile, [os.path.splitext(os.path.basename(libFile))[0]], [libFilePath], existingFunctionNames)
+        tagsList.extend(tmpTuple[0])
+    endTime = time.time()
+    writeSingleLineToLog("LIBFILES took " + str(lengthTime) + " seconds")
 
     return tagsList
 
