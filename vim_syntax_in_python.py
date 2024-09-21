@@ -132,11 +132,11 @@ def generateTags(inputString, currentFile, pid, bufNum):
             concatenatedImportString = ""
             continue
 
-        if isImportingLibrary and token.lower() == "as":
+        if isImportingLibrary and tokenLower == "as":
             importFilePath = importFilePath + FGL_SUFFIX
             continue
 
-        if prevToken == "\n" and token.lower() == "globals":
+        if prevToken == "\n" and tokenLower == "globals":
             isImportingGlobal = True
 
     startTime = time.time()
