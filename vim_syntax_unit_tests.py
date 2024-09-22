@@ -28,7 +28,7 @@ class TestStringMethods(unittest.TestCase):
 
     def test_tokenizeLinesOfFiles(self):
         inputString = [("import fgl import.basic.functions"), ("import fgl other.functions")]
-        outputArray = [("import", 1), ("fgl", 1), ("import", 1), (".", 1), ("basic", 1), (".", 1), ("functions", 1), ("\n", 1), ("import", 2), ("fgl", 2), ("other", 2), (".", 2), ("functions", 2), ("\n", 2)]
+        outputArray = [("import"), ("fgl"), ("import"), ("."), ("basic"), ("."), ("functions"), ("\n"), ("import"), ("fgl"), ("other"), ("."), ("functions"), ("\n")]
         self.assertEqual(vim_syntax_in_python.tokenizeLinesOfFiles(inputString), outputArray)
 
 if __name__ == '__main__':
