@@ -61,10 +61,12 @@ def generateTags(inputString, currentFile, pid, bufNum):
     token = "\n"
     isImportingGlobal = False
     globalFilePath = ""
+    lineNumber = 0
 
     for tokenBlock in tokenList:
         tokenLower, token, prevToken, prevPrevToken = tokenBlock[0], tokenBlock[0], tokenLower, prevToken
-        lineNumber = tokenBlock[1]
+        if token == "\n":
+            lineNumber += 1
 
         if isImportingGlobal:
             if (requiredToken == '"' and token != '"') or (requiredToken == "'" and token != "'") or (requiredToken == "`" and token != "`"):
@@ -223,12 +225,14 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
     prevPrevToken = ""
     prevToken = ""
     token = "\n"
+    lineNumber = 0
 
     startTime = time.time()
 
     for tokenBlock in tokenList:
         token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
-        lineNumber = tokenBlock[1]
+        if token == "\n":
+            lineNumber += 1
 
         if token in tokenDictionary and requiredToken == "":
             requiredToken = getRequiredToken(token)
@@ -278,10 +282,12 @@ def findVariableDefinition(buffer):
 
     prevToken = ""
     token = "\n"
+    lineNumber = 0
     for tokenBlock in tokenList:
         prevToken = token
         token = tokenBlock[0]
-        lineNumber = tokenBlock[1]
+        if token == "\n":
+            lineNumber += 1
 
         # this section is all about skipping based on strings and comments
         if token in tokenDictionary and requiredToken == "":
@@ -301,10 +307,12 @@ def findFunctionWrapper(buffer):
     token = "\n"
 
     latestFunctionLineNumber = 0
+    lineNumber = 0
 
     for tokenBlock in tokenList:
         token, prevToken = tokenBlock[0], token
-        lineNumber = tokenBlock[1]
+        if token == "\n":
+            lineNumber += 1
 
         # this section is all about skipping based on strings and comments
         if token in tokenDictionary and requiredToken == "":
@@ -376,8 +384,6 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
             continue
 
         token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
-        lineNumber = tokenBlock[1]
-
         if token == "=":
             importingFileType = prevToken
             continue
@@ -500,12 +506,14 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
     prevPrevToken = ""
     prevToken = ""
     token = "\n"
+    lineNumber = 0
 
     startTime = time.time()
 
     for tokenBlock in tokenList:
         token, prevToken, prevPrevToken = tokenBlock[0], token, prevToken
-        lineNumber = tokenBlock[1]
+        if token == "\n":
+            lineNumber += 1
 
         # this section is all about skipping based on strings and comments
         if token in tokenDictionary and requiredToken == "":
