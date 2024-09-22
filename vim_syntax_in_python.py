@@ -223,13 +223,13 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
     requiredToken = ""
     prevPrevToken = ""
     prevToken = ""
-    token = "\n"
+    tmpToken = "\n"
     lineNumber = 1
 
     startTime = time.time()
 
-    for tokenBlock in tokenList:
-        token, prevToken, prevPrevToken = tokenBlock, token, prevToken
+    for token in tokenList:
+        tmpToken, prevToken, prevPrevToken = token, tmpToken, prevToken
         if token == "\n":
             lineNumber += 1
 
@@ -280,11 +280,11 @@ def findVariableDefinition(buffer):
     tokenList = tokenizeLinesOfFiles(buffer)
 
     prevToken = ""
-    token = "\n"
+    tmpToken = "\n"
     lineNumber = 0
-    for tokenBlock in tokenList:
-        prevToken = token
-        token = tokenBlock
+    for token in tokenList:
+        prevToken = tmpToken
+        token = token
         if token == "\n":
             lineNumber += 1
 
@@ -303,13 +303,13 @@ def findFunctionWrapper(buffer):
     tokenList = tokenizeLinesOfFiles(buffer)
     requiredToken = ""
     prevToken = ""
-    token = "\n"
+    tmpToken = "\n"
 
     latestFunctionLineNumber = 0
-    lineNumber = 0
+    lineNumber = 1
 
-    for tokenBlock in tokenList:
-        token, prevToken = tokenBlock, token
+    for token in tokenList:
+        tmpToken, prevToken = token, tmpToken
         if token == "\n":
             lineNumber += 1
 
@@ -366,7 +366,7 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
 
     prevPrevToken = ""
     prevToken = ""
-    token = "\n"
+    tmpToken = "\n"
 
     libFilePath = ""
 
@@ -378,11 +378,11 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
         # this is in case the FGLLDPATH doesn't exist
         pass
 
-    for tokenBlock in tokenList:
-        if tokenBlock == "":
+    for token in tokenList:
+        if token == "":
             continue
 
-        token, prevToken, prevPrevToken = tokenBlock, token, prevToken
+        tmpToken, prevToken, prevPrevToken = token, tmpToken, prevToken
         if token == "=":
             importingFileType = prevToken
             continue
@@ -504,13 +504,13 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
     requiredToken = ""
     prevPrevToken = ""
     prevToken = ""
-    token = "\n"
+    tmpToken = "\n"
     lineNumber = 0
 
     startTime = time.time()
 
-    for tokenBlock in tokenList:
-        token, prevToken, prevPrevToken = tokenBlock, token, prevToken
+    for token in tokenList:
+        tmpToken, prevToken, prevPrevToken = token, tmpToken, prevToken
         if token == "\n":
             lineNumber += 1
 
