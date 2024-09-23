@@ -40,7 +40,7 @@ endfunction
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! setFunctions#GenerateTags(filePath, pid, bufNum)
     execute 'set tags=~/.temp_tags/.temp_tags.' . a:pid . '.' . a:bufNum . '.ctags'
-    let fileContent = getline(1, '$')
+    let fileContent = join(getline(1,'$'), "\n")
 
     " python for 2, python3 for 3
 python << EOF
@@ -115,6 +115,22 @@ EOF
 
 endfunction
 
+function! setFunctions#ArchiveTempTags(pid)
+
+python << EOF
+import sys
+import vim
+
+script_dir = vim.eval('s:script_dir')
+sys.path.insert(0, script_dir)
+
+import vim_syntax_in_python
+
+vim_syntax_in_python.archiveTempTags(vim.eval('a:pid'))
+EOF
+
+endfunction
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! setFunctions#Setup()
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -131,7 +147,8 @@ function! setFunctions#Setup()
 
     " This runs the GenerateTags() whenever a buffer is switched to
     " This could potentially get pretty heavy depending on the number of files there are
-    autocmd! BufEnter <buffer> silent! call setFunctions#GenerateTags(g:filePath, getpid(), bufnr('%')) &
+    autocmd! BufEnter <buffer> call setFunctions#GenerateTags(g:filePath, getpid(), bufnr('%'))
+    autocmd! VimLeave <buffer> call setFunctions#ArchiveTempTags(getpid())
 
     " The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
     nnoremap <buffer> <silent> <C-]> : execute 'tag '.setFunctions#CWordWithKey(g:filePath, getpid(), bufnr('%'))<CR>

@@ -1,6 +1,7 @@
 import re
 import os
 import time
+import shutil
 from os.path import expanduser
 from datetime import datetime
 
@@ -43,8 +44,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
         # this is in case the FGLLDPATH doesn't exist
         pass
 
-    file = open(currentFile, "r")
-    tokenList = tokenizeString(file.read())
+    tokenList = tokenizeString(inputString)
 
     # This is the part where we want to loop through and find the function definitions in the current file
     tagsLinesList = []
@@ -540,3 +540,16 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
     writeSingleLineToLog("if statements took " + str(length) + " seconds")
 
     return tagsLinesList
+
+def archiveTempTags(pid):
+    archiveDirectory = os.path.join(TAGS_FILE_DIRECTORY, datetime.today().strftime('%Y-%m-%d'))
+    if not os.path.isdir(archiveDirectory):
+        os.makedirs(archiveDirectory)
+
+    searchString = r"\b" + re.escape(pid) + r"\b"
+    allTagFiles = os.listdir(TAGS_FILE_DIRECTORY)
+    for f in allTagFiles:
+        tagsFile = os.path.join(TAGS_FILE_DIRECTORY, f)
+        if os.path.isfile(tagsFile) and re.search(searchString, os.path.join(TAGS_FILE_DIRECTORY, f)):
+            shutil.move(tagsFile, archiveDirectory)
+            writeSingleLineToLog("archived " + tagsFile)
