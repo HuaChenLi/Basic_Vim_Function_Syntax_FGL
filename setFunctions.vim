@@ -56,6 +56,26 @@ EOF
 
 endfunction
 
+function! setFunctions#GenerateTagsForCurrentBuffer(filePath, pid, bufNum)
+    if !getbufinfo(a:bufNum)[0].changed
+	return
+    endif
+    let fileContent = join(getline(1,'$'), "\n")
+
+    " python for 2, python3 for 3
+python << EOF
+import sys
+import vim
+
+script_dir = vim.eval('s:script_dir')
+sys.path.insert(0, script_dir)
+
+import vim_syntax_in_python
+
+vim_syntax_in_python.generateTagsForCurrentBuffer(vim.eval('fileContent'), vim.eval('a:filePath'), vim.eval('a:pid'), vim.eval('a:bufNum'))
+EOF
+
+endfunction
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! setFunctions#CWordWithKey(filePath, pid, bufNum) abort
@@ -145,6 +165,8 @@ function! setFunctions#Setup()
     " This could potentially get pretty heavy depending on the number of files there are
     autocmd! BufEnter <buffer> call setFunctions#GenerateTags(g:filePath, getpid(), bufnr('%'))
     autocmd! VimLeave <buffer> call setFunctions#ArchiveTempTags(getpid())
+    autocmd! InsertLeave <buffer> call setFunctions#GenerateTagsForCurrentBuffer(g:filePath, getpid(), bufnr('%'))
+    autocmd! BufWritePost <buffer> call setFunctions#GenerateTags(g:filePath, getpid(), bufnr('%'))
 
     " The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
     nnoremap <buffer> <silent> <C-]> : execute 'tag '.setFunctions#CWordWithKey(g:filePath, getpid(), bufnr('%'))<CR>

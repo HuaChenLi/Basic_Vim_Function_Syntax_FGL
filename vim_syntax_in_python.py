@@ -180,6 +180,130 @@ def generateTags(inputString, currentFile, pid, bufNum):
     vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
     writeSingleLineToLog("vim syntax for " + currentFile + " took " + str(vimSyntaxLengthOfTime) + " seconds")
 
+def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
+    vimSyntaxStart = time.time()
+    writeSingleLineToLog("=========================================================")
+    writeSingleLineToLog("vim syntax start for file: " + currentFile)
+    writeSingleLineToLog("=========================================================")
+
+    if not os.path.exists(TAGS_FILE_DIRECTORY):
+        os.makedirs(TAGS_FILE_DIRECTORY)
+
+    tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + TAGS_SUFFIX
+
+    currentDirectory = os.path.dirname(currentFile)
+    packagePaths = [currentDirectory]
+    try:
+        # allows the environment variable to be split depending on the os
+        packagePaths.extend(os.environ['FGLLDPATH'].split(os.pathsep))
+    except:
+        # this is in case the FGLLDPATH doesn't exist
+        pass
+
+    tokenList = tokenizeString(inputString)
+
+    # This is the part where we want to loop through and find the function definitions in the current file
+    tagsLinesList = []
+    existingFunctionNames = set()
+
+    isImportingLibrary = False
+
+    importFilePath = ""
+    concatenatedImportString = ""
+    requiredToken = ""
+    prevPrevToken = ""
+    prevToken = ""
+    tokenLower = "\n"
+    isImportingGlobal = False
+    globalFilePath = ""
+    lineNumber = 1
+
+    for token in tokenList:
+        tokenLower, prevToken, prevPrevToken = token, tokenLower, prevToken
+        if token == "\n":
+            lineNumber += 1
+
+        if isImportingGlobal:
+            if (requiredToken == '"' and token != '"') or (requiredToken == "'" and token != "'") or (requiredToken == "`" and token != "`"):
+                globalFilePath = globalFilePath + token
+            elif (requiredToken == '"' and token == '"') or (requiredToken == "'" and token == "'") or (requiredToken == "`" and token == "`"):
+                isImportingGlobal = False
+                tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory]))
+
+        if token in tokenDictionary and requiredToken == "":
+            requiredToken = getRequiredToken(token)
+        elif requiredToken != "" and token != requiredToken:
+            continue
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
+            continue
+        elif token == requiredToken:
+            requiredToken = ""
+            continue
+
+        tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
+
+        isPrevPrevTokenEnd = prevPrevToken == "end"
+        isPreviousTokenFunctionOrReport = (prevToken == "function") or (prevToken == "report")
+
+        if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd:
+            # We create the list of the function tags
+            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            existingFunctionNames.add(token)
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension]))
+
+        if tokenLower == "import" and prevToken == "\n":
+            # we need to check that Import is at the start of the line
+            isImportingLibrary = True
+            continue
+
+        if isImportingLibrary and prevToken == "import" and tokenLower == "fgl":
+            continue
+        elif isImportingLibrary and prevToken == "import" and not tokenLower == "fgl":
+            # for when importing not an FGL library
+            isImportingLibrary = False
+            continue
+
+        isPreviousTokenAs = prevToken == "as"
+
+        if isImportingLibrary and token != "." and token != "\n" and not tokenLower == "as" and not isPreviousTokenAs:
+            importFilePath = os.path.join(importFilePath, token)
+            if concatenatedImportString == "":
+                concatenatedImportString = token
+            else:
+                concatenatedImportString = concatenatedImportString + "." + token
+            continue
+
+        # When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
+        # The functionName is the AS file, while the file is the path to the file
+
+        if isImportingLibrary and token == "\n" and not isPreviousTokenAs:
+            isImportingLibrary = False
+            importFilePath = importFilePath + FGL_SUFFIX
+            tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, None))
+            importFilePath = ""
+            concatenatedImportString = ""
+            continue
+        elif isImportingLibrary and isPreviousTokenAs:
+            isImportingLibrary = False
+            tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, token))
+            importFilePath = ""
+            concatenatedImportString = ""
+            continue
+
+        if isImportingLibrary and tokenLower == "as":
+            importFilePath = importFilePath + FGL_SUFFIX
+            continue
+
+        if prevToken == "\n" and tokenLower == "globals":
+            isImportingGlobal = True
+
+    writeTagsFile(tagsLinesList, tagsFile, "w")
+
+    vimSyntaxEnd = time.time()
+    vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
+    writeSingleLineToLog("vim syntax for " + currentFile + " took " + str(vimSyntaxLengthOfTime) + " seconds")
+
+
 def createListOfTags(functionName, currentFile, lineNumber, functionTokens):
     # this is interesting, I would need to, for each separation, create a tagLine
     tagsLinesList = []
