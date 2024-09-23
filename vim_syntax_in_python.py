@@ -278,7 +278,7 @@ def tokenizeString(inputString):
     return tokenBlock
 
 def findVariableDefinition(buffer):
-    tokenList = tokenizeLinesOfFiles(buffer)
+    tokenList = tokenizeString(buffer)
 
     prevToken = ""
     tmpToken = "\n"
@@ -301,7 +301,7 @@ def findVariableDefinition(buffer):
             continue
 
 def findFunctionWrapper(buffer):
-    tokenList = tokenizeLinesOfFiles(buffer)
+    tokenList = tokenizeString(buffer)
     requiredToken = ""
     prevToken = ""
     tmpToken = "\n"
@@ -331,14 +331,6 @@ def findFunctionWrapper(buffer):
             latestFunctionLineNumber = lineNumber
 
     return latestFunctionLineNumber
-
-def tokenizeLinesOfFiles(file):
-    tokenList = []
-    for line in file:
-        tokenBlock = tokenizeString(line)
-        tokenBlock.append("\n")
-        tokenList.extend([token for token in tokenBlock])
-    return tokenList
 
 def getRequiredToken(inputToken):
     return tokenDictionary.get(inputToken, "")

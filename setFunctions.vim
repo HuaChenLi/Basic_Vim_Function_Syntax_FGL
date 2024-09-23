@@ -13,7 +13,7 @@ let s:script_dir = fnamemodify(resolve(expand('<sfile>', ':p')), ':h')
 function! setFunctions#GotoDefinition()
     let line = line('.')
     let col = col('.')
-    let fileContent = getline(1, line)
+    let fileContent = join(getline(1, line), "\n")
     " I'd rather pass everything into a python script and find the define that way
 
 python << EOF
@@ -76,7 +76,7 @@ endfunction
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! ShowFunctionName()
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    let fileContent = getline(1, line('.'))
+    let fileContent = join(getline(1, line('.')),"\n")
 
 python << EOF
 import sys
