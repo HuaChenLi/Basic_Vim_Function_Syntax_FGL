@@ -2,6 +2,7 @@ import re
 import os
 import time
 import shutil
+import vim # type: ignore
 from os.path import expanduser
 from datetime import datetime
 
@@ -11,6 +12,7 @@ TAGS_FILE_BASE = os.path.join(HOME, ".temp_tags",".temp_tags")
 FGL_DIRECTORY_SUFFIX = ".4gs"
 FGL_SUFFIX = ".4gl"
 LOG_DIRECTORY = os.path.join(TAGS_FILE_DIRECTORY, "fgl_syntax_log")
+TAGS_SUFFIX = ".ctags"
 
 tokenDictionary = {
     "'" : "'",
@@ -30,10 +32,15 @@ def generateTags(inputString, currentFile, pid, bufNum):
     if not os.path.exists(TAGS_FILE_DIRECTORY):
         os.makedirs(TAGS_FILE_DIRECTORY)
 
-    tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".ctags"
-    if os.path.exists(tagsFile):
-        writeSingleLineToLog("vim tags file: " + tagsFile + " exists, exiting")
-        return
+    tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + TAGS_SUFFIX
+
+    searchString = r"\b" + re.escape(pid + "." + bufNum) + r"\b"
+
+    allTagFiles = os.listdir(TAGS_FILE_DIRECTORY)
+    for f in allTagFiles:
+        existingTagsFile = os.path.join(TAGS_FILE_DIRECTORY, f)
+        if os.path.isfile(existingTagsFile) and re.search(searchString, os.path.join(TAGS_FILE_DIRECTORY, f)):
+            vim.command("execute 'set tags+=" + existingTagsFile + "'")
 
     currentDirectory = os.path.dirname(currentFile)
     packagePaths = [currentDirectory]
@@ -144,24 +151,30 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if prevToken == "\n" and tokenLower == "globals":
             isImportingGlobal = True
 
+    writeTagsFile(tagsLinesList, tagsFile, "w")
+
     startTime = time.time()
     for lib in librariesList:
         importFilePath = lib[0]
         fileAlias = lib[1].split(".")
-        tmpTuple = getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths, existingFunctionNames)
-        tagsLinesList.extend(tmpTuple[0])
-        existingFunctionNames.update(tmpTuple[1])
+        libraryTagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + "." + lib[1] + TAGS_SUFFIX
+        if not os.path.isfile(libraryTagsFile):
+            tmpTuple = getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths, existingFunctionNames)
+            if tmpTuple[0] is not None:
+                writeTagsFile(tmpTuple[0], libraryTagsFile, "a")
+                existingFunctionNames.update(tmpTuple[1])
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting public functions took " + str(lengthTime) + " seconds")
 
     startTime = time.time()
-    tagsLinesList.extend(getMakefileFunctions(currentDirectory, existingFunctionNames))
+    makefileTagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".Makefile" + TAGS_SUFFIX
+    if not os.path.isfile(makefileTagsFile):
+        writeTagsFile(getMakefileFunctions(currentDirectory, existingFunctionNames), makefileTagsFile, "a")
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting Makefile Functions took " + str(lengthTime) + " seconds")
 
-    writeTagsFile(tagsLinesList, pid, bufNum)
 
     vimSyntaxEnd = time.time()
     vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
@@ -184,14 +197,14 @@ def createListOfTags(functionName, currentFile, lineNumber, functionTokens):
 def createSingleTagLine(jumpToString, jumpToFile, lineNumber):
     return "{0}\t{1}\t{2}\n".format(jumpToString, jumpToFile, lineNumber)
 
-def writeTagsFile(tagsLinesList, pid, bufNum):
+def writeTagsFile(tagsLinesList, tagsFile, mode):
     # The tags file needs to be sorted alphabetically (by ASCII code) in order to work
     tagsLinesList.sort()
-    tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".ctags"
-    file = open(tagsFile, "a")
+    file = open(tagsFile, mode)
     for line in tagsLinesList:
         file.write(line)
     file.close()
+    vim.command("execute 'set tags+=" + tagsFile + "'")
 
 def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingFunctionNames):
     # I think Genero probably doesn't have overloading, but I think the priority for function scope goes
@@ -337,7 +350,7 @@ def getRequiredToken(inputToken):
 
 def removeTempTags(pid, bufNum):
     try:
-        tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".ctags"
+        tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + TAGS_SUFFIX
         os.remove(tagsFile)
     except OSError:
         pass

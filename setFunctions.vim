@@ -39,7 +39,6 @@ endfunction
 " This is the wrapper function of the python script
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! setFunctions#GenerateTags(filePath, pid, bufNum)
-    execute 'set tags=~/.temp_tags/.temp_tags.' . a:pid . '.' . a:bufNum . '.ctags'
     let fileContent = join(getline(1,'$'), "\n")
 
     " python for 2, python3 for 3
@@ -65,9 +64,6 @@ function! setFunctions#CWordWithKey(filePath, pid, bufNum) abort
     execute 'set iskeyword+=46'
     let selectedWord = expand('<cword>')
     execute 'set iskeyword-=46'
-
-    " Generates the tags when jumping to another file
-    call setFunctions#GenerateTags(a:filePath, a:pid, a:bufNum)
 
     return selectedWord
 endfunction
