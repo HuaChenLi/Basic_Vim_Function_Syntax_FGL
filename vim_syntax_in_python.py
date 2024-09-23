@@ -25,6 +25,7 @@ tokenDictionary = {
 
 def generateTags(inputString, currentFile, pid, bufNum):
     vimSyntaxStart = time.time()
+    startTime = time.time()
     writeSingleLineToLog("=========================================================")
     writeSingleLineToLog("vim syntax start for file: " + currentFile)
     writeSingleLineToLog("=========================================================")
@@ -152,6 +153,9 @@ def generateTags(inputString, currentFile, pid, bufNum):
             isImportingGlobal = True
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
+    endTime = time.time()
+    lengthTime = endTime - startTime
+    writeSingleLineToLog("going through current buffer took " + str(lengthTime) + " seconds")
 
     startTime = time.time()
     for lib in librariesList:
@@ -302,7 +306,6 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
     vimSyntaxEnd = time.time()
     vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
     writeSingleLineToLog("vim syntax for " + currentFile + " took " + str(vimSyntaxLengthOfTime) + " seconds")
-
 
 def createListOfTags(functionName, currentFile, lineNumber, functionTokens):
     # this is interesting, I would need to, for each separation, create a tagLine
