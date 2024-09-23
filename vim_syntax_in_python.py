@@ -43,7 +43,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
         # this is in case the FGLLDPATH doesn't exist
         pass
 
-    tokenList = tokenizeLinesOfFiles(inputString)
+    file = open(currentFile, "r")
+    tokenList = tokenizeString(file.read())
 
     # This is the part where we want to loop through and find the function definitions in the current file
     tagsLinesList = []
@@ -211,7 +212,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
     file = open(packageFile, "r")
 
     startTime = time.time()
-    tokenList = tokenizeLinesOfFiles(file)
+    tokenList = tokenizeString(file.read())
     endTime = time.time()
     length = endTime - startTime
     writeSingleLineToLog("tokenizing " + importFile + " took " + str(length) + " seconds and the number of tokens is " + str(len(tokenList)))
@@ -273,7 +274,7 @@ def tokenizeString(inputString):
     # probably can create a regex that is smart enough to do the whole thing by itself, but can probably just handle it in the python code afterwards
 
     # this regex is a bit more efficient than before, not sure if it can be even more efficient
-    tokenBlock = re.findall(r"\w+|!|\"|#|\$|%|&|'|\(|\)|\*|\+|,|--|-|\/|\.|:|;|<|=|>|\?|@|\[|\\+|\]|\^|`|{|\||}|~", inputString)
+    tokenBlock = re.findall(r"\w+|!|\"|#|\$|%|&|'|\(|\)|\*|\+|,|--|-|\/|\.|:|;|<|=|>|\?|@|\[|\\+|\]|\^|`|{|\||}|~|\n", inputString)
     return tokenBlock
 
 def findVariableDefinition(buffer):
@@ -354,7 +355,7 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     if not os.path.isfile(makeFile):
         return []
     file = open(makeFile, "r")
-    tokenList = tokenizeLinesOfFiles(file)
+    tokenList = tokenizeString(file.read())
 
     tagsList = []
     objFileList = []
@@ -494,7 +495,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
     file = open(packageFile, "r")
 
     startTime = time.time()
-    tokenList = tokenizeLinesOfFiles(file)
+    tokenList = tokenizeString(file.read())
     endTime = time.time()
     length = endTime - startTime
     writeSingleLineToLog("tokenizing " + importFile + " took " + str(length) + " seconds and the number of tokens is " + str(len(tokenList)))
