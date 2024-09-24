@@ -34,7 +34,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
         os.makedirs(TAGS_FILE_DIRECTORY)
 
     vim.command("execute 'set tags='") # resets the tags
-    
+
     tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + TAGS_SUFFIX
 
     searchString = r"\b" + re.escape(pid + "." + bufNum) + r"\b"
