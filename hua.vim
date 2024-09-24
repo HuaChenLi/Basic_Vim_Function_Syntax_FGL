@@ -30,8 +30,11 @@ syntax region commentRegion start=/#/ end=/\n/
 syntax region commentRegion start=/--/ end=/\n/
 syntax region commentRegion start=/{/ end=/}/
 
-syntax region stringRegion start=/"/ skip=/\(\\\)\@<!\(\\\\\)*\\"/ end=/"/
-syntax region stringRegion start=/'/ skip=/\(\\\)\@<!\(\\\\\)*\\'/ end=/'/
+" the two syntaxes are equivalent in function, I don't know which is better
+"syntax region stringRegion start=/"/ skip=/\(\\\)\@<!\(\\\\\)*\\"/ end=/"/
+syntax region stringRegion start=/"/ skip=/\\\\\|\\"/ end=/"/
+"syntax region stringRegion start=/'/ skip=/\(\\\)\@<!\(\\\\\)*\\'/ end=/'/
+syntax region stringRegion start=/'/ skip=/\\\\\|\\'/ end=/'/
 syntax region stringRegion start=/`/ end=/`/
 
 
