@@ -33,6 +33,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
     if not os.path.exists(TAGS_FILE_DIRECTORY):
         os.makedirs(TAGS_FILE_DIRECTORY)
 
+    vim.command("execute 'set tags='") # resets the tags
+    
     tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + TAGS_SUFFIX
 
     searchString = r"\b" + re.escape(pid + "." + bufNum) + r"\b"
