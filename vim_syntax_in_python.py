@@ -101,8 +101,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd:
             # We create the list of the function tags
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
             existingFunctionNames.add(token)
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension]))
 
         if tokenLower == "import" and prevToken == "\n":
             # we need to check that Import is at the start of the line
@@ -253,7 +253,7 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
             # We create the list of the function tags
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             existingFunctionNames.add(token)
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension]))
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
 
         if tokenLower == "import" and prevToken == "\n":
             # we need to check that Import is at the start of the line
@@ -307,12 +307,16 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
     vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
     writeSingleLineToLog("vim syntax for " + currentFile + " took " + str(vimSyntaxLengthOfTime) + " seconds")
 
-def createListOfTags(functionName, currentFile, lineNumber, functionTokens):
+def createListOfTags(functionName, currentFile, lineNumber, functionTokens, existingFunctionNames):
     # this is interesting, I would need to, for each separation, create a tagLine
     tagsLinesList = []
 
-    tagLine = "{0}\t{1}\t{2}\n".format(functionName, currentFile, lineNumber)
-    tagsLinesList.append(tagLine)
+    if existingFunctionNames is None:
+        tagsLinesList.append(createSingleTagLine(functionName, currentFile, lineNumber))
+    elif len(existingFunctionNames) == 0:
+        tagsLinesList.append(createSingleTagLine(functionName, currentFile, lineNumber))
+    elif functionName not in existingFunctionNames:
+            tagsLinesList.append(createSingleTagLine(functionName, currentFile, lineNumber))
 
     functionNameString = functionName
     for token in reversed(functionTokens):
@@ -390,9 +394,9 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
         isPrevPrevTokenPrivate = prevPrevToken == "private"
         isPreviousTokenFunctionOrReport = (prevToken == "function") or (prevToken == "report")
 
-        if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate and token not in existingFunctionNames:
+        if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate:
             # We create the list of the function tags
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias))
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=existingFunctionNames))
             existingFunctionNames.add(token)
             continue
 
@@ -400,7 +404,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
         isPrevTokenConstant = prevToken == "constant"
 
         if isPrevTokenConstant and isPrevPrevTokenPublic:
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias))
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()
     length = endTime - startTime
@@ -665,7 +669,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
 
         if isPrevTokenConstant and isPrevPrevTokenPublic:
             # We create the list of the function tags
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias))
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()
     length = endTime - startTime
