@@ -56,10 +56,9 @@ EOF
 
 endfunction
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! setFunctions#GenerateTagsForCurrentBuffer(filePath, pid, bufNum)
-    if !getbufinfo(a:bufNum)[0].changed
-	return
-    endif
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     let fileContent = join(getline(1,'$'), "\n")
 
     " python for 2, python3 for 3
