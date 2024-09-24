@@ -65,7 +65,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
     importFilePath = ""
     concatenatedImportString = ""
-    requiredToken = ""
+    requiredToken = None
     prevPrevToken = ""
     prevToken = ""
     tokenLower = "\n"
@@ -85,14 +85,14 @@ def generateTags(inputString, currentFile, pid, bufNum):
                 isImportingGlobal = False
                 tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory]))
 
-        if token in tokenDictionary and requiredToken == "":
-            requiredToken = getRequiredToken(token)
-        elif requiredToken != "" and token != requiredToken:
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken = ""
+            requiredToken = None
             continue
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
@@ -213,7 +213,7 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
 
     importFilePath = ""
     concatenatedImportString = ""
-    requiredToken = ""
+    requiredToken = None
     prevPrevToken = ""
     prevToken = ""
     tokenLower = "\n"
@@ -233,14 +233,14 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
                 isImportingGlobal = False
                 tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory]))
 
-        if token in tokenDictionary and requiredToken == "":
-            requiredToken = getRequiredToken(token)
-        elif requiredToken != "" and token != requiredToken:
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken = ""
+            requiredToken = None
             continue
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
@@ -361,7 +361,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
 
     tagsLinesList = []
 
-    requiredToken = ""
+    requiredToken = None
     prevPrevToken = ""
     prevToken = ""
     tmpToken = "\n"
@@ -374,14 +374,14 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
         if token == "\n":
             lineNumber += 1
 
-        if token in tokenDictionary and requiredToken == "":
-            requiredToken = getRequiredToken(token)
-        elif requiredToken != "" and token != requiredToken:
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken = ""
+            requiredToken = None
             continue
 
         prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
@@ -413,6 +413,7 @@ def tokenizeString(inputString):
 def findVariableDefinition(buffer):
     tokenList = tokenizeString(buffer)
 
+    requiredToken = None
     prevToken = ""
     tmpToken = "\n"
     lineNumber = 0
@@ -423,19 +424,19 @@ def findVariableDefinition(buffer):
             lineNumber += 1
 
         # this section is all about skipping based on strings and comments
-        if token in tokenDictionary and requiredToken == "":
-            requiredToken = getRequiredToken(token)
-        elif requiredToken != "" and token != requiredToken:
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken = ""
+            requiredToken = None
             continue
 
 def findFunctionWrapper(buffer):
     tokenList = tokenizeString(buffer)
-    requiredToken = ""
+    requiredToken = None
     prevToken = ""
     tmpToken = "\n"
 
@@ -448,14 +449,14 @@ def findFunctionWrapper(buffer):
             lineNumber += 1
 
         # this section is all about skipping based on strings and comments
-        if token in tokenDictionary and requiredToken == "":
-            requiredToken = getRequiredToken(token)
-        elif requiredToken != "" and token != requiredToken:
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken = ""
+            requiredToken = None
             continue
 
         token = token.lower() # putting .lower() here so it doesn't run when it doesn't have to
@@ -464,9 +465,6 @@ def findFunctionWrapper(buffer):
             latestFunctionLineNumber = lineNumber
 
     return latestFunctionLineNumber
-
-def getRequiredToken(inputToken):
-    return tokenDictionary.get(inputToken, "")
 
 def removeTempTags(pid, bufNum):
     try:
@@ -631,7 +629,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
 
     tagsLinesList = []
 
-    requiredToken = ""
+    requiredToken = None
     prevPrevToken = ""
     prevToken = ""
     tmpToken = "\n"
@@ -645,14 +643,14 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             lineNumber += 1
 
         # this section is all about skipping based on strings and comments
-        if token in tokenDictionary and requiredToken == "":
-            requiredToken = getRequiredToken(token)
-        elif requiredToken != "" and token != requiredToken:
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken = ""
+            requiredToken is None
             continue
 
         prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
