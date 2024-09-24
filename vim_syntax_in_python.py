@@ -65,7 +65,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
     importFilePath = ""
     concatenatedImportString = ""
-    requiredToken = ""
+    requiredToken = None
     prevPrevToken = ""
     prevToken = ""
     tokenLower = "\n"
@@ -85,26 +85,24 @@ def generateTags(inputString, currentFile, pid, bufNum):
                 isImportingGlobal = False
                 tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory]))
 
-        if token in tokenDictionary and requiredToken == "":
-            requiredToken = getRequiredToken(token)
-        elif requiredToken != "" and token != requiredToken:
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken = ""
+            requiredToken = None
             continue
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        isPrevPrevTokenEnd = prevPrevToken == "end"
-        isPreviousTokenFunctionOrReport = (prevToken == "function") or (prevToken == "report")
-
-        if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd:
+        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end":
             # We create the list of the function tags
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
             existingFunctionNames.add(token)
+            continue
 
         if tokenLower == "import" and prevToken == "\n":
             # we need to check that Import is at the start of the line
@@ -153,6 +151,12 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         if prevToken == "\n" and tokenLower == "globals":
             isImportingGlobal = True
+            continue
+
+        if prevToken == "constant":
+            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
+
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
     endTime = time.time()
@@ -216,7 +220,7 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
 
     importFilePath = ""
     concatenatedImportString = ""
-    requiredToken = ""
+    requiredToken = None
     prevPrevToken = ""
     prevToken = ""
     tokenLower = "\n"
@@ -236,26 +240,24 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
                 isImportingGlobal = False
                 tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory]))
 
-        if token in tokenDictionary and requiredToken == "":
-            requiredToken = getRequiredToken(token)
-        elif requiredToken != "" and token != requiredToken:
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken = ""
+            requiredToken = None
             continue
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        isPrevPrevTokenEnd = prevPrevToken == "end"
-        isPreviousTokenFunctionOrReport = (prevToken == "function") or (prevToken == "report")
-
-        if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd:
+        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end":
             # We create the list of the function tags
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             existingFunctionNames.add(token)
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
+            continue
 
         if tokenLower == "import" and prevToken == "\n":
             # we need to check that Import is at the start of the line
@@ -302,6 +304,12 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
 
         if prevToken == "\n" and tokenLower == "globals":
             isImportingGlobal = True
+            continue
+
+        if prevToken == "constant":
+            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
+
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
 
@@ -313,22 +321,23 @@ def createListOfTags(functionName, currentFile, lineNumber, functionTokens, exis
     # this is interesting, I would need to, for each separation, create a tagLine
     tagsLinesList = []
 
+    # I've inlined the createSingleTagLine() function to increase the speed very marginally
     if existingFunctionNames is None:
-        tagsLinesList.append(createSingleTagLine(functionName, currentFile, lineNumber))
-    elif len(existingFunctionNames) == 0:
-        tagsLinesList.append(createSingleTagLine(functionName, currentFile, lineNumber))
+        tagsLinesList.append("%s\t%s\t%s\n" % (functionName, currentFile, lineNumber))
     elif functionName not in existingFunctionNames:
-            tagsLinesList.append(createSingleTagLine(functionName, currentFile, lineNumber))
+        tagsLinesList.append("%s\t%s\t%s\n" % (functionName, currentFile, lineNumber))
+    elif len(existingFunctionNames) == 0:
+        tagsLinesList.append("%s\t%s\t%s\n" % (functionName, currentFile, lineNumber))
 
     functionNameString = functionName
     for token in reversed(functionTokens):
-        functionNameString = token + "." + functionNameString
-        tagsLinesList.append(createSingleTagLine(functionNameString, currentFile, lineNumber))
+        functionNameString = "%s.%s" % (token, functionNameString)
+        tagsLinesList.append("%s\t%s\t%s\n" % (functionNameString, currentFile, lineNumber))
 
     return tagsLinesList
 
 def createSingleTagLine(jumpToString, jumpToFile, lineNumber):
-    return "{0}\t{1}\t{2}\n".format(jumpToString, jumpToFile, lineNumber)
+    return "%s\t%s\t%s\n" % (jumpToString, jumpToFile, lineNumber)
 
 def writeTagsFile(tagsLinesList, tagsFile, mode):
     # The tags file needs to be sorted alphabetically (by ASCII code) in order to work
@@ -367,7 +376,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
 
     tagsLinesList = []
 
-    requiredToken = ""
+    requiredToken = None
     prevPrevToken = ""
     prevToken = ""
     tmpToken = "\n"
@@ -380,32 +389,25 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
         if token == "\n":
             lineNumber += 1
 
-        if token in tokenDictionary and requiredToken == "":
-            requiredToken = getRequiredToken(token)
-        elif requiredToken != "" and token != requiredToken:
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken = ""
+            requiredToken = None
             continue
 
         prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        isPrevPrevTokenEnd = prevPrevToken == "end"
-        isPrevPrevTokenPrivate = prevPrevToken == "private"
-        isPreviousTokenFunctionOrReport = (prevToken == "function") or (prevToken == "report")
-
-        if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate:
+        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end" and not prevPrevToken == "private":
             # We create the list of the function tags
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=existingFunctionNames))
             existingFunctionNames.add(token)
             continue
 
-        isPrevPrevTokenPublic = prevPrevToken == "public"
-        isPrevTokenConstant = prevToken == "constant"
-
-        if isPrevTokenConstant and isPrevPrevTokenPublic:
+        if prevToken == "constant" and prevPrevToken == "public":
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()
@@ -426,6 +428,7 @@ def tokenizeString(inputString):
 def findVariableDefinition(buffer):
     tokenList = tokenizeString(buffer)
 
+    requiredToken = None
     prevToken = ""
     tmpToken = "\n"
     lineNumber = 0
@@ -436,19 +439,19 @@ def findVariableDefinition(buffer):
             lineNumber += 1
 
         # this section is all about skipping based on strings and comments
-        if token in tokenDictionary and requiredToken == "":
-            requiredToken = getRequiredToken(token)
-        elif requiredToken != "" and token != requiredToken:
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken = ""
+            requiredToken = None
             continue
 
 def findFunctionWrapper(buffer):
     tokenList = tokenizeString(buffer)
-    requiredToken = ""
+    requiredToken = None
     prevToken = ""
     tmpToken = "\n"
 
@@ -461,14 +464,14 @@ def findFunctionWrapper(buffer):
             lineNumber += 1
 
         # this section is all about skipping based on strings and comments
-        if token in tokenDictionary and requiredToken == "":
-            requiredToken = getRequiredToken(token)
-        elif requiredToken != "" and token != requiredToken:
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken = ""
+            requiredToken = None
             continue
 
         token = token.lower() # putting .lower() here so it doesn't run when it doesn't have to
@@ -477,9 +480,6 @@ def findFunctionWrapper(buffer):
             latestFunctionLineNumber = lineNumber
 
     return latestFunctionLineNumber
-
-def getRequiredToken(inputToken):
-    return tokenDictionary.get(inputToken, "")
 
 def removeTempTags(pid, bufNum):
     try:
@@ -517,6 +517,7 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
         # this is in case the FGLLDPATH doesn't exist
         pass
 
+    startTime = time.time()
     for token in tokenList:
         if token == "":
             continue
@@ -551,6 +552,9 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
         elif importingFileType == "GLOBALS" and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
             globalFileList.append((file, prevPrevToken))
+    endTime = time.time()
+    lengthTime = endTime - startTime
+    writeSingleLineToLog("checking tokens in Makefile took " + str(lengthTime) + " seconds")
 
     startTime = time.time()
     for obj in objFileList:
@@ -640,7 +644,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
 
     tagsLinesList = []
 
-    requiredToken = ""
+    requiredToken = None
     prevPrevToken = ""
     prevToken = ""
     tmpToken = "\n"
@@ -654,14 +658,14 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             lineNumber += 1
 
         # this section is all about skipping based on strings and comments
-        if token in tokenDictionary and requiredToken == "":
-            requiredToken = getRequiredToken(token)
-        elif requiredToken != "" and token != requiredToken:
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
             continue
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken = ""
+            requiredToken is None
             continue
 
         prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
