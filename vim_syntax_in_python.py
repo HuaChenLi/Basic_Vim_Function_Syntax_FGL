@@ -97,10 +97,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        isPrevPrevTokenEnd = prevPrevToken == "end"
-        isPreviousTokenFunctionOrReport = (prevToken == "function") or (prevToken == "report")
-
-        if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd:
+        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end":
             # We create the list of the function tags
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
@@ -248,10 +245,7 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        isPrevPrevTokenEnd = prevPrevToken == "end"
-        isPreviousTokenFunctionOrReport = (prevToken == "function") or (prevToken == "report")
-
-        if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd:
+        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end":
             # We create the list of the function tags
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             existingFunctionNames.add(token)
@@ -392,20 +386,13 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
 
         prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        isPrevPrevTokenEnd = prevPrevToken == "end"
-        isPrevPrevTokenPrivate = prevPrevToken == "private"
-        isPreviousTokenFunctionOrReport = (prevToken == "function") or (prevToken == "report")
-
-        if isPreviousTokenFunctionOrReport and not isPrevPrevTokenEnd and not isPrevPrevTokenPrivate:
+        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end" and not prevPrevToken == "private":
             # We create the list of the function tags
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=existingFunctionNames))
             existingFunctionNames.add(token)
             continue
 
-        isPrevPrevTokenPublic = prevPrevToken == "public"
-        isPrevTokenConstant = prevToken == "constant"
-
-        if isPrevTokenConstant and isPrevPrevTokenPublic:
+        if prevToken == "constant" and prevPrevToken == "public":
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()
@@ -517,6 +504,7 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
         # this is in case the FGLLDPATH doesn't exist
         pass
 
+    startTime = time.time()
     for token in tokenList:
         if token == "":
             continue
@@ -551,6 +539,9 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
         elif importingFileType == "GLOBALS" and token == "o" and prevToken == ".":
             file = prevPrevToken + FGL_SUFFIX
             globalFileList.append((file, prevPrevToken))
+    endTime = time.time()
+    lengthTime = endTime - startTime
+    writeSingleLineToLog("checking tokens in Makefile took " + str(lengthTime) + " seconds")
 
     startTime = time.time()
     for obj in objFileList:
