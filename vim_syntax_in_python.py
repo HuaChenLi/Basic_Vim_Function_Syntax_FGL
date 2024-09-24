@@ -102,6 +102,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
             existingFunctionNames.add(token)
+            continue
 
         if tokenLower == "import" and prevToken == "\n":
             # we need to check that Import is at the start of the line
@@ -150,6 +151,12 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         if prevToken == "\n" and tokenLower == "globals":
             isImportingGlobal = True
+            continue
+
+        if prevToken == "constant":
+            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
+
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
     endTime = time.time()
@@ -250,6 +257,7 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             existingFunctionNames.add(token)
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
+            continue
 
         if tokenLower == "import" and prevToken == "\n":
             # we need to check that Import is at the start of the line
@@ -296,6 +304,12 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
 
         if prevToken == "\n" and tokenLower == "globals":
             isImportingGlobal = True
+            continue
+
+        if prevToken == "constant":
+            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
+
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
 
@@ -307,22 +321,23 @@ def createListOfTags(functionName, currentFile, lineNumber, functionTokens, exis
     # this is interesting, I would need to, for each separation, create a tagLine
     tagsLinesList = []
 
+    # I've inlined the createSingleTagLine() function to increase the speed very marginally
     if existingFunctionNames is None:
-        tagsLinesList.append(createSingleTagLine(functionName, currentFile, lineNumber))
-    elif len(existingFunctionNames) == 0:
-        tagsLinesList.append(createSingleTagLine(functionName, currentFile, lineNumber))
+        tagsLinesList.append("%s\t%s\t%s\n" % (functionName, currentFile, lineNumber))
     elif functionName not in existingFunctionNames:
-            tagsLinesList.append(createSingleTagLine(functionName, currentFile, lineNumber))
+        tagsLinesList.append("%s\t%s\t%s\n" % (functionName, currentFile, lineNumber))
+    elif len(existingFunctionNames) == 0:
+        tagsLinesList.append("%s\t%s\t%s\n" % (functionName, currentFile, lineNumber))
 
     functionNameString = functionName
     for token in reversed(functionTokens):
-        functionNameString = token + "." + functionNameString
-        tagsLinesList.append(createSingleTagLine(functionNameString, currentFile, lineNumber))
+        functionNameString = "%s.%s" % (token, functionNameString)
+        tagsLinesList.append("%s\t%s\t%s\n" % (functionNameString, currentFile, lineNumber))
 
     return tagsLinesList
 
 def createSingleTagLine(jumpToString, jumpToFile, lineNumber):
-    return "{0}\t{1}\t{2}\n".format(jumpToString, jumpToFile, lineNumber)
+    return "%s\t%s\t%s\n" % (jumpToString, jumpToFile, lineNumber)
 
 def writeTagsFile(tagsLinesList, tagsFile, mode):
     # The tags file needs to be sorted alphabetically (by ASCII code) in order to work
