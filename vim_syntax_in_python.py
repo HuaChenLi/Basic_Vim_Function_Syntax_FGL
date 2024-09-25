@@ -14,6 +14,12 @@ FGL_SUFFIX = ".4gl"
 LOG_DIRECTORY = os.path.join(TAGS_FILE_DIRECTORY, "fgl_syntax_log")
 TAGS_SUFFIX = ".ctags"
 
+GENERO_KEY_WORDS = set()
+KEYWORDS_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "genero_key_words.txt")
+print(os.path.dirname(os.path.realpath(__file__)))
+if os.path.isfile(KEYWORDS_FILE):
+    GENERO_KEY_WORDS.update(open(KEYWORDS_FILE, "r").read().split("\n"))
+
 tokenDictionary = {
     "'" : "'",
     '"' : '"',
@@ -154,6 +160,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
             continue
 
         if prevToken == "constant":
+            if token not in GENERO_KEY_WORDS:
+                vim.command("execute 'syn match constantGroup /\\c\\<" + token + "\\>/'")
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
 
