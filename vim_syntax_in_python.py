@@ -13,6 +13,7 @@ FGL_DIRECTORY_SUFFIX = ".4gs"
 FGL_SUFFIX = ".4gl"
 LOG_DIRECTORY = os.path.join(TAGS_FILE_DIRECTORY, "fgl_syntax_log")
 TAGS_SUFFIX = ".ctags"
+CONSTANTS_SUFFIX = ".cons"
 
 GENERO_KEY_WORDS = set()
 KEYWORDS_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "genero_key_words.txt")
@@ -42,7 +43,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
     tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + TAGS_SUFFIX
 
-    searchString = r"\b" + re.escape(pid + "." + bufNum) + r"\b"
+    searchString = r"\b" + re.escape(pid + "." + bufNum) + r"\b" + r"\.\w+" + re.escape(TAGS_SUFFIX)
 
     allTagFiles = os.listdir(TAGS_FILE_DIRECTORY)
     for f in allTagFiles:
@@ -88,7 +89,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
                 globalFilePath = globalFilePath + token
             elif (requiredToken == '"' and token == '"') or (requiredToken == "'" and token == "'") or (requiredToken == "`" and token == "`"):
                 isImportingGlobal = False
-                tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory]))
+                tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory])[0])
 
         if token in tokenDictionary and requiredToken is None:
             requiredToken = tokenDictionary.get(token)
@@ -170,6 +171,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
     lengthTime = endTime - startTime
     writeSingleLineToLog("going through current buffer took " + str(lengthTime) + " seconds")
 
+    constantsFile = os.path.join(TAGS_FILE_DIRECTORY, ".constants." + pid + "." + bufNum + CONSTANTS_SUFFIX)
+
     startTime = time.time()
     for lib in librariesList:
         importFilePath = lib[0]
@@ -180,6 +183,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
             if tmpTuple[0] is not None:
                 writeTagsFile(tmpTuple[0], libraryTagsFile, "a")
                 existingFunctionNames.update(tmpTuple[1])
+            if tmpTuple[2] is not None:
+                writeConstantsFile(tmpTuple[2], constantsFile, "a")
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting public functions took " + str(lengthTime) + " seconds")
@@ -192,10 +197,11 @@ def generateTags(inputString, currentFile, pid, bufNum):
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting Makefile Functions took " + str(lengthTime) + " seconds")
 
-
     vimSyntaxEnd = time.time()
     vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
     writeSingleLineToLog("vim syntax for " + currentFile + " took " + str(vimSyntaxLengthOfTime) + " seconds")
+
+    highlightExistingConstants(constantsFile)
 
 def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
     vimSyntaxStart = time.time()
@@ -245,7 +251,7 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
                 globalFilePath = globalFilePath + token
             elif (requiredToken == '"' and token == '"') or (requiredToken == "'" and token == "'") or (requiredToken == "`" and token == "`"):
                 isImportingGlobal = False
-                tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory]))
+                tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory])[0])
 
         if token in tokenDictionary and requiredToken is None:
             requiredToken = tokenDictionary.get(token)
@@ -319,8 +325,10 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
 
-
     writeTagsFile(tagsLinesList, tagsFile, "w")
+
+    constantsFile = os.path.join(TAGS_FILE_DIRECTORY, ".constants." + pid + "." + bufNum + CONSTANTS_SUFFIX)
+    highlightExistingConstants(constantsFile)
 
     vimSyntaxEnd = time.time()
     vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
@@ -356,6 +364,11 @@ def writeTagsFile(tagsLinesList, tagsFile, mode):
     file.close()
     vim.command("execute 'set tags+=" + tagsFile + "'")
 
+def writeConstantsFile(constantsList, constantsFile, mode):
+    file = open(constantsFile, mode)
+    file.write("".join(constantsList))
+    file.close()
+
 def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingFunctionNames):
     # I think Genero probably doesn't have overloading, but I think the priority for function scope goes
     # Current File > Imported Library > OBJFILES > CUSTLIBS > LIBFILES
@@ -370,7 +383,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
 
     if not isExistingPackageFile:
         writeSingleLineToLog("couldn't find file " + importFile)
-        return [], set()
+        return [], set(), []
 
     file = open(packageFile, "r")
 
@@ -383,6 +396,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
     # This is the part where we want to loop through and find the function definitions
 
     tagsLinesList = []
+    constantsList = []
 
     requiredToken = None
     prevPrevToken = ""
@@ -417,6 +431,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
 
         if prevToken == "constant" and prevPrevToken == "public":
             if token not in GENERO_KEY_WORDS:
+                constantsList.append("%s%s" % (token, "\n"))
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
@@ -424,7 +439,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
     length = endTime - startTime
     writeSingleLineToLog("if statements took " + str(length) + " seconds")
 
-    return tagsLinesList, existingFunctionNames
+    return tagsLinesList, existingFunctionNames, constantsList
 
 def tokenizeString(inputString):
     # basically, the massive line of regex code repeats, so we will grab all printable characters (since all printable characters are between ! to ~ except white spaces)
@@ -592,7 +607,8 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
 
     startTime = time.time()
     for globalFile in globalFileList:
-        tagsList.extend(getPublicConstantsFromLibrary(globalFile[0], [globalFile[1]], [currentDirectory]))
+        tmpTuple = getPublicConstantsFromLibrary(globalFile[0], [globalFile[1]], [currentDirectory])
+        tagsList.extend(tmpTuple[0])
     endTime = time.time()
     writeSingleLineToLog("GLOBALS took " + str(lengthTime) + " seconds")
 
@@ -653,6 +669,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
     writeSingleLineToLog("tokenizing " + importFile + " took " + str(length) + " seconds and the number of tokens is " + str(len(tokenList)))
 
     tagsLinesList = []
+    constantsList = []
 
     requiredToken = None
     prevPrevToken = ""
@@ -684,13 +701,14 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             # We create the list of the function tags
             if token not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
+                constantsList.append(token)
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()
     length = endTime - startTime
     writeSingleLineToLog("if statements took " + str(length) + " seconds")
 
-    return tagsLinesList
+    return tagsLinesList, constantsList
 
 def archiveTempTags(pid):
     archiveDirectory = os.path.join(TAGS_FILE_DIRECTORY, datetime.today().strftime('%Y-%m-%d'))
@@ -704,3 +722,9 @@ def archiveTempTags(pid):
         if os.path.isfile(tagsFile) and re.search(searchString, os.path.join(TAGS_FILE_DIRECTORY, f)):
             shutil.move(tagsFile, archiveDirectory)
             writeSingleLineToLog("archived " + tagsFile)
+
+def highlightExistingConstants(constantsFile):
+    if os.path.isfile(constantsFile):
+        highlightExistingConstants = open(constantsFile, "r").read().split("\n")
+        for const in highlightExistingConstants:
+            vim.command("execute 'syn match constantGroup /\\<" + const + "\\>/'")
