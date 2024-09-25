@@ -16,6 +16,7 @@ syn match keywordGroup /\c\<PRIVATE\>/
 syn match keywordGroup /\c\<PUBLIC\>/
 syn match keywordGroup /\c\<REPORT\>/
 syn match keywordGroup /\c\<STRING\>/
+syn match keywordGroup /\c\<TYPE\>/
 syn match keywordGroup /\c\<VAR\>/
 
 hi keywordGroup ctermfg=darkblue
