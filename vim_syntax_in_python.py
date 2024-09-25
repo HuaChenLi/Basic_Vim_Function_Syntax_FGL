@@ -352,8 +352,7 @@ def writeTagsFile(tagsLinesList, tagsFile, mode):
     # The tags file needs to be sorted alphabetically (by ASCII code) in order to work
     tagsLinesList.sort()
     file = open(tagsFile, mode)
-    for line in tagsLinesList:
-        file.write(line)
+    file.write("".join(tagsLinesList))
     file.close()
     vim.command("execute 'set tags+=" + tagsFile + "'")
 
