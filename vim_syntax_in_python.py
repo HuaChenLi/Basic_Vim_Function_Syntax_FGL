@@ -165,6 +165,9 @@ def generateTags(inputString, currentFile, pid, bufNum):
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
 
+        if prevToken == "type":
+            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
     endTime = time.time()
@@ -325,6 +328,10 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
 
+        if prevToken == "type":
+            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
+
     writeTagsFile(tagsLinesList, tagsFile, "w")
 
     constantsFile = os.path.join(TAGS_FILE_DIRECTORY, ".constants." + pid + "." + bufNum + CONSTANTS_SUFFIX)
@@ -433,6 +440,9 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
             if token not in GENERO_KEY_WORDS:
                 constantsList.append("%s%s" % (token, "\n"))
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
+
+        if prevToken == "type" and prevPrevToken == "public":
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()
@@ -702,6 +712,9 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             if token not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
                 constantsList.append(token)
+            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
+
+        if prevToken == "type" and prevPrevToken == "public":
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()
