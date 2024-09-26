@@ -73,10 +73,12 @@ def generateTags(inputString, currentFile, pid, bufNum):
     currentType = ""
 
     isDefiningVariable = False
+    currentVariables = []
 
     importFilePath = ""
     concatenatedImportString = ""
     requiredToken = None
+    prevTokenNotNewline = ""
     prevPrevToken = ""
     prevToken = ""
     tokenLower = "\n"
@@ -89,8 +91,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if token == "\n":
             lineNumber += 1
         else:
-            prevTokenNotNewline = tokenLower
-            prevPrevToken = prevToken
+            prevPrevToken = prevTokenNotNewline
+            prevTokenNotNewline = prevToken
 
         if isImportingGlobal:
             if (requiredToken == '"' and token != '"') or (requiredToken == "'" and token != "'") or (requiredToken == "`" and token != "`"):
@@ -111,7 +113,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end":
+        if ((prevTokenNotNewline == "function") or (prevTokenNotNewline == "report")) and not prevPrevToken == "end":
             if token == "(":
                 isTypeFunction = True
                 continue
@@ -122,13 +124,13 @@ def generateTags(inputString, currentFile, pid, bufNum):
                 existingFunctionNames.add(token)
                 continue
 
-        if isTypeFunction and not prevToken == "(" and not prevToken == ")" and not token == ")":
+        if isTypeFunction and not prevTokenNotNewline == "(" and not prevTokenNotNewline == ")" and not token == ")":
             currentType = token
             continue
 
-        if isTypeFunction and prevToken == ")":
+        if isTypeFunction and prevTokenNotNewline == ")":
             if currentType in existingTypes:
-                existingTypes[currentType].add(token)
+                existingTypes[currentType].append((token,lineNumber))
             isTypeFunction = False
             currentType = ""
             continue
@@ -182,27 +184,34 @@ def generateTags(inputString, currentFile, pid, bufNum):
             isImportingGlobal = True
             continue
 
-        if prevToken == "constant":
+        if prevTokenNotNewline == "constant":
             if token not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
             continue
 
-        if prevToken == "type":
+        if prevTokenNotNewline == "type":
             if token not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
-            existingTypes[token] = set()
+            existingTypes[token] = []
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
             continue
 
-        if tokenLower == "define":
+        if not isDefiningVariable and tokenLower == "define":
             isDefiningVariable = True
             continue
 
-        if isDefiningVariable and token in existingFunctionNames:
-            pass
+        if isDefiningVariable and (prevTokenNotNewline == "define" or prevTokenNotNewline == ","):
+            currentVariables.append(token)
+            continue
+
+        if isDefiningVariable and not (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token in existingTypes:
+            tagsLinesList.extend(createListOfTypeMethodTags(currentVariables, existingTypes[token], currentFile))
+
+        if isDefiningVariable and prevTokenNotNewline == "end" and token == "record":
+            isDefiningVariable = False
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
     endTime = time.time()
@@ -403,6 +412,13 @@ def createListOfTags(functionName, currentFile, lineNumber, functionTokens, exis
 
 def createSingleTagLine(jumpToString, jumpToFile, lineNumber):
     return "%s\t%s\t%s\n" % (jumpToString, jumpToFile, lineNumber)
+
+def createListOfTypeMethodTags(currentVariables, typeDefinition, jumpToFile):
+    tagsLineList = []
+    for v in currentVariables:
+        for t in typeDefinition:
+            tagsLineList.append("%s.%s\t%s\t%s\n" % (v, t[0], jumpToFile, t[1]))
+    return tagsLineList
 
 def writeTagsFile(tagsLinesList, tagsFile, mode):
     # The tags file needs to be sorted alphabetically (by ASCII code) in order to work
