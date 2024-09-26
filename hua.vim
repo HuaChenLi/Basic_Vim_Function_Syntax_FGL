@@ -1,22 +1,23 @@
-syn match keywordGroup '\c\<AS\>'
-syn match keywordGroup '\c\<BOOLEAN\>'
-syn match keywordGroup '\c\<CALL\>'
-syn match keywordGroup '\c\<CONSTANT\>'
-syn match keywordGroup '\c\<DEFINE\>'
-syn match keywordGroup '\c\<DISPLAY\>'
-syn match keywordGroup '\c\<END\>'
-syn match keywordGroup '\c\<FGL\>'
-syn match keywordGroup '\c\<FOR\>'
-syn match keywordGroup '\c\<FUNCTION\>'
-syn match keywordGroup '\c\<GLOBALS\>'
-syn match keywordGroup '\c\<IMPORT\>'
-syn match keywordGroup '\c\<INTEGER\>'
-syn match keywordGroup '\c\<LET\>'
-syn match keywordGroup '\c\<PRIVATE\>'
-syn match keywordGroup '\c\<PUBLIC\>'
-syn match keywordGroup '\c\<REPORT\>'
-syn match keywordGroup '\c\<STRING\>'
-syn match keywordGroup '\c\<VAR\>'
+syn match keywordGroup /\c\<AS\>/
+syn match keywordGroup /\c\<BOOLEAN\>/
+syn match keywordGroup /\c\<CALL\>/
+syn match keywordGroup /\c\<CONSTANT\>/
+syn match keywordGroup /\c\<DEFINE\>/
+syn match keywordGroup /\c\<DISPLAY\>/
+syn match keywordGroup /\c\<END\>/
+syn match keywordGroup /\c\<FGL\>/
+syn match keywordGroup /\c\<FOR\>/
+syn match keywordGroup /\c\<FUNCTION\>/
+syn match keywordGroup /\c\<GLOBALS\>/
+syn match keywordGroup /\c\<IMPORT\>/
+syn match keywordGroup /\c\<INTEGER\>/
+syn match keywordGroup /\c\<LET\>/
+syn match keywordGroup /\c\<PRIVATE\>/
+syn match keywordGroup /\c\<PUBLIC\>/
+syn match keywordGroup /\c\<REPORT\>/
+syn match keywordGroup /\c\<STRING\>/
+syn match keywordGroup /\c\<TYPE\>/
+syn match keywordGroup /\c\<VAR\>/
 
 hi keywordGroup ctermfg=darkblue
 hi variableGroup ctermfg=lightblue
@@ -24,7 +25,6 @@ hi functionGroup ctermfg=yellow
 hi constantGroup ctermfg=darkyellow
 hi stringRegion ctermfg=brown
 hi commentRegion ctermfg=darkgreen
-
 
 syntax region commentRegion start=/#/ end=/\n/
 syntax region commentRegion start=/--/ end=/\n/
@@ -36,7 +36,6 @@ syntax region stringRegion start=/"/ skip=/\\\\\|\\"/ end=/"/
 "syntax region stringRegion start=/'/ skip=/\(\\\)\@<!\(\\\\\)*\\'/ end=/'/
 syntax region stringRegion start=/'/ skip=/\\\\\|\\'/ end=/'/
 syntax region stringRegion start=/`/ end=/`/
-
 
 """""""""""""""""""""""""""""""""""""""
 " automatic closing of open syntax
