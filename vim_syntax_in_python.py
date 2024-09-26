@@ -282,7 +282,7 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
 
         if isImportingLibrary and prevToken == "import" and tokenLower == "fgl":
             continue
-        elif isImportingLibrary and prevToken == "import" and not tokenLower == "fgl":
+        elif isImportingLibrary and prevToken == "import" and not tokenLower == "fgl" and token != ".":
             # for when importing not an FGL library
             isImportingLibrary = False
             continue
