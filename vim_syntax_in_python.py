@@ -211,6 +211,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
     constantsFile = os.path.join(TAGS_FILE_DIRECTORY, ".constants." + pid + "." + bufNum + CONSTANTS_SUFFIX)
 
+    constantsList = []
     startTime = time.time()
     for lib in librariesList:
         importFilePath = lib[0]
@@ -222,7 +223,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
                 writeTagsFile(tmpTuple[0], libraryTagsFile, "a")
                 existingFunctionNames.update(tmpTuple[1])
             if tmpTuple[2] is not None:
-                writeConstantsFile(tmpTuple[2], constantsFile, "a")
+                constantsList.extend(tmpTuple[2])
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting public functions took " + str(lengthTime) + " seconds")
@@ -230,16 +231,19 @@ def generateTags(inputString, currentFile, pid, bufNum):
     startTime = time.time()
     makefileTagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".Makefile" + TAGS_SUFFIX
     if not os.path.isfile(makefileTagsFile):
-        writeTagsFile(getMakefileFunctions(currentDirectory, existingFunctionNames), makefileTagsFile, "a")
+        tmpTuple = getMakefileFunctions(currentDirectory, existingFunctionNames)
+        writeTagsFile(tmpTuple[0], makefileTagsFile, "a")
+        constantsList.extend(tmpTuple[1])
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting Makefile Functions took " + str(lengthTime) + " seconds")
 
+    writeConstantsFile(constantsList, constantsFile, "a")
+    highlightExistingConstants(constantsFile)
+
     vimSyntaxEnd = time.time()
     vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
     writeSingleLineToLog("vim syntax for " + currentFile + " took " + str(vimSyntaxLengthOfTime) + " seconds")
-
-    highlightExistingConstants(constantsFile)
 
 def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
     vimSyntaxStart = time.time()
@@ -566,7 +570,7 @@ def removeTempTags(pid, bufNum):
 def getMakefileFunctions(currentDirectory, existingFunctionNames):
     makeFile = os.path.join(currentDirectory, "Makefile")
     if not os.path.isfile(makeFile):
-        return []
+        return [], []
     file = open(makeFile, "r")
     tokenList = tokenizeString(file.read())
 
@@ -655,14 +659,16 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     endTime = time.time()
     writeSingleLineToLog("LIBFILES took " + str(lengthTime) + " seconds")
 
+    constantsList = []
     startTime = time.time()
     for globalFile in globalFileList:
         tmpTuple = getPublicConstantsFromLibrary(globalFile[0], [globalFile[1]], [currentDirectory])
         tagsList.extend(tmpTuple[0])
+        constantsList.extend(tmpTuple[1])
     endTime = time.time()
     writeSingleLineToLog("GLOBALS took " + str(lengthTime) + " seconds")
 
-    return tagsList
+    return tagsList, constantsList
 
 def writeSingleLineToLog(inputString):
     if not os.path.exists(LOG_DIRECTORY):
