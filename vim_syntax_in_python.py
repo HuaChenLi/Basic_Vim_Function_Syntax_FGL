@@ -66,9 +66,11 @@ def generateTags(inputString, currentFile, pid, bufNum):
     tagsLinesList = []
     librariesList = []
     existingFunctionNames = set()
-    existingTypes = set()
+    existingTypes = {}
 
     isImportingLibrary = False
+    isTypeFunction = False
+    currentType = ""
 
     importFilePath = ""
     concatenatedImportString = ""
@@ -104,11 +106,26 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end" and not token == "(":
-            # We create the list of the function tags
-            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
-            existingFunctionNames.add(token)
+        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end":
+            if token == "(":
+                isTypeFunction = True
+                continue
+            else:
+                # We create the list of regular function tags
+                fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+                tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
+                existingFunctionNames.add(token)
+                continue
+
+        if isTypeFunction and not prevToken == "(" and not prevToken == ")" and not token == ")":
+            currentType = token
+            continue
+
+        if isTypeFunction and prevToken == ")":
+            if currentType in existingTypes:
+                existingTypes[currentType].add(token)
+            isTypeFunction = False
+            currentType = ""
             continue
 
         if tokenLower == "import" and prevToken == "\n":
@@ -167,8 +184,10 @@ def generateTags(inputString, currentFile, pid, bufNum):
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
 
         if prevToken == "type":
+            if token not in GENERO_KEY_WORDS:
+                vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
-            existingTypes.add(token)
+            existingTypes[token] = set()
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
@@ -331,6 +350,8 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
 
         if prevToken == "type":
+            if token not in GENERO_KEY_WORDS:
+                vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
 
@@ -445,6 +466,9 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
         if prevToken == "type" and prevPrevToken == "public":
+            if token not in GENERO_KEY_WORDS:
+                constantsList.append("%s%s" % (token, "\n"))
+                vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()
