@@ -66,6 +66,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
     tagsLinesList = []
     librariesList = []
     existingFunctionNames = set()
+    existingTypes = set()
 
     isImportingLibrary = False
 
@@ -103,7 +104,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end":
+        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end" and not token == "(":
             # We create the list of the function tags
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
@@ -167,6 +168,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         if prevToken == "type":
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            existingTypes.add(token)
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
