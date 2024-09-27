@@ -135,16 +135,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
             currentType = ""
             continue
 
-        if tokenLower == "import" and prevToken == "\n":
-            # we need to check that Import is at the start of the line
+        if tokenLower == "fgl" and prevToken == "import":
             isImportingLibrary = True
-            continue
-
-        if isImportingLibrary and prevToken == "import" and tokenLower == "fgl":
-            continue
-        elif isImportingLibrary and prevToken == "import" and not tokenLower == "fgl":
-            # for when importing not an FGL library
-            isImportingLibrary = False
             continue
 
         isPreviousTokenAs = prevToken == "as"
@@ -302,7 +294,6 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
 
     for token in tokenList:
         tokenLower, prevToken = token, tokenLower
-        # tokenLower, prevToken, prevPrevToken = token, tokenLower, prevToken
         if prevToken == "\n":
             lineNumber += 1
         else:
@@ -350,16 +341,8 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
             currentType = ""
             continue
 
-        if tokenLower == "import" and prevToken == "\n":
-            # we need to check that Import is at the start of the line
+        if tokenLower == "fgl" and prevToken == "import":
             isImportingLibrary = True
-            continue
-
-        if isImportingLibrary and prevToken == "import" and tokenLower == "fgl":
-            continue
-        elif isImportingLibrary and prevToken == "import" and not tokenLower == "fgl" and token != ".":
-            # for when importing not an FGL library
-            isImportingLibrary = False
             continue
 
         isPreviousTokenAs = prevToken == "as"
