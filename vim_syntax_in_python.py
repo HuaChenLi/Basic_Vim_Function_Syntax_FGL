@@ -90,9 +90,6 @@ def generateTags(inputString, currentFile, pid, bufNum):
         tokenLower, prevToken = token, tokenLower
         if prevToken == "\n":
             lineNumber += 1
-        else:
-            prevPrevToken = prevTokenNotNewline
-            prevTokenNotNewline = prevToken
 
         if isImportingGlobal:
             if (requiredToken == '"' and token != '"') or (requiredToken == "'" and token != "'") or (requiredToken == "`" and token != "`"):
@@ -112,6 +109,10 @@ def generateTags(inputString, currentFile, pid, bufNum):
             continue
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
+
+        if prevToken not in tokenDictionary and prevToken != "\n":
+            prevPrevToken = prevTokenNotNewline
+            prevTokenNotNewline = prevToken
 
         if ((prevTokenNotNewline == "function") or (prevTokenNotNewline == "report")) and not prevPrevToken == "end":
             if token == "(":
@@ -144,6 +145,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if isImportingLibrary and prevToken == "." and token != "\n":
             importFilePath = os.path.join(importFilePath, token)
             concatenatedImportString = concatenatedImportString + "." + token
+            continue
 
         # When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
         # The functionName is the AS file, while the file is the path to the file
@@ -186,16 +188,21 @@ def generateTags(inputString, currentFile, pid, bufNum):
             isDefiningVariable = True
             continue
 
-        if isDefiningVariable and (prevTokenNotNewline == "define" or prevTokenNotNewline == ","):
+        if isDefiningVariable and (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token != "\n":
             currentVariables.add(token)
             continue
 
         if isDefiningVariable and not (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token in existingTypes:
             tagsLinesList.extend(createListOfTypeMethodTags(currentVariables, existingTypes[token], currentFile))
+            currentVariables = set()
 
-        if isDefiningVariable and token is not "\n" and prevToken is not "\n" and token is not "," and prevTokenNotNewline is not "," and not prevTokenNotNewline in currentVariables:
+        # this statement is 100% gonna fail with DYNAMIC ARRAY OF RECORD
+        if isDefiningVariable and token != "\n" and prevToken != "\n" and token != "," and prevTokenNotNewline != "," and prevPrevToken != "define":
+            for i in currentVariables:
+                writeSingleLineToLog(i)
             isDefiningVariable = False
             currentVariables = set()
+            writeSingleLineToLog(token + " " + str(lineNumber) + " " + prevToken + " " + prevPrevToken)
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
     endTime = time.time()
@@ -287,9 +294,6 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
         tokenLower, prevToken = token, tokenLower
         if prevToken == "\n":
             lineNumber += 1
-        else:
-            prevPrevToken = prevTokenNotNewline
-            prevTokenNotNewline = prevToken
 
         if isImportingGlobal:
             if (requiredToken == '"' and token != '"') or (requiredToken == "'" and token != "'") or (requiredToken == "`" and token != "`"):
@@ -309,6 +313,10 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
             continue
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
+
+        if prevToken not in tokenDictionary and prevToken != "\n":
+            prevPrevToken = prevTokenNotNewline
+            prevTokenNotNewline = prevToken
 
         if ((prevTokenNotNewline == "function") or (prevTokenNotNewline == "report")) and not prevPrevToken == "end":
             if token == "(":
@@ -341,6 +349,7 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
         if isImportingLibrary and prevToken == "." and token != "\n":
             importFilePath = os.path.join(importFilePath, token)
             concatenatedImportString = concatenatedImportString + "." + token
+            continue
 
         # When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
         # The functionName is the AS file, while the file is the path to the file
@@ -379,14 +388,15 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
             isDefiningVariable = True
             continue
 
-        if isDefiningVariable and (prevTokenNotNewline == "define" or prevTokenNotNewline == ","):
+        if isDefiningVariable and (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token != "\n":
             currentVariables.add(token)
             continue
 
         if isDefiningVariable and not (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token in existingTypes:
             tagsLinesList.extend(createListOfTypeMethodTags(currentVariables, existingTypes[token], currentFile))
 
-        if isDefiningVariable and token is not "\n" and prevToken is not "\n" and token is not "," and prevTokenNotNewline is not "," and not prevTokenNotNewline in currentVariables:
+        if isDefiningVariable and token != "\n" and prevToken != "\n" and token != "," and prevTokenNotNewline != "," and not prevTokenNotNewline in currentVariables:
+
             isDefiningVariable = False
             currentVariables = set()
 
