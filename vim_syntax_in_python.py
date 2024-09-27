@@ -73,7 +73,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
     currentType = ""
 
     isDefiningVariable = False
-    currentVariables = []
+    currentVariables = set()
 
     importFilePath = ""
     concatenatedImportString = ""
@@ -204,17 +204,15 @@ def generateTags(inputString, currentFile, pid, bufNum):
             continue
 
         if isDefiningVariable and (prevTokenNotNewline == "define" or prevTokenNotNewline == ","):
-            currentVariables.append(token)
+            currentVariables.add(token)
             continue
 
         if isDefiningVariable and not (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token in existingTypes:
             tagsLinesList.extend(createListOfTypeMethodTags(currentVariables, existingTypes[token], currentFile))
 
-        if token == "\n":
-            isDefiningVariable = False # this is obviously wrong, but it's just to stop from creating infinite tags
-
-        if isDefiningVariable and prevTokenNotNewline == "end" and token == "record":
+        if isDefiningVariable and token is not "\n" and prevToken is not "\n" and token is not "," and prevTokenNotNewline is not "," and not prevTokenNotNewline in currentVariables:
             isDefiningVariable = False
+            currentVariables = set()
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
     endTime = time.time()
@@ -423,11 +421,9 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
         if isDefiningVariable and not (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token in existingTypes:
             tagsLinesList.extend(createListOfTypeMethodTags(currentVariables, existingTypes[token], currentFile))
 
-        if token == "\n":
-            isDefiningVariable = False # this is obviously wrong, but it's just to stop from creating infinite tags
-
-        if isDefiningVariable and prevTokenNotNewline == "end" and token == "record":
+        if isDefiningVariable and token is not "\n" and prevToken is not "\n" and token is not "," and prevTokenNotNewline is not "," and not prevTokenNotNewline in currentVariables:
             isDefiningVariable = False
+            currentVariables = set()
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
 
