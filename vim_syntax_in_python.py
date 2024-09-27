@@ -198,11 +198,8 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         # this statement is 100% gonna fail with DYNAMIC ARRAY OF RECORD
         if isDefiningVariable and token != "\n" and prevToken != "\n" and token != "," and prevTokenNotNewline != "," and prevPrevToken != "define":
-            for i in currentVariables:
-                writeSingleLineToLog(i)
             isDefiningVariable = False
             currentVariables = set()
-            writeSingleLineToLog(token + " " + str(lineNumber) + " " + prevToken + " " + prevPrevToken)
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
     endTime = time.time()
