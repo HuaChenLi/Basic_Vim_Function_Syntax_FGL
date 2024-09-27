@@ -135,24 +135,20 @@ def generateTags(inputString, currentFile, pid, bufNum):
             currentType = ""
             continue
 
-        if tokenLower == "fgl" and prevToken == "import":
+        if prevToken == "fgl" and prevPrevToken == "import":
+            importFilePath = token
+            concatenatedImportString = token
             isImportingLibrary = True
             continue
 
-        isPreviousTokenAs = prevToken == "as"
-
-        if isImportingLibrary and token != "." and token != "\n" and not tokenLower == "as" and not isPreviousTokenAs:
+        if isImportingLibrary and prevToken == "." and token != "\n":
             importFilePath = os.path.join(importFilePath, token)
-            if concatenatedImportString == "":
-                concatenatedImportString = token
-            else:
-                concatenatedImportString = concatenatedImportString + "." + token
-            continue
+            concatenatedImportString = concatenatedImportString + "." + token
 
         # When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
         # The functionName is the AS file, while the file is the path to the file
 
-        if isImportingLibrary and token == "\n" and not isPreviousTokenAs:
+        if isImportingLibrary and token == "\n" and prevToken != "as":
             isImportingLibrary = False
             importFilePath = importFilePath + FGL_SUFFIX
             librariesList.append((importFilePath, concatenatedImportString))
@@ -160,16 +156,13 @@ def generateTags(inputString, currentFile, pid, bufNum):
             importFilePath = ""
             concatenatedImportString = ""
             continue
-        elif isImportingLibrary and isPreviousTokenAs:
+        elif isImportingLibrary and prevToken == "as":
             isImportingLibrary = False
+            importFilePath = importFilePath + FGL_SUFFIX
             librariesList.append((importFilePath, token))
             tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, token))
             importFilePath = ""
             concatenatedImportString = ""
-            continue
-
-        if isImportingLibrary and tokenLower == "as":
-            importFilePath = importFilePath + FGL_SUFFIX
             continue
 
         if prevToken == "\n" and tokenLower == "globals":
@@ -279,7 +272,7 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
     isTypeFunction = False
     currentType = ""
     isDefiningVariable = False
-    currentVariables = []
+    currentVariables = set()
 
     importFilePath = ""
     concatenatedImportString = ""
@@ -341,39 +334,32 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
             currentType = ""
             continue
 
-        if tokenLower == "fgl" and prevToken == "import":
+        if prevToken == "fgl" and prevPrevToken == "import":
+            importFilePath = token
+            concatenatedImportString = token
             isImportingLibrary = True
             continue
 
-        isPreviousTokenAs = prevToken == "as"
-
-        if isImportingLibrary and token != "." and token != "\n" and not tokenLower == "as" and not isPreviousTokenAs:
+        if isImportingLibrary and prevToken == "." and token != "\n":
             importFilePath = os.path.join(importFilePath, token)
-            if concatenatedImportString == "":
-                concatenatedImportString = token
-            else:
-                concatenatedImportString = concatenatedImportString + "." + token
-            continue
+            concatenatedImportString = concatenatedImportString + "." + token
 
         # When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
         # The functionName is the AS file, while the file is the path to the file
 
-        if isImportingLibrary and token == "\n" and not isPreviousTokenAs:
+        if isImportingLibrary and token == "\n" and prevToken != "as":
             isImportingLibrary = False
             importFilePath = importFilePath + FGL_SUFFIX
             tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, None))
             importFilePath = ""
             concatenatedImportString = ""
             continue
-        elif isImportingLibrary and isPreviousTokenAs:
+        elif isImportingLibrary and prevToken == "as":
             isImportingLibrary = False
+            importFilePath = importFilePath + FGL_SUFFIX
             tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, token))
             importFilePath = ""
             concatenatedImportString = ""
-            continue
-
-        if isImportingLibrary and tokenLower == "as":
-            importFilePath = importFilePath + FGL_SUFFIX
             continue
 
         if prevToken == "\n" and tokenLower == "globals":
@@ -398,7 +384,7 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
             continue
 
         if isDefiningVariable and (prevTokenNotNewline == "define" or prevTokenNotNewline == ","):
-            currentVariables.append(token)
+            currentVariables.add(token)
             continue
 
         if isDefiningVariable and not (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token in existingTypes:
