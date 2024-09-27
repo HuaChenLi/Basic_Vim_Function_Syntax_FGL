@@ -84,11 +84,11 @@ def generateTags(inputString, currentFile, pid, bufNum):
     tokenLower = "\n"
     isImportingGlobal = False
     globalFilePath = ""
-    lineNumber = 1
+    lineNumber = 0
 
     for token in tokenList:
         tokenLower, prevToken = token, tokenLower
-        if token == "\n":
+        if prevToken == "\n":
             lineNumber += 1
         else:
             prevPrevToken = prevTokenNotNewline
@@ -300,12 +300,12 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
     tokenLower = "\n"
     isImportingGlobal = False
     globalFilePath = ""
-    lineNumber = 1
+    lineNumber = 0
 
     for token in tokenList:
         tokenLower, prevToken = token, tokenLower
         # tokenLower, prevToken, prevPrevToken = token, tokenLower, prevToken
-        if token == "\n":
+        if prevToken == "\n":
             lineNumber += 1
         else:
             prevPrevToken = prevTokenNotNewline
