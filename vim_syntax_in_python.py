@@ -567,7 +567,6 @@ def findVariableDefinition(varName, buffer, currentFile, currentLineNumber):
         tmpTuple = findFunctionDefinition(varName, tokenList, packagePaths)
         packageFile = tmpTuple[0]
         functionLine = tmpTuple[1]
-        execCommand = "execute 'let packageFile = " + tmpTuple[0] + "'"
         return packageFile, functionLine
     elif len(parts) == 2:
         # then this can be only be function/method call or type/constant definition
@@ -906,8 +905,6 @@ def findFunctionDefinition(varName, tokenList, packagePaths):
     packageFile = ""
     functionLine = 0
 
-
-    writeSingleLineToLog("we got here 1")
     prefix = varName.rsplit(".", 1)[0]
     functionName = varName.rsplit(".", 1)[1]
 
@@ -944,19 +941,15 @@ def findFunctionDefinition(varName, tokenList, packagePaths):
             continue
 
         if isImportingLibrary:
-            writeSingleLineToLog("we got here 2 prefix " + prefix)
             if prevToken == "as":
                 importFilePath = importFilePath + FGL_SUFFIX
-                # tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, token))
             elif token == "\n":
                 importFilePath = importFilePath + FGL_SUFFIX
                 if prefix in concatenatedImportString:
-                    writeSingleLineToLog("we got here 10")
                     tmpTuple = getFunctionFromFile(importFilePath, packagePaths, functionName)
                     packageFile = tmpTuple[0]
                     functionLine = tmpTuple[1]
                     break
-                # tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, None))
 
             if token == "\n":
                 isImportingLibrary = False
@@ -966,9 +959,7 @@ def findFunctionDefinition(varName, tokenList, packagePaths):
     return packageFile, functionLine
 
 def getFunctionFromFile(importFile, packagePaths, functionName):
-
     writeSingleLineToLog("getting functions from " + importFile)
-
     isExistingPackageFile = False
 
     for package in packagePaths:
@@ -994,13 +985,13 @@ def getFunctionFromFile(importFile, packagePaths, functionName):
     prevTokenNotNewline = ""
     prevToken = ""
     tmpToken = "\n"
-    lineNumber = 1
+    lineNumber = 0
 
     startTime = time.time()
 
     for token in tokenList:
         tmpToken, prevToken = token, tmpToken
-        if token == "\n":
+        if prevToken == "\n":
             lineNumber += 1
 
         if token in tokenDictionary and requiredToken is None:
@@ -1034,8 +1025,5 @@ def getFunctionFromFile(importFile, packagePaths, functionName):
     endTime = time.time()
     length = endTime - startTime
     writeSingleLineToLog("if statements took " + str(length) + " seconds")
-
-    writeSingleLineToLog("lineNumber is " + str(lineNumber))
-    writeSingleLineToLog("packageFile is " + packageFile)
 
     return packageFile, lineNumber

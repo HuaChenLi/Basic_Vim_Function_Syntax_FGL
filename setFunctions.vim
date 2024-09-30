@@ -28,12 +28,10 @@ tmpTuple = vim_syntax_in_python.findVariableDefinition(vim.eval('varName'), vim.
 
 execCommand = "let packageFile = escape('" + str(tmpTuple[0]) + "', '\\')"
 vim.command(execCommand)
-print(execCommand)
 
 execCommand = "let functionLine = escape('" + str(tmpTuple[1]) + "', '\\')"
 vim.command(execCommand)
 EOF
-    echo packageFile
     execute 'e +' . functionLine . ' ' . packageFile
 endfunction
 
