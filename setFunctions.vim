@@ -11,10 +11,8 @@ let s:script_dir = fnamemodify(resolve(expand('<sfile>', ':p')), ':h')
 "The entire below section is for jumping to variable definition
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! setFunctions#GotoDefinition()
-    let line = line('.')
-    let col = col('.')
-    let fileContent = join(getline(1, line), "\n")
-    " I'd rather pass everything into a python script and find the define that way
+    let fileContent = join(getline(1, line('.')), "\n")
+    let varName = setFunctions#CWordWithKey()
 
 python << EOF
 import sys
@@ -25,7 +23,7 @@ sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
 
-lineNumber = vim_syntax_in_python.findVariableDefinition(vim.eval('fileContent'))
+lineNumber = vim_syntax_in_python.findVariableDefinition(vim.eval('varName'), vim.eval('fileContent'))
 vim.command("let lineNumber = '%s'"% lineNumber)
 EOF
     echo lineNumber
@@ -77,7 +75,7 @@ EOF
 endfunction
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-function! setFunctions#CWordWithKey(filePath, pid, bufNum) abort
+function! setFunctions#CWordWithKey() abort
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     " Allows the '.' to be used as a keyword temporarily
     execute 'set iskeyword+=46'
@@ -168,7 +166,7 @@ function! setFunctions#Setup()
     autocmd! BufWritePost <buffer> call setFunctions#GenerateTags(g:filePath, getpid(), bufnr('%'))
 
     " The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
-    nnoremap <buffer> <silent> <C-]> : execute 'tag '.setFunctions#CWordWithKey(g:filePath, getpid(), bufnr('%'))<CR>
+    nnoremap <buffer> <silent> <C-]> : execute 'tag '.setFunctions#CWordWithKey()<CR>
 
     " The below section allows the user to jump to the definition of a variable (still in progress)
     nnoremap <F12> : call setFunctions#GotoDefinition()<CR>
