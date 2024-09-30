@@ -393,7 +393,6 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
             tagsLinesList.extend(createListOfTypeMethodTags(currentVariables, existingTypes[token], currentFile))
 
         if isDefiningVariable and token != "\n" and prevToken != "\n" and token != "," and prevTokenNotNewline != "," and not prevTokenNotNewline in currentVariables:
-
             isDefiningVariable = False
             currentVariables = set()
 
@@ -535,18 +534,58 @@ def tokenizeString(inputString):
     tokenBlock = re.findall(r"\w+|!|\"|#|\$|%|&|'|\(|\)|\*|\+|,|--|-|\/|\.|:|;|<|=|>|\?|@|\[|\\+|\]|\^|`|{|\||}|~|\n", inputString)
     return tokenBlock
 
-def findVariableDefinition(buffer):
+def findVariableDefinition(varName, buffer, currentFile, currentLineNumber):
+    startTime = time.time()
+
     tokenList = tokenizeString(buffer)
 
+    currentDirectory = os.path.dirname(currentFile)
+    packagePaths = [currentDirectory]
+    try:
+        # allows the environment variable to be split depending on the os
+        packagePaths.extend(os.environ['FGLLDPATH'].split(os.pathsep))
+    except:
+        # this is in case the FGLLDPATH doesn't exist
+        pass
+
+    isVarFound = False
+    isImportingGlobal = False
     requiredToken = None
+    prevTokenNotNewline = ""
+    prevPrevToken = ""
     prevToken = ""
     tmpToken = "\n"
+    globalFilePath = ""
     lineNumber = 0
+
+    # if the token has ".", then we need to match it with either functions or the public types
+    parts = varName.split(".")
+    numParts = len(parts)
+    writeSingleLineToLog(str(len(parts)))
+    if len(parts) > 2:
+        # then this can only be function call or type/constant definition
+        tmpTuple = findFunctionDefinition(varName, tokenList, packagePaths)
+        packageFile = tmpTuple[0]
+        functionLine = tmpTuple[1]
+        execCommand = "execute 'let packageFile = " + tmpTuple[0] + "'"
+        return packageFile, functionLine
+    elif len(parts) == 2:
+        # then this can be only be function/method call or type/constant definition
+        pass
+    # if len(parts) == 1, then can only be function call or type/constant definition
+
+
     for token in tokenList:
-        prevToken = tmpToken
-        token = token
+        prevToken = tmpToken.lower()
+        tmpToken = token
         if token == "\n":
             lineNumber += 1
+
+        if isImportingGlobal:
+            if (requiredToken == '"' and token != '"') or (requiredToken == "'" and token != "'") or (requiredToken == "`" and token != "`"):
+                globalFilePath = globalFilePath + token
+            elif (requiredToken == '"' and token == '"') or (requiredToken == "'" and token == "'") or (requiredToken == "`" and token == "`"):
+                isImportingGlobal = False
 
         # this section is all about skipping based on strings and comments
         if token in tokenDictionary and requiredToken is None:
@@ -558,6 +597,38 @@ def findVariableDefinition(buffer):
         elif token == requiredToken:
             requiredToken = None
             continue
+
+        if prevToken not in tokenDictionary and prevToken != "\n":
+            prevPrevToken = prevTokenNotNewline
+            prevTokenNotNewline = prevToken
+
+        if token == varName:
+            if lineNumber < currentLineNumber and prevTokenNotNewline == "define":
+                writeSingleLineToLog("Found Definition " + token) # remove later
+                isVarFound = True
+                break
+            if prevTokenNotNewline == "function":
+                writeSingleLineToLog("Found Function " + token) # remove later
+                isVarFound = True
+                break
+            elif prevTokenNotNewline == "constant":
+                writeSingleLineToLog("Found Constant" + token) # remove later
+                isVarFound = True
+                break
+            elif prevTokenNotNewline == "type":
+                writeSingleLineToLog("Found Type " + token) # remove later
+                isVarFound = True
+                break
+
+    endTime = time.time()
+    lengthTime = endTime - startTime
+    writeSingleLineToLog("looking for definition took " + str(lengthTime))
+
+    if not isVarFound:
+        # check globals to see if it exists
+        globalFilePath
+
+    return lineNumber
 
 def findFunctionWrapper(buffer):
     tokenList = tokenizeString(buffer)
@@ -821,3 +892,150 @@ def highlightExistingConstants(constantsFile):
         highlightExistingConstants = open(constantsFile, "r").read().split("\n")
         for const in highlightExistingConstants:
             vim.command("execute 'syn match constantGroup /\\<" + const + "\\>/'")
+
+def findFunctionDefinition(varName, tokenList, packagePaths):
+    requiredToken = None
+    isImportingLibrary = False
+    concatenatedImportString = ""
+    prevTokenNotNewline = ""
+    prevPrevToken = ""
+    prevToken = ""
+    tmpToken = "\n"
+    lineNumber = 0
+
+    packageFile = ""
+    functionLine = 0
+
+
+    writeSingleLineToLog("we got here 1")
+    prefix = varName.rsplit(".", 1)[0]
+    functionName = varName.rsplit(".", 1)[1]
+
+    for token in tokenList:
+        prevToken = tmpToken.lower()
+        tmpToken = token
+        if token == "\n":
+            lineNumber += 1
+
+        # this section is all about skipping based on strings and comments
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
+            continue
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
+            continue
+        elif token == requiredToken:
+            requiredToken = None
+            continue
+
+        if prevToken not in tokenDictionary and prevToken != "\n":
+            prevPrevToken = prevTokenNotNewline
+            prevTokenNotNewline = prevToken
+
+        if prevToken == "fgl" and prevPrevToken == "import":
+            importFilePath = token
+            concatenatedImportString = token
+            isImportingLibrary = True
+            continue
+
+        if isImportingLibrary and prevToken == "." and token != "\n":
+            importFilePath = os.path.join(importFilePath, token)
+            concatenatedImportString = concatenatedImportString + "." + token
+            continue
+
+        if isImportingLibrary:
+            writeSingleLineToLog("we got here 2 prefix " + prefix)
+            if prevToken == "as":
+                importFilePath = importFilePath + FGL_SUFFIX
+                # tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, token))
+            elif token == "\n":
+                importFilePath = importFilePath + FGL_SUFFIX
+                if prefix in concatenatedImportString:
+                    writeSingleLineToLog("we got here 10")
+                    tmpTuple = getFunctionFromFile(importFilePath, packagePaths, functionName)
+                    packageFile = tmpTuple[0]
+                    functionLine = tmpTuple[1]
+                    break
+                # tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, None))
+
+            if token == "\n":
+                isImportingLibrary = False
+                importFilePath = ""
+                concatenatedImportString = ""
+
+    return packageFile, functionLine
+
+def getFunctionFromFile(importFile, packagePaths, functionName):
+
+    writeSingleLineToLog("getting functions from " + importFile)
+
+    isExistingPackageFile = False
+
+    for package in packagePaths:
+        packageFile = os.path.join(package, importFile)
+        if os.path.isfile(packageFile):
+            isExistingPackageFile = True
+            break
+
+    if not isExistingPackageFile:
+        writeSingleLineToLog("couldn't find file " + importFile)
+        return "", 0
+
+    file = open(packageFile, "r")
+
+    startTime = time.time()
+    tokenList = tokenizeString(file.read())
+    endTime = time.time()
+    length = endTime - startTime
+    writeSingleLineToLog("tokenizing " + importFile + " took " + str(length) + " seconds and the number of tokens is " + str(len(tokenList)))
+
+    requiredToken = None
+    prevPrevToken = ""
+    prevTokenNotNewline = ""
+    prevToken = ""
+    tmpToken = "\n"
+    lineNumber = 1
+
+    startTime = time.time()
+
+    for token in tokenList:
+        tmpToken, prevToken = token, tmpToken
+        if token == "\n":
+            lineNumber += 1
+
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
+            continue
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
+            continue
+        elif token == requiredToken:
+            requiredToken = None
+            continue
+
+        if prevToken not in tokenDictionary and prevToken != "\n":
+            prevPrevToken = prevTokenNotNewline
+            prevTokenNotNewline = prevToken
+
+        prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
+
+        if token == functionName and ((prevTokenNotNewline == "function") or (prevTokenNotNewline == "report")) and not prevPrevToken == "end" and not prevPrevToken == "private":
+            writeSingleLineToLog("found public function " + token)
+            break
+
+        if token == functionName and prevTokenNotNewline == "constant" and prevPrevToken == "public":
+            writeSingleLineToLog("found public constant " + token)
+            break
+
+        if token == functionName and prevTokenNotNewline == "type" and prevPrevToken == "public":
+            writeSingleLineToLog("found public type " + token)
+            break
+
+    endTime = time.time()
+    length = endTime - startTime
+    writeSingleLineToLog("if statements took " + str(length) + " seconds")
+
+    writeSingleLineToLog("lineNumber is " + str(lineNumber))
+    writeSingleLineToLog("packageFile is " + packageFile)
+
+    return packageFile, lineNumber

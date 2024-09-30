@@ -10,8 +10,9 @@ let s:script_dir = fnamemodify(resolve(expand('<sfile>', ':p')), ':h')
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "The entire below section is for jumping to variable definition
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-function! setFunctions#GotoDefinition()
-    let fileContent = join(getline(1, line('.')), "\n")
+function! setFunctions#GotoDefinition(filePath)
+    let lineNumber = line('.')
+    let fileContent = join(getline(1, '$'), "\n")
     let varName = setFunctions#CWordWithKey()
 
 python << EOF
@@ -23,13 +24,17 @@ sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
 
-lineNumber = vim_syntax_in_python.findVariableDefinition(vim.eval('varName'), vim.eval('fileContent'))
-vim.command("let lineNumber = '%s'"% lineNumber)
+tmpTuple = vim_syntax_in_python.findVariableDefinition(vim.eval('varName'), vim.eval('fileContent'), vim.eval('g:filePath'), vim.eval('lineNumber'))
+
+execCommand = "let packageFile = escape('" + str(tmpTuple[0]) + "', '\\')"
+vim.command(execCommand)
+print(execCommand)
+
+execCommand = "let functionLine = escape('" + str(tmpTuple[1]) + "', '\\')"
+vim.command(execCommand)
 EOF
-    echo lineNumber
-   " let searchString = '\<\cdefine\>\([\n \t]\+\w\+[\n \t]\+\w\+,\([\n \t]*\)*\)*[\n \t]\+\<' . expand('<cword>') . '\>'
-   " let returnLine =  SearchNotCommentLineNumber(searchString, line, col, line, col)
-    call cursor(lineNumber, 1)
+    echo packageFile
+    execute 'e +' . functionLine . ' ' . packageFile
 endfunction
 
 
@@ -169,7 +174,7 @@ function! setFunctions#Setup()
     nnoremap <buffer> <silent> <C-]> : execute 'tag '.setFunctions#CWordWithKey()<CR>
 
     " The below section allows the user to jump to the definition of a variable (still in progress)
-    nnoremap <F12> : call setFunctions#GotoDefinition()<CR>
+    nnoremap <F12> : call setFunctions#GotoDefinition(g:filePath)<CR>
 
 endfunction
 
