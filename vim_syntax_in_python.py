@@ -43,7 +43,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
     tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + TAGS_SUFFIX
 
-    searchString = r"\b" + re.escape(pid + "." + bufNum) + r"\b" + r"\.\w+" + re.escape(TAGS_SUFFIX)
+    searchString = r"\b" + re.escape(pid + "." + bufNum) + r"\b" + r"[\.\w]+" + re.escape(TAGS_SUFFIX)
 
     allTagFiles = os.listdir(TAGS_FILE_DIRECTORY)
     for f in allTagFiles:
@@ -67,21 +67,28 @@ def generateTags(inputString, currentFile, pid, bufNum):
     librariesList = []
     existingFunctionNames = set()
 
+    existingTypes = {}
     isImportingLibrary = False
+    isTypeFunction = False
+    currentType = ""
+
+    isDefiningVariable = False
+    currentVariables = set()
 
     importFilePath = ""
     concatenatedImportString = ""
     requiredToken = None
     prevPrevToken = ""
+    prevTokenNotNewline = ""
     prevToken = ""
     tokenLower = "\n"
     isImportingGlobal = False
     globalFilePath = ""
-    lineNumber = 1
+    lineNumber = 0
 
     for token in tokenList:
-        tokenLower, prevToken, prevPrevToken = token, tokenLower, prevToken
-        if token == "\n":
+        tokenLower, prevToken = token, tokenLower
+        if prevToken == "\n":
             lineNumber += 1
 
         if isImportingGlobal:
@@ -103,71 +110,96 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end":
-            # We create the list of the function tags
-            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
-            existingFunctionNames.add(token)
+        if prevToken not in tokenDictionary and prevToken != "\n":
+            prevPrevToken = prevTokenNotNewline
+            prevTokenNotNewline = prevToken
+
+        if ((prevTokenNotNewline == "function") or (prevTokenNotNewline == "report")) and not prevPrevToken == "end":
+            if token == "(":
+                isTypeFunction = True
+                continue
+            else:
+                # We create the list of regular function tags
+                fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+                tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
+                existingFunctionNames.add(token)
+                continue
+
+        if isTypeFunction and not prevTokenNotNewline == "(" and not prevTokenNotNewline == ")" and not token == ")":
+            currentType = token
             continue
 
-        if tokenLower == "import" and prevToken == "\n":
-            # we need to check that Import is at the start of the line
+        if isTypeFunction and prevTokenNotNewline == ")":
+            if currentType in existingTypes:
+                existingTypes[currentType].append((token,lineNumber))
+            isTypeFunction = False
+            currentType = ""
+            continue
+
+        if prevToken == "fgl" and prevPrevToken == "import":
+            importFilePath = token
+            concatenatedImportString = token
             isImportingLibrary = True
             continue
 
-        if isImportingLibrary and prevToken == "import" and tokenLower == "fgl":
-            continue
-        elif isImportingLibrary and prevToken == "import" and not tokenLower == "fgl":
-            # for when importing not an FGL library
-            isImportingLibrary = False
-            continue
-
-        isPreviousTokenAs = prevToken == "as"
-
-        if isImportingLibrary and token != "." and token != "\n" and not tokenLower == "as" and not isPreviousTokenAs:
+        if isImportingLibrary and prevToken == "." and token != "\n":
             importFilePath = os.path.join(importFilePath, token)
-            if concatenatedImportString == "":
-                concatenatedImportString = token
-            else:
-                concatenatedImportString = concatenatedImportString + "." + token
+            concatenatedImportString = concatenatedImportString + "." + token
             continue
 
         # When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
         # The functionName is the AS file, while the file is the path to the file
 
-        if isImportingLibrary and token == "\n" and not isPreviousTokenAs:
-            isImportingLibrary = False
-            importFilePath = importFilePath + FGL_SUFFIX
-            librariesList.append((importFilePath, concatenatedImportString))
-            tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, None))
-            importFilePath = ""
-            concatenatedImportString = ""
-            continue
-        elif isImportingLibrary and isPreviousTokenAs:
-            isImportingLibrary = False
-            librariesList.append((importFilePath, token))
-            tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, token))
-            importFilePath = ""
-            concatenatedImportString = ""
-            continue
+        if isImportingLibrary:
+            if prevToken == "as":
+                importFilePath = importFilePath + FGL_SUFFIX
+                librariesList.append((importFilePath, token))
+                tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, token))
+            elif token == "\n":
+                importFilePath = importFilePath + FGL_SUFFIX
+                librariesList.append((importFilePath, concatenatedImportString))
+                tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, None))
 
-        if isImportingLibrary and tokenLower == "as":
-            importFilePath = importFilePath + FGL_SUFFIX
-            continue
+            if token == "\n":
+                isImportingLibrary = False
+                importFilePath = ""
+                concatenatedImportString = ""
 
         if prevToken == "\n" and tokenLower == "globals":
             isImportingGlobal = True
             continue
 
-        if prevToken == "constant":
+        if prevTokenNotNewline == "constant":
             if token not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
+            continue
 
-        if prevToken == "type":
+        if prevTokenNotNewline == "type":
+            if token not in GENERO_KEY_WORDS:
+                vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            existingTypes[token] = []
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
+            continue
+
+        if not isDefiningVariable and tokenLower == "define":
+            isDefiningVariable = True
+            continue
+
+        if isDefiningVariable and (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token != "\n":
+            currentVariables.add(token)
+            continue
+
+        if isDefiningVariable and not (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token in existingTypes:
+            tagsLinesList.extend(createListOfTypeMethodTags(currentVariables, existingTypes[token], currentFile))
+            currentVariables = set()
+
+        # this statement is 100% gonna fail with DYNAMIC ARRAY OF RECORD
+        if isDefiningVariable and token != "\n" and prevToken != "\n" and token != "," and prevTokenNotNewline != "," and prevPrevToken != "define":
+            isDefiningVariable = False
+            currentVariables = set()
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
     endTime = time.time()
@@ -176,6 +208,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
     constantsFile = os.path.join(TAGS_FILE_DIRECTORY, ".constants." + pid + "." + bufNum + CONSTANTS_SUFFIX)
 
+    constantsList = []
     startTime = time.time()
     for lib in librariesList:
         importFilePath = lib[0]
@@ -187,7 +220,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
                 writeTagsFile(tmpTuple[0], libraryTagsFile, "a")
                 existingFunctionNames.update(tmpTuple[1])
             if tmpTuple[2] is not None:
-                writeConstantsFile(tmpTuple[2], constantsFile, "a")
+                constantsList.extend(tmpTuple[2])
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting public functions took " + str(lengthTime) + " seconds")
@@ -195,16 +228,19 @@ def generateTags(inputString, currentFile, pid, bufNum):
     startTime = time.time()
     makefileTagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".Makefile" + TAGS_SUFFIX
     if not os.path.isfile(makefileTagsFile):
-        writeTagsFile(getMakefileFunctions(currentDirectory, existingFunctionNames), makefileTagsFile, "a")
+        tmpTuple = getMakefileFunctions(currentDirectory, existingFunctionNames)
+        writeTagsFile(tmpTuple[0], makefileTagsFile, "a")
+        constantsList.extend(tmpTuple[1])
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting Makefile Functions took " + str(lengthTime) + " seconds")
 
+    writeConstantsFile(constantsList, constantsFile, "a")
+    highlightExistingConstants(constantsFile)
+
     vimSyntaxEnd = time.time()
     vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
     writeSingleLineToLog("vim syntax for " + currentFile + " took " + str(vimSyntaxLengthOfTime) + " seconds")
-
-    highlightExistingConstants(constantsFile)
 
 def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
     vimSyntaxStart = time.time()
@@ -234,19 +270,26 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
 
     isImportingLibrary = False
 
+    existingTypes = {}
+    isTypeFunction = False
+    currentType = ""
+    isDefiningVariable = False
+    currentVariables = set()
+
     importFilePath = ""
     concatenatedImportString = ""
     requiredToken = None
     prevPrevToken = ""
+    prevTokenNotNewline = ""
     prevToken = ""
     tokenLower = "\n"
     isImportingGlobal = False
     globalFilePath = ""
-    lineNumber = 1
+    lineNumber = 0
 
     for token in tokenList:
-        tokenLower, prevToken, prevPrevToken = token, tokenLower, prevToken
-        if token == "\n":
+        tokenLower, prevToken = token, tokenLower
+        if prevToken == "\n":
             lineNumber += 1
 
         if isImportingGlobal:
@@ -268,69 +311,91 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
 
         tokenLower = tokenLower.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end":
-            # We create the list of the function tags
-            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
-            existingFunctionNames.add(token)
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
+        if prevToken not in tokenDictionary and prevToken != "\n":
+            prevPrevToken = prevTokenNotNewline
+            prevTokenNotNewline = prevToken
+
+        if ((prevTokenNotNewline == "function") or (prevTokenNotNewline == "report")) and not prevPrevToken == "end":
+            if token == "(":
+                isTypeFunction = True
+                continue
+            else:
+                # We create the list of the function tags
+                fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+                tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
+                existingFunctionNames.add(token)
+                continue
+
+        if isTypeFunction and not prevTokenNotNewline == "(" and not prevTokenNotNewline == ")" and not token == ")":
+            currentType = token
             continue
 
-        if tokenLower == "import" and prevToken == "\n":
-            # we need to check that Import is at the start of the line
+        if isTypeFunction and prevTokenNotNewline == ")":
+            if currentType in existingTypes:
+                existingTypes[currentType].append((token,lineNumber))
+            isTypeFunction = False
+            currentType = ""
+            continue
+
+        if prevToken == "fgl" and prevPrevToken == "import":
+            importFilePath = token
+            concatenatedImportString = token
             isImportingLibrary = True
             continue
 
-        if isImportingLibrary and prevToken == "import" and tokenLower == "fgl":
-            continue
-        elif isImportingLibrary and prevToken == "import" and not tokenLower == "fgl" and token != ".":
-            # for when importing not an FGL library
-            isImportingLibrary = False
-            continue
-
-        isPreviousTokenAs = prevToken == "as"
-
-        if isImportingLibrary and token != "." and token != "\n" and not tokenLower == "as" and not isPreviousTokenAs:
+        if isImportingLibrary and prevToken == "." and token != "\n":
             importFilePath = os.path.join(importFilePath, token)
-            if concatenatedImportString == "":
-                concatenatedImportString = token
-            else:
-                concatenatedImportString = concatenatedImportString + "." + token
+            concatenatedImportString = concatenatedImportString + "." + token
             continue
 
         # When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
         # The functionName is the AS file, while the file is the path to the file
 
-        if isImportingLibrary and token == "\n" and not isPreviousTokenAs:
-            isImportingLibrary = False
-            importFilePath = importFilePath + FGL_SUFFIX
-            tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, None))
-            importFilePath = ""
-            concatenatedImportString = ""
-            continue
-        elif isImportingLibrary and isPreviousTokenAs:
-            isImportingLibrary = False
-            tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, token))
-            importFilePath = ""
-            concatenatedImportString = ""
-            continue
+        if isImportingLibrary:
+            if prevToken == "as":
+                importFilePath = importFilePath + FGL_SUFFIX
+                tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, token))
+            elif token == "\n":
+                importFilePath = importFilePath + FGL_SUFFIX
+                tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, None))
 
-        if isImportingLibrary and tokenLower == "as":
-            importFilePath = importFilePath + FGL_SUFFIX
-            continue
+            if token == "\n":
+                isImportingLibrary = False
+                importFilePath = ""
+                concatenatedImportString = ""
 
         if prevToken == "\n" and tokenLower == "globals":
             isImportingGlobal = True
             continue
 
-        if prevToken == "constant":
+        if prevTokenNotNewline == "constant":
             if token not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
 
-        if prevToken == "type":
+        if prevTokenNotNewline == "type":
+            if token not in GENERO_KEY_WORDS:
+                vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
+            existingTypes[token] = []
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
+
+        if not isDefiningVariable and tokenLower == "define":
+            isDefiningVariable = True
+            continue
+
+        if isDefiningVariable and (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token != "\n":
+            currentVariables.add(token)
+            continue
+
+        if isDefiningVariable and not (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token in existingTypes:
+            tagsLinesList.extend(createListOfTypeMethodTags(currentVariables, existingTypes[token], currentFile))
+
+        if isDefiningVariable and token != "\n" and prevToken != "\n" and token != "," and prevTokenNotNewline != "," and not prevTokenNotNewline in currentVariables:
+
+            isDefiningVariable = False
+            currentVariables = set()
 
     writeTagsFile(tagsLinesList, tagsFile, "w")
 
@@ -362,6 +427,13 @@ def createListOfTags(functionName, currentFile, lineNumber, functionTokens, exis
 
 def createSingleTagLine(jumpToString, jumpToFile, lineNumber):
     return "%s\t%s\t%s\n" % (jumpToString, jumpToFile, lineNumber)
+
+def createListOfTypeMethodTags(currentVariables, typeDefinition, jumpToFile):
+    tagsLineList = []
+    for v in currentVariables:
+        for t in typeDefinition:
+            tagsLineList.append("%s.%s\t%s\t%s\n" % (v, t[0], jumpToFile, t[1]))
+    return tagsLineList
 
 def writeTagsFile(tagsLinesList, tagsFile, mode):
     # The tags file needs to be sorted alphabetically (by ASCII code) in order to work
@@ -443,6 +515,9 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
         if prevToken == "type" and prevPrevToken == "public":
+            if token not in GENERO_KEY_WORDS:
+                constantsList.append("%s%s" % (token, "\n"))
+                vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()
@@ -526,7 +601,7 @@ def removeTempTags(pid, bufNum):
 def getMakefileFunctions(currentDirectory, existingFunctionNames):
     makeFile = os.path.join(currentDirectory, "Makefile")
     if not os.path.isfile(makeFile):
-        return []
+        return [], []
     file = open(makeFile, "r")
     tokenList = tokenizeString(file.read())
 
@@ -615,14 +690,16 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     endTime = time.time()
     writeSingleLineToLog("LIBFILES took " + str(lengthTime) + " seconds")
 
+    constantsList = []
     startTime = time.time()
     for globalFile in globalFileList:
         tmpTuple = getPublicConstantsFromLibrary(globalFile[0], [globalFile[1]], [currentDirectory])
         tagsList.extend(tmpTuple[0])
+        constantsList.extend(tmpTuple[1])
     endTime = time.time()
     writeSingleLineToLog("GLOBALS took " + str(lengthTime) + " seconds")
 
-    return tagsList
+    return tagsList, constantsList
 
 def writeSingleLineToLog(inputString):
     if not os.path.exists(LOG_DIRECTORY):
@@ -715,6 +792,9 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
         if prevToken == "type" and prevPrevToken == "public":
+            if token not in GENERO_KEY_WORDS:
+                vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
+                constantsList.append(token)
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()

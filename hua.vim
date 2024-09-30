@@ -1,11 +1,14 @@
+syn match keywordGroup /\c\<ARRAY\>/
 syn match keywordGroup /\c\<AS\>/
 syn match keywordGroup /\c\<BOOLEAN\>/
 syn match keywordGroup /\c\<CALL\>/
 syn match keywordGroup /\c\<CONSTANT\>/
 syn match keywordGroup /\c\<DEFINE\>/
 syn match keywordGroup /\c\<DISPLAY\>/
+syn match keywordGroup /\c\<DYNAMIC\>/
 syn match keywordGroup /\c\<END\>/
 syn match keywordGroup /\c\<FGL\>/
+syn match keywordGroup /\c\<FLOAT\>/
 syn match keywordGroup /\c\<FOR\>/
 syn match keywordGroup /\c\<FUNCTION\>/
 syn match keywordGroup /\c\<GLOBALS\>/
@@ -14,7 +17,10 @@ syn match keywordGroup /\c\<INTEGER\>/
 syn match keywordGroup /\c\<LET\>/
 syn match keywordGroup /\c\<PRIVATE\>/
 syn match keywordGroup /\c\<PUBLIC\>/
+syn match keywordGroup /\c\<RECORD\>/
 syn match keywordGroup /\c\<REPORT\>/
+syn match keywordGroup /\c\<RETURN\>/
+syn match keywordGroup /\c\<RETURNS\>/
 syn match keywordGroup /\c\<STRING\>/
 syn match keywordGroup /\c\<TYPE\>/
 syn match keywordGroup /\c\<VAR\>/
@@ -262,8 +268,6 @@ function! IsCurrentRegionInFunction()
 endfunction
 
 
-
-
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " In Genero manuals: allows you to press gf to go to the file with the function
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -285,7 +289,6 @@ function! LoadModule(fname)
 endfunction
 
 set includeexpr=LoadModule(v:fname)
-
 
 call setFunctions#Setup()
 
