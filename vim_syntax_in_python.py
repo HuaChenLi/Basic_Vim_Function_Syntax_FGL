@@ -43,7 +43,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
 
     tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + TAGS_SUFFIX
 
-    searchString = r"\b" + re.escape(pid + "." + bufNum) + r"\b" + r"\.\w+" + re.escape(TAGS_SUFFIX)
+    searchString = r"\b" + re.escape(pid + "." + bufNum) + r"\b" + r"[\.\w]+" + re.escape(TAGS_SUFFIX)
 
     allTagFiles = os.listdir(TAGS_FILE_DIRECTORY)
     for f in allTagFiles:
