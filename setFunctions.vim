@@ -24,12 +24,13 @@ sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
 
-tmpTuple = vim_syntax_in_python.findVariableDefinition(vim.eval('varName'), vim.eval('fileContent'), vim.eval('g:filePath'), vim.eval('lineNumber'))
+tmpTuple1 = None
+tmpTuple1 = vim_syntax_in_python.findVariableDefinition(vim.eval('varName'), vim.eval('fileContent'), vim.eval('g:filePath'), vim.eval('lineNumber'))
 
-execCommand = "let packageFile = escape('" + str(tmpTuple[0]) + "', '\\')"
+execCommand = "let packageFile = '" + str(tmpTuple1[0]) + "'"
 vim.command(execCommand)
 
-execCommand = "let functionLine = escape('" + str(tmpTuple[1]) + "', '\\')"
+execCommand = "let functionLine = '" + str(tmpTuple1[1]) + "'"
 vim.command(execCommand)
 EOF
     execute 'e +' . functionLine . ' ' . packageFile
