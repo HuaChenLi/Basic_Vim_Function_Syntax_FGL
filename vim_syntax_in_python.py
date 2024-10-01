@@ -548,86 +548,30 @@ def findVariableDefinition(varName, buffer, currentFile, currentLineNumber):
         # this is in case the FGLLDPATH doesn't exist
         pass
 
-    isVarFound = False
-    isImportingGlobal = False
-    requiredToken = None
-    prevTokenNotNewline = ""
-    prevPrevToken = ""
-    prevToken = ""
-    tmpToken = "\n"
-    globalFilePath = ""
-    lineNumber = 0
-
     # if the token has ".", then we need to match it with either functions or the public types
     parts = varName.split(".")
-    numParts = len(parts)
     writeSingleLineToLog(str(len(parts)))
     if len(parts) > 2:
         # then this can only be function call or type/constant definition
-        tmpTuple = findFunctionDefinition(varName, tokenList, packagePaths)
+        tmpTuple = findFunctionDefinitionFromLibraryPackage(varName, tokenList, packagePaths)
         packageFile = tmpTuple[0]
         functionLine = tmpTuple[1]
         return packageFile, functionLine
     elif len(parts) == 2:
         # then this can be only be function/method call or type/constant definition
         pass
-    # if len(parts) == 1, then can only be function call or type/constant definition
-
-
-    for token in tokenList:
-        prevToken = tmpToken.lower()
-        tmpToken = token
-        if token == "\n":
-            lineNumber += 1
-
-        if isImportingGlobal:
-            if (requiredToken == '"' and token != '"') or (requiredToken == "'" and token != "'") or (requiredToken == "`" and token != "`"):
-                globalFilePath = globalFilePath + token
-            elif (requiredToken == '"' and token == '"') or (requiredToken == "'" and token == "'") or (requiredToken == "`" and token == "`"):
-                isImportingGlobal = False
-
-        # this section is all about skipping based on strings and comments
-        if token in tokenDictionary and requiredToken is None:
-            requiredToken = tokenDictionary.get(token)
-        elif requiredToken is not None and token != requiredToken:
-            continue
-        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
-            continue
-        elif token == requiredToken:
-            requiredToken = None
-            continue
-
-        if prevToken not in tokenDictionary and prevToken != "\n":
-            prevPrevToken = prevTokenNotNewline
-            prevTokenNotNewline = prevToken
-
-        if token == varName:
-            if lineNumber < currentLineNumber and prevTokenNotNewline == "define":
-                writeSingleLineToLog("Found Definition " + token) # remove later
-                isVarFound = True
-                break
-            if prevTokenNotNewline == "function":
-                writeSingleLineToLog("Found Function " + token) # remove later
-                isVarFound = True
-                break
-            elif prevTokenNotNewline == "constant":
-                writeSingleLineToLog("Found Constant" + token) # remove later
-                isVarFound = True
-                break
-            elif prevTokenNotNewline == "type":
-                writeSingleLineToLog("Found Type " + token) # remove later
-                isVarFound = True
-                break
+    else:
+        # if len(parts) == 1, then can only be function call or type/constant definition
+        tmpTuple = findSingularToken(varName, tokenList, currentFile, packagePaths, currentLineNumber)
+        packageFile = tmpTuple[0]
+        functionLine = tmpTuple[1]
+        return packageFile, functionLine
 
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("looking for definition took " + str(lengthTime))
 
-    if not isVarFound:
-        # check globals to see if it exists
-        globalFilePath
-
-    return lineNumber
+    return "", 0
 
 def findFunctionWrapper(buffer):
     tokenList = tokenizeString(buffer)
@@ -906,7 +850,7 @@ def highlightExistingConstants(constantsFile):
         for const in highlightExistingConstants:
             vim.command("execute 'syn match constantGroup /\\<" + const + "\\>/'")
 
-def findFunctionDefinition(varName, tokenList, packagePaths):
+def findFunctionDefinitionFromLibraryPackage(varName, tokenList, packagePaths):
     requiredToken = None
     isImportingLibrary = False
     concatenatedImportString = ""
@@ -1041,3 +985,150 @@ def getFunctionFromFile(importFile, packagePaths, functionName):
     writeSingleLineToLog("if statements took " + str(length) + " seconds")
 
     return packageFile, lineNumber
+
+def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLineNumber):
+    isFunctionFound = False
+    isVarFound = False
+    isImportingGlobal = False
+    isImportingLibrary = False
+    requiredToken = None
+    prevTokenNotNewline = ""
+    prevPrevToken = ""
+    prevToken = ""
+    tmpToken = "\n"
+    globalFilePath = ""
+    lineNumber = 0
+
+    packageFile = ""
+    functionLine = 0
+
+    librariesList = []
+
+    writeSingleLineToLog("proof of something here")
+
+    for token in tokenList:
+        prevToken = tmpToken.lower()
+        tmpToken = token
+        if prevToken == "\n":
+            lineNumber += 1
+
+        if isImportingGlobal:
+            if (requiredToken == '"' and token != '"') or (requiredToken == "'" and token != "'") or (requiredToken == "`" and token != "`"):
+                globalFilePath = globalFilePath + token
+            elif (requiredToken == '"' and token == '"') or (requiredToken == "'" and token == "'") or (requiredToken == "`" and token == "`"):
+                isImportingGlobal = False
+
+        # this section is all about skipping based on strings and comments
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
+            continue
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
+            continue
+        elif token == requiredToken:
+            requiredToken = None
+            continue
+
+        if prevToken not in tokenDictionary and prevToken != "\n":
+            prevPrevToken = prevTokenNotNewline
+            prevTokenNotNewline = prevToken
+
+        if prevToken == "fgl" and prevPrevToken == "import":
+            importFilePath = token
+            concatenatedImportString = token
+            isImportingLibrary = True
+            continue
+
+        if isImportingLibrary and prevToken == "." and token != "\n":
+            importFilePath = os.path.join(importFilePath, token)
+            concatenatedImportString = concatenatedImportString + "." + token
+            continue
+
+        # When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
+        # The functionName is the AS file, while the file is the path to the file
+
+        if isImportingLibrary:
+            if prevToken == "as":
+                importFilePath = importFilePath + FGL_SUFFIX
+                writeSingleLineToLog("with alias " + importFilePath)
+                librariesList.append((importFilePath, token))
+            elif token == "\n" and prevPrevToken != "as":
+                importFilePath = importFilePath + FGL_SUFFIX
+                writeSingleLineToLog("without alias " + importFilePath)
+                librariesList.append((importFilePath, concatenatedImportString))
+
+            if token == "\n":
+                isImportingLibrary = False
+                importFilePath = ""
+                concatenatedImportString = ""
+
+        if token == varName:
+            if lineNumber < currentLineNumber and prevTokenNotNewline == "define":
+                writeSingleLineToLog("Found Definition " + token) # remove later
+                isVarFound = True
+                break
+            if prevTokenNotNewline == "function":
+                writeSingleLineToLog("Found Function " + token) # remove later
+                isFunctionFound = True
+                break
+            elif prevTokenNotNewline == "constant":
+                writeSingleLineToLog("Found Constant" + token) # remove later
+                isFunctionFound = True
+                break
+            elif prevTokenNotNewline == "type":
+                writeSingleLineToLog("Found Type " + token) # remove later
+                isFunctionFound = True
+                break
+
+    if isFunctionFound:
+        packageFile = currentFile
+        functionLine = lineNumber
+
+    if isVarFound:
+        packageFile = currentFile
+        functionLine = lineNumber
+
+    if not isFunctionFound and not isVarFound:
+        writeSingleLineToLog("here?????????????????????????? " + str(len(librariesList)))
+        writeSingleLineToLog(str(librariesList))
+        # look in other files
+        # Current File > Imported Library > OBJFILES > CUSTLIBS > LIBFILES
+        for l in librariesList:
+            writeSingleLineToLog(" why is there no suffix here?????? " + l[0])
+            # need to loop through each library and check if has string
+            if checkVariableInLibrary(varName, l[0], packagePaths):
+                writeSingleLineToLog("found function name")
+                break
+
+        
+        pass
+
+    return packageFile, functionLine
+
+
+def checkVariableInLibrary(varName, importFile, packagePaths):
+    isExistingPackageFile = False
+    writeSingleLineToLog(importFile)
+
+    for package in packagePaths:
+        packageFile = os.path.join(package, importFile)
+        writeSingleLineToLog(packageFile)
+        if os.path.isfile(packageFile):
+            isExistingPackageFile = True
+            break
+
+    if not isExistingPackageFile:
+        writeSingleLineToLog("no packages found")
+        return False
+    
+    file = open(packageFile, "r")
+
+    isVariableFound = False
+
+    if re.search(varName, file.read()):
+        writeSingleLineToLog("found function or whatever here")
+        isVariableFound = True
+    else:
+        writeSingleLineToLog("we ain't found shit")
+
+    return isVariableFound
