@@ -556,22 +556,22 @@ def findVariableDefinition(varName, buffer, currentFile, currentLineNumber):
         tmpTuple = findFunctionDefinitionFromLibraryPackage(varName, tokenList, packagePaths)
         packageFile = tmpTuple[0]
         functionLine = tmpTuple[1]
-        return packageFile, functionLine
     elif len(parts) == 2:
         # then this can be only be function/method call or type/constant definition
-        pass
+        tmpTuple = findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, currentLineNumber)
+        packageFile = tmpTuple[0]
+        functionLine = tmpTuple[1]
     else:
         # if len(parts) == 1, then can only be function call or type/constant definition
         tmpTuple = findSingularToken(varName, tokenList, currentFile, packagePaths, currentLineNumber)
         packageFile = tmpTuple[0]
         functionLine = tmpTuple[1]
-        return packageFile, functionLine
 
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("looking for definition took " + str(lengthTime))
 
-    return "", 0
+    return packageFile, functionLine
 
 def findFunctionWrapper(buffer):
     tokenList = tokenizeString(buffer)
@@ -1223,5 +1223,159 @@ def findFunctionFromMakefile(currentDirectory, varName):
             packageFile = tmpTuple[0]
             functionLine = tmpTuple[1]
             return packageFile, functionLine
+
+    return packageFile, functionLine
+
+def findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, currentLineNumber):
+    isFunctionFound = False
+    isLibraryFunction = False
+    isVarFound = False
+    isImportingGlobal = False
+    isImportingLibrary = False
+    requiredToken = None
+    prevTokenNotNewline = ""
+    prevPrevToken = ""
+    prevToken = ""
+    tmpToken = "\n"
+    globalFilePath = ""
+    lineNumber = 0
+
+    packageFile = ""
+    functionLine = 0
+
+    librariesList = []
+
+    prefix = varName.rsplit(".", 1)[0]
+    functionName = varName.rsplit(".", 1)[1]
+
+    currentDirectory = os.path.dirname(currentFile)
+
+    writeSingleLineToLog("brand new function")
+
+    for token in tokenList:
+        prevToken = tmpToken.lower()
+        tmpToken = token
+        if prevToken == "\n":
+            lineNumber += 1
+
+        if isImportingGlobal:
+            if (requiredToken == '"' and token != '"') or (requiredToken == "'" and token != "'") or (requiredToken == "`" and token != "`"):
+                globalFilePath = globalFilePath + token
+            elif (requiredToken == '"' and token == '"') or (requiredToken == "'" and token == "'") or (requiredToken == "`" and token == "`"):
+                isImportingGlobal = False
+
+        # this section is all about skipping based on strings and comments
+        if token in tokenDictionary and requiredToken is None:
+            requiredToken = tokenDictionary.get(token)
+        elif requiredToken is not None and token != requiredToken:
+            continue
+        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
+            continue
+        elif token == requiredToken:
+            requiredToken = None
+            continue
+
+        if prevToken not in tokenDictionary and prevToken != "\n":
+            prevPrevToken = prevTokenNotNewline
+            prevTokenNotNewline = prevToken
+
+        if prevToken == "fgl" and prevPrevToken == "import":
+            importFilePath = token
+            concatenatedImportString = token
+            isImportingLibrary = True
+            continue
+
+        if isImportingLibrary and prevToken == "." and token != "\n":
+            importFilePath = os.path.join(importFilePath, token)
+            concatenatedImportString = concatenatedImportString + "." + token
+            continue
+
+        if isImportingLibrary:
+            if prevToken == "as":
+                importFilePath = importFilePath + FGL_SUFFIX
+                if token == prefix:
+                    tmpTuple = findFunctionFromSpecificLibrary(importFilePath, packagePaths, functionName)
+                    packageFile = tmpTuple[0]
+                    functionLine = tmpTuple[1]
+                    isLibraryFunction = True
+            elif token == "\n":
+                importFilePath = importFilePath + FGL_SUFFIX
+                if prefix in concatenatedImportString:
+                    tmpTuple = findFunctionFromSpecificLibrary(importFilePath, packagePaths, functionName)
+                    packageFile = tmpTuple[0]
+                    functionLine = tmpTuple[1]
+                    isLibraryFunction = True
+                    break
+
+            if token == "\n":
+                isImportingLibrary = False
+                importFilePath = ""
+                concatenatedImportString = ""
+
+        if isImportingLibrary:
+            if prevToken == "as":
+                importFilePath = importFilePath + FGL_SUFFIX
+                writeSingleLineToLog("with alias " + importFilePath)
+                librariesList.append((importFilePath, token))
+            elif token == "\n" and prevPrevToken != "as":
+                importFilePath = importFilePath + FGL_SUFFIX
+                writeSingleLineToLog("without alias " + importFilePath)
+                librariesList.append((importFilePath, concatenatedImportString))
+
+            if token == "\n":
+                isImportingLibrary = False
+                importFilePath = ""
+                concatenatedImportString = ""
+
+        if token == varName:
+            if lineNumber < currentLineNumber and prevTokenNotNewline == "define":
+                writeSingleLineToLog("Found Definition " + token) # remove later
+                isVarFound = True
+                break
+            if (prevTokenNotNewline == "function" or prevTokenNotNewline == "report") and prevPrevToken != "end":
+                writeSingleLineToLog("Found Function " + token) # remove later
+                isFunctionFound = True
+                break
+            elif prevTokenNotNewline == "constant":
+                writeSingleLineToLog("Found Constant" + token) # remove later
+                isFunctionFound = True
+                break
+            elif prevTokenNotNewline == "type":
+                writeSingleLineToLog("Found Type " + token) # remove later
+                isFunctionFound = True
+                break
+
+    if isFunctionFound and not isLibraryFunction:
+        packageFile = currentFile
+        functionLine = lineNumber
+
+    if isVarFound and not isLibraryFunction:
+        packageFile = currentFile
+        functionLine = lineNumber
+
+    if not isFunctionFound and not isVarFound and not isLibraryFunction:
+        writeSingleLineToLog("here?????????????????????????? " + str(len(librariesList)))
+        writeSingleLineToLog(str(librariesList))
+        # look in other files
+        # Current File > Imported Library > OBJFILES > CUSTLIBS > LIBFILES
+        for l in librariesList:
+            writeSingleLineToLog(" why is there no suffix here?????? " + l[0])
+            # need to loop through each library and check if has string
+            # tmpTuple = checkVariableInLibrary(varName, l[0], packagePaths)
+
+            tmpTuple = findFunctionFromSpecificLibrary(l[0], packagePaths, varName)
+            if tmpTuple[0] != "":
+                packageFile = tmpTuple[0]
+                functionLine = tmpTuple[1]
+                isFunctionFound = True
+                break
+
+    if not isFunctionFound and not isLibraryFunction:
+        # need to get Makefile functions
+        tmpTuple = findFunctionFromMakefile(currentDirectory, varName)
+        packageFile = tmpTuple[0]
+        functionLine = tmpTuple[1]
+
+    writeSingleLineToLog("we should have ended with this " + packageFile)
 
     return packageFile, functionLine
