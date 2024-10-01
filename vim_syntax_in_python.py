@@ -1005,6 +1005,7 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
     return packageFile, functionLine
 
 def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLineNumber):
+    isLibraryFunction = False
     isFunctionFound = False
     isVarFound = False
     isImportingGlobal = False
@@ -1023,8 +1024,6 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
     librariesList = []
 
     currentDirectory = os.path.dirname(currentFile)
-
-    writeSingleLineToLog("proof of something here")
 
     for token in tokenList:
         prevToken = tmpToken.lower()
@@ -1064,14 +1063,22 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
             concatenatedImportString = concatenatedImportString + "." + token
             continue
 
-        # When it's imported AS something else, we need to create the tags file, but the mapping line is just a bit different
-        # The functionName is the AS file, while the file is the path to the file
+        if isImportingLibrary and concatenatedImportString.endswith(varName):
+            packageFile = checkLibraryExists(importFilePath + FGL_SUFFIX, packagePaths)
+            functionLine = 1
+            isLibraryFunction = True
+            break
 
         if isImportingLibrary:
             if prevToken == "as":
                 importFilePath = importFilePath + FGL_SUFFIX
                 writeSingleLineToLog("with alias " + importFilePath)
                 librariesList.append((importFilePath, token))
+                if varName == token:
+                    packageFile = checkLibraryExists(importFilePath, packagePaths)
+                    functionLine = 1
+                    isLibraryFunction = True
+                    break
             elif token == "\n" and prevPrevToken != "as":
                 importFilePath = importFilePath + FGL_SUFFIX
                 writeSingleLineToLog("without alias " + importFilePath)
@@ -1100,15 +1107,15 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
                 isFunctionFound = True
                 break
 
-    if isFunctionFound:
+    if isFunctionFound and not isLibraryFunction:
         packageFile = currentFile
         functionLine = lineNumber
 
-    if isVarFound:
+    if isVarFound and not isLibraryFunction:
         packageFile = currentFile
         functionLine = lineNumber
 
-    if not isFunctionFound and not isVarFound:
+    if not isFunctionFound and not isVarFound and not isLibraryFunction:
         writeSingleLineToLog("here?????????????????????????? " + str(len(librariesList)))
         writeSingleLineToLog(str(librariesList))
         # look in other files
@@ -1125,7 +1132,7 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
                 isFunctionFound = True
                 break
 
-    if not isFunctionFound:
+    if not isFunctionFound and not isLibraryFunction:
         # need to get Makefile functions
         tmpTuple = findFunctionFromMakefile(currentDirectory, varName)
         packageFile = tmpTuple[0]
@@ -1251,6 +1258,7 @@ def findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, curren
     globalFilePath = ""
     lineNumber = 0
 
+    concatenatedImportString = ""
     packageFile = ""
     functionLine = 0
 
@@ -1301,6 +1309,12 @@ def findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, curren
             concatenatedImportString = concatenatedImportString + "." + token
             continue
 
+        if isImportingLibrary and concatenatedImportString.endswith(varName):
+            packageFile = checkLibraryExists(importFilePath + FGL_SUFFIX, packagePaths)
+            functionLine = 1
+            isLibraryFunction = True
+            break
+
         if isImportingLibrary:
             if prevToken == "as":
                 importFilePath = importFilePath + FGL_SUFFIX
@@ -1311,7 +1325,7 @@ def findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, curren
                     isLibraryFunction = True
             elif token == "\n":
                 importFilePath = importFilePath + FGL_SUFFIX
-                if prefix in concatenatedImportString:
+                if concatenatedImportString.endswith(prefix):
                     tmpTuple = findFunctionFromSpecificLibrary(importFilePath, packagePaths, functionName)
                     packageFile = tmpTuple[0]
                     functionLine = tmpTuple[1]
