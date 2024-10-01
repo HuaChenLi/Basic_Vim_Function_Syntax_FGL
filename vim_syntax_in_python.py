@@ -558,11 +558,13 @@ def findVariableDefinition(varName, buffer, currentFile, currentLineNumber):
         functionLine = tmpTuple[1]
     elif len(parts) == 2:
         # then this can be only be function/method call or type/constant definition
+        # did not factor in importing libraries, like libPackage.file
         tmpTuple = findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, currentLineNumber)
         packageFile = tmpTuple[0]
         functionLine = tmpTuple[1]
     else:
         # if len(parts) == 1, then can only be function call or type/constant definition
+        # did not factor in importing libraries, like libFile
         tmpTuple = findSingularToken(varName, tokenList, currentFile, packagePaths, currentLineNumber)
         packageFile = tmpTuple[0]
         functionLine = tmpTuple[1]
@@ -860,6 +862,7 @@ def findFunctionDefinitionFromLibraryPackage(varName, tokenList, packagePaths):
     tmpToken = "\n"
     lineNumber = 0
 
+    importFilePath = ""
     packageFile = ""
     functionLine = 0
 
@@ -897,6 +900,11 @@ def findFunctionDefinitionFromLibraryPackage(varName, tokenList, packagePaths):
             importFilePath = os.path.join(importFilePath, token)
             concatenatedImportString = concatenatedImportString + "." + token
             continue
+
+        if isImportingLibrary and concatenatedImportString.endswith(varName):
+            packageFile = checkLibraryExists(importFilePath + FGL_SUFFIX, packagePaths)
+            functionLine = 1
+            break
 
         if isImportingLibrary:
             if prevToken == "as":
@@ -950,6 +958,7 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
     prevToken = ""
     tmpToken = "\n"
     lineNumber = 0
+    functionLine = 0
 
     startTime = time.time()
 
@@ -976,21 +985,24 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
 
         if token == functionName and ((prevTokenNotNewline == "function") or (prevTokenNotNewline == "report")) and not prevPrevToken == "end" and not prevPrevToken == "private":
             writeSingleLineToLog("found public function " + token)
+            functionLine = lineNumber
             break
 
         if token == functionName and prevTokenNotNewline == "constant" and prevPrevToken == "public":
             writeSingleLineToLog("found public constant " + token)
+            functionLine = lineNumber
             break
 
         if token == functionName and prevTokenNotNewline == "type" and prevPrevToken == "public":
             writeSingleLineToLog("found public type " + token)
+            functionLine = lineNumber
             break
 
     endTime = time.time()
     length = endTime - startTime
     writeSingleLineToLog("if statements took " + str(length) + " seconds")
 
-    return packageFile, lineNumber
+    return packageFile, functionLine
 
 def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLineNumber):
     isFunctionFound = False
@@ -1118,7 +1130,6 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
         tmpTuple = findFunctionFromMakefile(currentDirectory, varName)
         packageFile = tmpTuple[0]
         functionLine = tmpTuple[1]
-        pass
 
     return packageFile, functionLine
 
@@ -1379,3 +1390,20 @@ def findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, curren
     writeSingleLineToLog("we should have ended with this " + packageFile)
 
     return packageFile, functionLine
+
+def checkLibraryExists(importFile, packagePaths):
+    writeSingleLineToLog("getting functions from here " + importFile)
+    isExistingPackageFile = False
+
+    for package in packagePaths:
+        packageFile = os.path.join(package, importFile)
+        writeSingleLineToLog(packageFile)
+        if os.path.isfile(packageFile):
+            isExistingPackageFile = True
+            break
+
+    if not isExistingPackageFile:
+        writeSingleLineToLog("couldn't find file " + importFile)
+        return ""
+
+    return packageFile
