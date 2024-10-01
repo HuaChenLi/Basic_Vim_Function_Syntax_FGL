@@ -904,7 +904,7 @@ def findFunctionDefinitionFromLibraryPackage(varName, tokenList, packagePaths):
             elif token == "\n":
                 importFilePath = importFilePath + FGL_SUFFIX
                 if prefix in concatenatedImportString:
-                    tmpTuple = getFunctionFromFile(importFilePath, packagePaths, functionName)
+                    tmpTuple = findFunctionFromSpecificLibrary(importFilePath, packagePaths, functionName)
                     packageFile = tmpTuple[0]
                     functionLine = tmpTuple[1]
                     break
@@ -916,12 +916,13 @@ def findFunctionDefinitionFromLibraryPackage(varName, tokenList, packagePaths):
 
     return packageFile, functionLine
 
-def getFunctionFromFile(importFile, packagePaths, functionName):
-    writeSingleLineToLog("getting functions from " + importFile)
+def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
+    writeSingleLineToLog("getting functions from here " + importFile)
     isExistingPackageFile = False
 
     for package in packagePaths:
         packageFile = os.path.join(package, importFile)
+        writeSingleLineToLog(packageFile)
         if os.path.isfile(packageFile):
             isExistingPackageFile = True
             break
@@ -1009,6 +1010,8 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
 
     librariesList = []
 
+    currentDirectory = os.path.dirname(currentFile)
+
     writeSingleLineToLog("proof of something here")
 
     for token in tokenList:
@@ -1072,7 +1075,7 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
                 writeSingleLineToLog("Found Definition " + token) # remove later
                 isVarFound = True
                 break
-            if prevTokenNotNewline == "function":
+            if (prevTokenNotNewline == "function" or prevTokenNotNewline == "report") and prevPrevToken != "end":
                 writeSingleLineToLog("Found Function " + token) # remove later
                 isFunctionFound = True
                 break
@@ -1103,12 +1106,122 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
             # need to loop through each library and check if has string
             # tmpTuple = checkVariableInLibrary(varName, l[0], packagePaths)
 
-            tmpTuple = getFunctionFromFile(l[0], packagePaths, varName)
+            tmpTuple = findFunctionFromSpecificLibrary(l[0], packagePaths, varName)
             if tmpTuple[0] != "":
                 packageFile = tmpTuple[0]
                 functionLine = tmpTuple[1]
+                isFunctionFound = True
                 break
 
+    if not isFunctionFound:
+        # need to get Makefile functions
+        tmpTuple = findFunctionFromMakefile(currentDirectory, varName)
+        packageFile = tmpTuple[0]
+        functionLine = tmpTuple[1]
         pass
+
+    return packageFile, functionLine
+
+def findFunctionFromMakefile(currentDirectory, varName):
+    makeFile = os.path.join(currentDirectory, "Makefile")
+    if not os.path.isfile(makeFile):
+        return "", 0
+    file = open(makeFile, "r")
+    tokenList = tokenizeString(file.read())
+
+    objFileList = []
+    custLibFileList = []
+    libFileList = []
+    globalFileList = []
+
+    importingFileType = ""
+
+    prevPrevToken = ""
+    prevToken = ""
+    tmpToken = "\n"
+
+    libFilePath = ""
+
+    packagePaths = []
+    packageFile = ""
+    functionLine = 0
+    try:
+        # allows the environment variable to be split depending on the os
+        packagePaths.extend(os.environ['FGLLDPATH'].split(os.pathsep))
+    except:
+        # this is in case the FGLLDPATH doesn't exist
+        pass
+
+    startTime = time.time()
+    for token in tokenList:
+        if token == "":
+            continue
+
+        tmpToken, prevToken, prevPrevToken = token, tmpToken, prevToken
+        if token == "=":
+            importingFileType = prevToken
+            continue
+
+        if importingFileType == "OBJFILES" and token == "o" and prevToken == ".":
+            file = prevPrevToken + FGL_SUFFIX
+            objFileList.append((file, prevPrevToken))
+        elif importingFileType == "CUSTLIBS" and token == "o" and prevToken == ".":
+            file = prevPrevToken + FGL_SUFFIX
+            custLibFileList.append((file, prevPrevToken))
+        elif importingFileType == "LIBFILES":
+            if token == "a" and prevToken == ".":
+                libFilePath = libFilePath + FGL_DIRECTORY_SUFFIX
+                if os.path.isdir(libFilePath):
+                    libFileList = [f for f in os.listdir(libFilePath) if os.path.isfile(os.path.join(libFilePath, f))]
+                else:
+                    writeSingleLineToLog("can't find " + libFilePath)
+            elif (prevPrevToken == "$" and prevToken == "(") or (prevToken == "$" and token != "("):
+                try:
+                    # allows the environment variable to be split depending on the os
+                    libFilePath = os.environ[token]
+                except:
+                    # this is in case the environment variable doesn't exist
+                    pass
+            elif token != "a" and prevToken == "/":
+                libFilePath = os.path.join(libFilePath, token)
+        elif importingFileType == "GLOBALS" and token == "o" and prevToken == ".":
+            file = prevPrevToken + FGL_SUFFIX
+            globalFileList.append((file, prevPrevToken))
+    endTime = time.time()
+    lengthTime = endTime - startTime
+    writeSingleLineToLog("checking tokens in Makefile took " + str(lengthTime) + " seconds")
+
+    writeSingleLineToLog("looking at OBJFILES")
+    for obj in objFileList:
+        tmpTuple = findFunctionFromSpecificLibrary(obj[0], [currentDirectory], varName)
+        if tmpTuple[0] != "":
+            packageFile = tmpTuple[0]
+            functionLine = tmpTuple[1]
+            return packageFile, functionLine
+
+    writeSingleLineToLog("looking at CUSTLIBS")
+    for custLib in custLibFileList:
+        tmpTuple = findFunctionFromSpecificLibrary(custLib[0], packagePaths, varName)
+        if tmpTuple[0] != "":
+            packageFile = tmpTuple[0]
+            functionLine = tmpTuple[1]
+            return packageFile, functionLine
+
+    writeSingleLineToLog("looking at LIBFILES")
+    for libFile in libFileList:
+        writeSingleLineToLog(libFile)
+        tmpTuple = findFunctionFromSpecificLibrary(libFile, [libFilePath], varName)
+        if tmpTuple[0] != "":
+            packageFile = tmpTuple[0]
+            functionLine = tmpTuple[1]
+            return packageFile, functionLine
+
+    writeSingleLineToLog("looking at GLOBALS")
+    for globalFile in globalFileList:
+        tmpTuple = findFunctionFromSpecificLibrary(globalFile[0], [currentDirectory], varName)
+        if tmpTuple[0] != "":
+            packageFile = tmpTuple[0]
+            functionLine = tmpTuple[1]
+            return packageFile, functionLine
 
     return packageFile, functionLine
