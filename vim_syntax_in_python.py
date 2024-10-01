@@ -931,9 +931,14 @@ def getFunctionFromFile(importFile, packagePaths, functionName):
         return "", 0
 
     file = open(packageFile, "r")
+    fileContent = file.read()
+
+    if not re.search(functionName, fileContent):
+        writeSingleLineToLog("no function name in here")
+        return "", 0
 
     startTime = time.time()
-    tokenList = tokenizeString(file.read())
+    tokenList = tokenizeString(fileContent)
     endTime = time.time()
     length = endTime - startTime
     writeSingleLineToLog("tokenizing " + importFile + " took " + str(length) + " seconds and the number of tokens is " + str(len(tokenList)))
@@ -1096,39 +1101,14 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
         for l in librariesList:
             writeSingleLineToLog(" why is there no suffix here?????? " + l[0])
             # need to loop through each library and check if has string
-            if checkVariableInLibrary(varName, l[0], packagePaths):
-                writeSingleLineToLog("found function name")
+            # tmpTuple = checkVariableInLibrary(varName, l[0], packagePaths)
+
+            tmpTuple = getFunctionFromFile(l[0], packagePaths, varName)
+            if tmpTuple[0] != "":
+                packageFile = tmpTuple[0]
+                functionLine = tmpTuple[1]
                 break
 
-        
         pass
 
     return packageFile, functionLine
-
-
-def checkVariableInLibrary(varName, importFile, packagePaths):
-    isExistingPackageFile = False
-    writeSingleLineToLog(importFile)
-
-    for package in packagePaths:
-        packageFile = os.path.join(package, importFile)
-        writeSingleLineToLog(packageFile)
-        if os.path.isfile(packageFile):
-            isExistingPackageFile = True
-            break
-
-    if not isExistingPackageFile:
-        writeSingleLineToLog("no packages found")
-        return False
-    
-    file = open(packageFile, "r")
-
-    isVariableFound = False
-
-    if re.search(varName, file.read()):
-        writeSingleLineToLog("found function or whatever here")
-        isVariableFound = True
-    else:
-        writeSingleLineToLog("we ain't found shit")
-
-    return isVariableFound
