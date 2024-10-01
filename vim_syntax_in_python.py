@@ -745,7 +745,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
 
     if not isExistingPackageFile:
         writeSingleLineToLog("couldn't find file " + importFile)
-        return []
+        return [], []
 
     file = open(packageFile, "r")
 
