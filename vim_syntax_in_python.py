@@ -760,15 +760,18 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
 
     requiredToken = None
     prevPrevToken = ""
+    prevTokenNotNewline = ""
     prevToken = ""
     tmpToken = "\n"
     lineNumber = 0
 
+    isDefiningConstant = False
+
     startTime = time.time()
 
     for token in tokenList:
-        tmpToken, prevToken, prevPrevToken = token, tmpToken, prevToken
-        if token == "\n":
+        tmpToken, prevToken = token, tmpToken
+        if prevToken == "\n":
             lineNumber += 1
 
         # this section is all about skipping based on strings and comments
@@ -779,22 +782,33 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
         elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
             continue
         elif token == requiredToken:
-            requiredToken is None
+            requiredToken = None
             continue
 
         prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        if prevToken == "constant" and prevPrevToken == "public":
-            # We create the list of the function tags
+        if prevToken not in tokenDictionary and prevToken != "\n":
+            prevPrevToken = prevTokenNotNewline
+            prevTokenNotNewline = prevToken
+
+        if not isDefiningConstant and prevToken == "constant" and prevPrevToken == "public":
+            isDefiningConstant = True
+
+        if isDefiningConstant and (prevTokenNotNewline == "constant" or prevTokenNotNewline == ",") and token != "\n":
             if token not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
-                constantsList.append(token)
+                constantsList.append("%s%s" % (token, "\n"))
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
+            continue
+
+        # this statement is 100% gonna fail with DYNAMIC ARRAY OF RECORD
+        if isDefiningConstant and token != "\n" and prevToken != "\n" and token != "," and token != "=" and token not in tokenDictionary and prevTokenNotNewline != "," and prevPrevToken != "define":
+            isDefiningConstant = False
 
         if prevToken == "type" and prevPrevToken == "public":
             if token not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
-                constantsList.append(token)
+                constantsList.append("%s%s" % (token, "\n"))
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()
