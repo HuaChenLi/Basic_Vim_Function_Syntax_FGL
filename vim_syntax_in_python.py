@@ -1005,6 +1005,7 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
     return packageFile, functionLine
 
 def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLineNumber):
+    isDefiningVariable = False
     isLibraryFunction = False
     isFunctionFound = False
     isVarFound = False
@@ -1024,6 +1025,8 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
     librariesList = []
 
     currentDirectory = os.path.dirname(currentFile)
+
+    variableList = set()
 
     for token in tokenList:
         prevToken = tmpToken.lower()
@@ -1089,8 +1092,12 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
                 importFilePath = ""
                 concatenatedImportString = ""
 
+        if not isDefiningVariable and prevTokenNotNewline == "define":
+            variableList.add(token)
+            isDefiningVariable = True
+
         if token == varName:
-            if lineNumber < currentLineNumber and prevTokenNotNewline == "define":
+            if lineNumber < currentLineNumber and isDefiningVariable and (prevTokenNotNewline == "define" or prevTokenNotNewline == ","):
                 writeSingleLineToLog("Found Definition " + token) # remove later
                 isVarFound = True
                 break
@@ -1106,6 +1113,10 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
                 writeSingleLineToLog("Found Type " + token) # remove later
                 isFunctionFound = True
                 break
+
+        if isDefiningVariable and token != "\n" and prevToken != "\n" and token != "," and prevTokenNotNewline != "," and token not in variableList and token not in GENERO_KEY_WORDS:
+            isDefiningVariable = False
+            variableList = set()
 
     if isFunctionFound and not isLibraryFunction:
         packageFile = currentFile
@@ -1132,7 +1143,7 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
                 isFunctionFound = True
                 break
 
-    if not isFunctionFound and not isLibraryFunction:
+    if not isFunctionFound and not isLibraryFunction and not isVarFound:
         # need to get Makefile functions
         tmpTuple = findFunctionFromMakefile(currentDirectory, varName)
         packageFile = tmpTuple[0]
