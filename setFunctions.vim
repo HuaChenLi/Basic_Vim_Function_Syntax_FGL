@@ -26,10 +26,19 @@ import vim_syntax_in_python
 lineNumber = vim_syntax_in_python.findVariableDefinition(vim.eval('varName'), vim.eval('fileContent'))
 vim.command("let lineNumber = '%s'"% lineNumber)
 EOF
+<<<<<<< Updated upstream
     echo lineNumber
    " let searchString = '\<\cdefine\>\([\n \t]\+\w\+[\n \t]\+\w\+,\([\n \t]*\)*\)*[\n \t]\+\<' . expand('<cword>') . '\>'
    " let returnLine =  SearchNotCommentLineNumber(searchString, line, col, line, col)
     call cursor(lineNumber, 1)
+=======
+    if g:filePath == packageFile
+        call cursor(functionLine, 1)
+    elseif functionLine != 0
+        execute 'e +' . functionLine . ' ' . packageFile
+    endif
+
+>>>>>>> Stashed changes
 endfunction
 
 
