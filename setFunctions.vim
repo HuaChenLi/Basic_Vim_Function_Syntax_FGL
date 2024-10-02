@@ -33,9 +33,12 @@ vim.command(execCommand)
 execCommand = "let functionLine = '" + str(tmpTuple1[1]) + "'"
 vim.command(execCommand)
 EOF
-    if functionLine != 0
-	execute 'e +' . functionLine . ' ' . packageFile
+    if g:filePath == packageFile
+        call cursor(functionLine, 1)
+    elseif functionLine != 0
+        execute 'e +' . functionLine . ' ' . packageFile
     endif
+
 endfunction
 
 
