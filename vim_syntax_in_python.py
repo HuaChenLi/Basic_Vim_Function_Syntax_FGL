@@ -18,7 +18,7 @@ CONSTANTS_SUFFIX = ".cons"
 GENERO_KEY_WORDS = set()
 KEYWORDS_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "genero_key_words.txt")
 if os.path.isfile(KEYWORDS_FILE):
-    GENERO_KEY_WORDS.update(open(KEYWORDS_FILE, "r").read().split("\n"))
+    GENERO_KEY_WORDS.update(open(KEYWORDS_FILE, "r").read().lower().split("\n"))
 
 tokenDictionary = {
     "'" : "'",
@@ -170,14 +170,14 @@ def generateTags(inputString, currentFile, pid, bufNum):
             continue
 
         if prevTokenNotNewline == "constant":
-            if token not in GENERO_KEY_WORDS:
+            if tokenLower not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
             continue
 
         if prevTokenNotNewline == "type":
-            if token not in GENERO_KEY_WORDS:
+            if tokenLower not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             existingTypes[token] = []
@@ -811,7 +811,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             isDefiningConstant = True
 
         if isDefiningConstant and (prevTokenNotNewline == "constant" or prevTokenNotNewline == ",") and token != "\n":
-            if token not in GENERO_KEY_WORDS:
+            if token.lower() not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
                 constantsList.append("%s%s" % (token, "\n"))
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
@@ -822,7 +822,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             isDefiningConstant = False
 
         if prevToken == "type" and prevPrevToken == "public":
-            if token not in GENERO_KEY_WORDS:
+            if token.lower() not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
                 constantsList.append("%s%s" % (token, "\n"))
             tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
@@ -1100,7 +1100,9 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
             if lineNumber < currentLineNumber and isDefiningVariable and (prevTokenNotNewline == "define" or prevTokenNotNewline == ","):
                 writeSingleLineToLog("Found Definition " + token) # remove later
                 isVarFound = True
-                break
+                packageFile = currentFile
+                functionLine = lineNumber
+                continue
             if (prevTokenNotNewline == "function" or prevTokenNotNewline == "report") and prevPrevToken != "end":
                 writeSingleLineToLog("Found Function " + token) # remove later
                 isFunctionFound = True
@@ -1122,20 +1124,11 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
         packageFile = currentFile
         functionLine = lineNumber
 
-    if isVarFound and not isLibraryFunction:
-        packageFile = currentFile
-        functionLine = lineNumber
-
     if not isFunctionFound and not isVarFound and not isLibraryFunction:
-        writeSingleLineToLog("here?????????????????????????? " + str(len(librariesList)))
-        writeSingleLineToLog(str(librariesList))
         # look in other files
         # Current File > Imported Library > OBJFILES > CUSTLIBS > LIBFILES
         for l in librariesList:
-            writeSingleLineToLog(" why is there no suffix here?????? " + l[0])
             # need to loop through each library and check if has string
-            # tmpTuple = checkVariableInLibrary(varName, l[0], packagePaths)
-
             tmpTuple = findFunctionFromSpecificLibrary(l[0], packagePaths, varName)
             if tmpTuple[0] != "":
                 packageFile = tmpTuple[0]
