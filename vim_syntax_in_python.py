@@ -536,6 +536,9 @@ def tokenizeString(inputString):
 
 def findVariableDefinition(varName, buffer, currentFile, currentLineNumber):
     startTime = time.time()
+    writeSingleLineToLog("=========================================================")
+    writeSingleLineToLog("looking for variable " + varName)
+    writeSingleLineToLog("=========================================================")
 
     tokenList = tokenizeString(buffer)
 
