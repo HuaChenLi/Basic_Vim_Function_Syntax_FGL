@@ -551,20 +551,9 @@ def findVariableDefinition(varName, buffer, currentFile, currentLineNumber):
         # this is in case the FGLLDPATH doesn't exist
         pass
 
-    # if the token has ".", then we need to match it with either functions or the public types
-    parts = varName.split(".")
-    writeSingleLineToLog(str(len(parts)))
-    if len(parts) > 2:
-        # then this can only be function call or type/constant definition
-        tmpTuple = findFunctionDefinitionFromLibraryPackage(varName, tokenList, packagePaths)
-        packageFile = tmpTuple[0]
-        functionLine = tmpTuple[1]
-    else:
-        # if len(parts) == 1, then can only be function call or type/constant definition
-        # if len(parts) == 2, then this can be only be function/method call or type/constant definition
-        tmpTuple = findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, currentLineNumber)
-        packageFile = tmpTuple[0]
-        functionLine = tmpTuple[1]
+    tmpTuple = findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, currentLineNumber)
+    packageFile = tmpTuple[0]
+    functionLine = tmpTuple[1]
 
     endTime = time.time()
     lengthTime = endTime - startTime
@@ -1003,7 +992,8 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
                 functionLine = lineNumber
                 break
 
-        if isDefiningVariable and token != "\n" and prevToken != "\n" and token != "," and prevTokenNotNewline != "," and token not in variableList and token not in GENERO_KEY_WORDS:
+        # this is awful
+        if isDefiningVariable and token != "\n" and token != "=" and prevToken != "\n" and token != "," and prevTokenNotNewline != "," and token not in variableList and token not in GENERO_KEY_WORDS and token not in tokenDictionary:
             isDefiningVariable = False
             variableList = set()
 
