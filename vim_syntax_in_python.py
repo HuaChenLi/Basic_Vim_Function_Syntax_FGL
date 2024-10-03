@@ -963,6 +963,9 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
     lineNumber = 0
     functionLine = 0
 
+    variableList = set()
+    isDefiningVariable = False
+
     startTime = time.time()
 
     for token in tokenList:
@@ -986,13 +989,17 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
             prevPrevToken = prevTokenNotNewline
             prevTokenNotNewline = prevToken
 
-        if token == functionName and ((prevTokenNotNewline == "function") or (prevTokenNotNewline == "report")) and not prevPrevToken == "end" and not prevPrevToken == "private":
-            writeSingleLineToLog("found public function " + token)
+        if not isDefiningVariable and prevTokenNotNewline == "constant":
+            variableList.add(token)
+            isDefiningVariable = True
+
+        if isDefiningVariable and (prevTokenNotNewline == "constant" or prevTokenNotNewline == ","):
+            writeSingleLineToLog("found public constant " + token) # remove later
             functionLine = lineNumber
             break
 
-        if token == functionName and prevTokenNotNewline == "constant" and not prevPrevToken == "private":
-            writeSingleLineToLog("found public constant " + token)
+        if token == functionName and ((prevTokenNotNewline == "function") or (prevTokenNotNewline == "report")) and not prevPrevToken == "end" and not prevPrevToken == "private":
+            writeSingleLineToLog("found public function " + token)
             functionLine = lineNumber
             break
 
@@ -1000,6 +1007,10 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
             writeSingleLineToLog("found public type " + token)
             functionLine = lineNumber
             break
+
+        if isDefiningVariable and token != "\n" and prevToken != "\n" and token != "," and prevTokenNotNewline != "," and token not in variableList and token not in GENERO_KEY_WORDS:
+            isDefiningVariable = False
+            variableList = set()
 
     endTime = time.time()
     length = endTime - startTime
@@ -1099,6 +1110,10 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
             variableList.add(token)
             isDefiningVariable = True
 
+        if not isDefiningVariable and prevTokenNotNewline == "constant":
+            variableList.add(token)
+            isDefiningVariable = True
+
         if token == varName:
             if lineNumber < currentLineNumber and isDefiningVariable and (prevTokenNotNewline == "define" or prevTokenNotNewline == ","):
                 writeSingleLineToLog("Found Definition " + token) # remove later
@@ -1110,8 +1125,8 @@ def findSingularToken(varName, tokenList, currentFile, packagePaths, currentLine
                 writeSingleLineToLog("Found Function " + token) # remove later
                 isFunctionFound = True
                 break
-            elif prevTokenNotNewline == "constant":
-                writeSingleLineToLog("Found Constant" + token) # remove later
+            elif isDefiningVariable and (prevTokenNotNewline == "constant" or prevTokenNotNewline == ","):
+                writeSingleLineToLog("Found Constant " + token) # remove later
                 isFunctionFound = True
                 break
             elif prevTokenNotNewline == "type":
