@@ -559,15 +559,9 @@ def findVariableDefinition(varName, buffer, currentFile, currentLineNumber):
         tmpTuple = findFunctionDefinitionFromLibraryPackage(varName, tokenList, packagePaths)
         packageFile = tmpTuple[0]
         functionLine = tmpTuple[1]
-    elif len(parts) == 2:
-        # then this can be only be function/method call or type/constant definition
-        # did not factor in importing libraries, like libPackage.file
-        tmpTuple = findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, currentLineNumber)
-        packageFile = tmpTuple[0]
-        functionLine = tmpTuple[1]
     else:
         # if len(parts) == 1, then can only be function call or type/constant definition
-        # did not factor in importing libraries, like libFile
+        # if len(parts) == 2, then this can be only be function/method call or type/constant definition
         tmpTuple = findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, currentLineNumber)
         packageFile = tmpTuple[0]
         functionLine = tmpTuple[1]
