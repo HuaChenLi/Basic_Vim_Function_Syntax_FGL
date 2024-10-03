@@ -838,78 +838,6 @@ def highlightExistingConstants(constantsFile):
         for const in highlightExistingConstants:
             vim.command("execute 'syn match constantGroup /\\<" + const + "\\>/'")
 
-def findFunctionDefinitionFromLibraryPackage(varName, tokenList, packagePaths):
-    requiredToken = None
-    isImportingLibrary = False
-    concatenatedImportString = ""
-    prevTokenNotNewline = ""
-    prevPrevToken = ""
-    prevToken = ""
-    tmpToken = "\n"
-    lineNumber = 0
-
-    importFilePath = ""
-    packageFile = ""
-    functionLine = 0
-
-    prefix = varName.rsplit(".", 1)[0]
-    functionName = varName.rsplit(".", 1)[1]
-
-    for token in tokenList:
-        prevToken = tmpToken.lower()
-        tmpToken = token
-        if token == "\n":
-            lineNumber += 1
-
-        # this section is all about skipping based on strings and comments
-        if token in tokenDictionary and requiredToken is None:
-            requiredToken = tokenDictionary.get(token)
-        elif requiredToken is not None and token != requiredToken:
-            continue
-        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
-            continue
-        elif token == requiredToken:
-            requiredToken = None
-            continue
-
-        if prevToken not in tokenDictionary and prevToken != "\n":
-            prevPrevToken = prevTokenNotNewline
-            prevTokenNotNewline = prevToken
-
-        if prevToken == "fgl" and prevPrevToken == "import":
-            importFilePath = token
-            concatenatedImportString = token
-            isImportingLibrary = True
-            continue
-
-        if isImportingLibrary and prevToken == "." and token != "\n":
-            importFilePath = os.path.join(importFilePath, token)
-            concatenatedImportString = concatenatedImportString + "." + token
-            continue
-
-        if isImportingLibrary and concatenatedImportString.endswith(varName):
-            packageFile = checkLibraryExists(importFilePath + FGL_SUFFIX, packagePaths)
-            functionLine = 1
-            break
-
-        if isImportingLibrary:
-            if prevToken == "as":
-                importFilePath = importFilePath + FGL_SUFFIX
-            elif token == "\n":
-                importFilePath = importFilePath + FGL_SUFFIX
-                if concatenatedImportString.endswith(prefix):
-                    tmpTuple = findFunctionFromSpecificLibrary(importFilePath, packagePaths, functionName)
-                    packageFile = tmpTuple[0]
-                    functionLine = tmpTuple[1]
-                    break
-
-            if token == "\n":
-                isImportingLibrary = False
-                importFilePath = ""
-                concatenatedImportString = ""
-
-    return packageFile, functionLine
-
 def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
     writeSingleLineToLog("getting functions from here " + importFile)
     isExistingPackageFile = False
@@ -1269,7 +1197,6 @@ def findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, curren
                 break
 
     if not isFunctionFound and not isLibraryFunction:
-        # need to get Makefile functions
         tmpTuple = findFunctionFromMakefile(currentDirectory, varName)
         packageFile = tmpTuple[0]
         functionLine = tmpTuple[1]
