@@ -1214,7 +1214,6 @@ def findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, curren
                 importFilePath = importFilePath + FGL_SUFFIX
                 if concatenatedImportString.endswith(prefix):
                     writeSingleLineToLog("without alias " + importFilePath + " " + concatenatedImportString)
-                    writeSingleLineToLog("functionName " + functionName)
                     tmpTuple = findFunctionFromSpecificLibrary(importFilePath, packagePaths, functionName)
                     packageFile = tmpTuple[0]
                     functionLine = tmpTuple[1]
