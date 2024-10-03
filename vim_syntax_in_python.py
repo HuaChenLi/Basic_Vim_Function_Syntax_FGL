@@ -807,7 +807,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             prevPrevToken = prevTokenNotNewline
             prevTokenNotNewline = prevToken
 
-        if not isDefiningConstant and prevToken == "constant" and prevPrevToken == "public":
+        if not isDefiningConstant and prevToken == "constant" and not prevPrevToken == "private":
             isDefiningConstant = True
 
         if isDefiningConstant and (prevTokenNotNewline == "constant" or prevTokenNotNewline == ",") and token != "\n":
@@ -821,7 +821,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
         if isDefiningConstant and token != "\n" and prevToken != "\n" and token != "," and token != "=" and token not in tokenDictionary and prevTokenNotNewline != "," and prevPrevToken != "define":
             isDefiningConstant = False
 
-        if prevToken == "type" and prevPrevToken == "public":
+        if prevToken == "type" and not prevPrevToken == "private":
             if token.lower() not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
                 constantsList.append("%s%s" % (token, "\n"))
@@ -911,7 +911,7 @@ def findFunctionDefinitionFromLibraryPackage(varName, tokenList, packagePaths):
                 importFilePath = importFilePath + FGL_SUFFIX
             elif token == "\n":
                 importFilePath = importFilePath + FGL_SUFFIX
-                if prefix in concatenatedImportString:
+                if concatenatedImportString.endswith(prefix):
                     tmpTuple = findFunctionFromSpecificLibrary(importFilePath, packagePaths, functionName)
                     packageFile = tmpTuple[0]
                     functionLine = tmpTuple[1]
@@ -977,23 +977,23 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
             requiredToken = None
             continue
 
+        prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
+
         if prevToken not in tokenDictionary and prevToken != "\n":
             prevPrevToken = prevTokenNotNewline
             prevTokenNotNewline = prevToken
-
-        prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
         if token == functionName and ((prevTokenNotNewline == "function") or (prevTokenNotNewline == "report")) and not prevPrevToken == "end" and not prevPrevToken == "private":
             writeSingleLineToLog("found public function " + token)
             functionLine = lineNumber
             break
 
-        if token == functionName and prevTokenNotNewline == "constant" and prevPrevToken == "public":
+        if token == functionName and prevTokenNotNewline == "constant" and not prevPrevToken == "private":
             writeSingleLineToLog("found public constant " + token)
             functionLine = lineNumber
             break
 
-        if token == functionName and prevTokenNotNewline == "type" and prevPrevToken == "public":
+        if token == functionName and prevTokenNotNewline == "type" and not prevPrevToken == "private":
             writeSingleLineToLog("found public type " + token)
             functionLine = lineNumber
             break
