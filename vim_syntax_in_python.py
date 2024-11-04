@@ -874,6 +874,8 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
     lineNumber = 0
     functionLine = 0
 
+    isFunctionFound = False
+
     variableList = set()
     isDefiningVariable = False
 
@@ -908,16 +910,19 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
             if isDefiningVariable and (prevTokenNotNewline == "constant" or prevTokenNotNewline == ","):
                 writeSingleLineToLog("found public constant " + token) # remove later
                 functionLine = lineNumber
+                isFunctionFound = True
                 break
 
             if ((prevTokenNotNewline == "function") or (prevTokenNotNewline == "report")) and not prevPrevToken == "end" and not prevPrevToken == "private":
                 writeSingleLineToLog("found public function " + token)
                 functionLine = lineNumber
+                isFunctionFound = True
                 break
 
             if prevTokenNotNewline == "type" and not prevPrevToken == "private":
                 writeSingleLineToLog("found public type " + token)
                 functionLine = lineNumber
+                isFunctionFound = True
                 break
 
         # this is awful
@@ -929,7 +934,11 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
     length = endTime - startTime
     writeSingleLineToLog("if statements took " + str(length) + " seconds")
 
-    return packageFile, functionLine
+    if isFunctionFound:
+        return packageFile, functionLine
+    else:
+        return "", 0
+
 
 def findFunctionFromMakefile(currentDirectory, varName):
     makeFile = os.path.join(currentDirectory, "Makefile")
