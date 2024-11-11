@@ -79,7 +79,7 @@ sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
 
-vim_syntax_in_python.generateTagsForCurrentBuffer(vim.eval('fileContent'), vim.eval('a:filePath'), vim.eval('a:pid'), vim.eval('a:bufNum'))
+vim_syntax_in_python.highlightVariablesForCurrentBuffer(vim.eval('fileContent'), vim.eval('a:filePath'), vim.eval('a:pid'), vim.eval('a:bufNum'))
 EOF
 
 endfunction

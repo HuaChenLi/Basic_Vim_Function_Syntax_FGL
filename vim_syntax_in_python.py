@@ -216,7 +216,7 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
     vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
     writeSingleLineToLog("vim syntax for " + currentFile + " took " + str(vimSyntaxLengthOfTime) + " seconds")
 
-def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
+def highlightVariablesForCurrentBuffer(inputString, currentFile, pid, bufNum):
     vimSyntaxStart = time.time()
     writeSingleLineToLog("=========================================================")
     writeSingleLineToLog("vim syntax start for file: " + currentFile)
@@ -406,7 +406,6 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
 
     # This is the part where we want to loop through and find the function definitions
 
-    tagsLinesList = []
     constantsList = []
 
     requiredToken = None
@@ -453,7 +452,7 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
     length = endTime - startTime
     writeSingleLineToLog("if statements took " + str(length) + " seconds")
 
-    return tagsLinesList, existingFunctionNames, constantsList
+    return [], existingFunctionNames, constantsList
 
 def tokenizeString(inputString):
     # basically, the massive line of regex code repeats, so we will grab all printable characters (since all printable characters are between ! to ~ except white spaces)
