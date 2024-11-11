@@ -355,13 +355,6 @@ def findFunctionWrapper(buffer):
 
     return latestFunctionLineNumber
 
-def removeTempTags(pid, bufNum):
-    try:
-        tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + TAGS_SUFFIX
-        os.remove(tagsFile)
-    except OSError:
-        pass
-
 def getMakefileFunctions(currentDirectory):
     makeFile = os.path.join(currentDirectory, "Makefile")
     if not os.path.isfile(makeFile):
