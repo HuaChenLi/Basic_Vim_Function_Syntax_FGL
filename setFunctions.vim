@@ -138,7 +138,7 @@ function! setFunctions#Setup()
     autocmd! BufEnter <buffer> call setFunctions#HighlightVariables(g:filePath, getpid(), bufnr('%'))
     autocmd! VimLeave <buffer> call setFunctions#ArchiveTempTags(getpid())
     autocmd! InsertLeave <buffer> call setFunctions#HighlightVariables(g:filePath, getpid(), bufnr('%'))
-    autocmd! BufWritePost <buffer> call HighlightVariables#GenerateTags(g:filePath, getpid(), bufnr('%'))
+    autocmd! BufWritePost <buffer> call setFunctions#HighlightVariables(g:filePath, getpid(), bufnr('%'))
 
     " The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
     nnoremap <buffer> <silent> <C-]> : execute 'tag '.setFunctions#CWordWithKey()<CR>
