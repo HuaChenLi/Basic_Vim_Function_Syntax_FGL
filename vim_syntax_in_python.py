@@ -185,20 +185,16 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
     startTime = time.time()
     for lib in librariesList:
         importFilePath = lib[0]
-        libraryTagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + "." + lib[1] + TAGS_SUFFIX
-        if not os.path.isfile(libraryTagsFile):
-            tmpTuple = getPublicVariablesFromLibrary(importFilePath, packagePaths)
-            if tmpTuple[2] is not None:
-                constantsList.extend(tmpTuple[2])
+        tmpTuple = getPublicVariablesFromLibrary(importFilePath, packagePaths)
+        if tmpTuple[2] is not None:
+            constantsList.extend(tmpTuple[2])
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting public functions took " + str(lengthTime) + " seconds")
 
     startTime = time.time()
-    makefileTagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".Makefile" + TAGS_SUFFIX
-    if not os.path.isfile(makefileTagsFile):
-        tmpTuple = getMakefileFunctions(currentDirectory)
-        constantsList.extend(tmpTuple[1])
+    tmpTuple = getMakefileFunctions(currentDirectory)
+    constantsList.extend(tmpTuple[1])
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting Makefile Functions took " + str(lengthTime) + " seconds")
