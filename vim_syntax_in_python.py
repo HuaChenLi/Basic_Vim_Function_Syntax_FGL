@@ -377,7 +377,6 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     file = open(makeFile, "r")
     tokenList = tokenizeString(file.read())
 
-    tagsList = []
     objFileList = []
     custLibFileList = []
     libFileList = []
@@ -441,7 +440,6 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     startTime = time.time()
     for obj in objFileList:
         tmpTuple = getPublicFunctionsFromLibrary(obj[0], [obj[1]], [currentDirectory], existingFunctionNames)
-        tagsList.extend(tmpTuple[0])
         existingFunctionNames.update(tmpTuple[1])
     endTime = time.time()
     lengthTime = endTime - startTime
@@ -450,7 +448,6 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     startTime = time.time()
     for custLib in custLibFileList:
         tmpTuple = getPublicFunctionsFromLibrary(custLib[0], [custLib[1]], packagePaths, existingFunctionNames)
-        tagsList.extend(tmpTuple[0])
         existingFunctionNames.update(tmpTuple[1])
     endTime = time.time()
     writeSingleLineToLog("CUSTLIBS took " + str(lengthTime) + " seconds")
@@ -458,7 +455,6 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     startTime = time.time()
     for libFile in libFileList:
         tmpTuple = getPublicFunctionsFromLibrary(libFile, [os.path.splitext(os.path.basename(libFile))[0]], [libFilePath], existingFunctionNames)
-        tagsList.extend(tmpTuple[0])
     endTime = time.time()
     writeSingleLineToLog("LIBFILES took " + str(lengthTime) + " seconds")
 
@@ -466,12 +462,11 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     startTime = time.time()
     for globalFile in globalFileList:
         tmpTuple = getPublicConstantsFromLibrary(globalFile[0], [globalFile[1]], [currentDirectory])
-        tagsList.extend(tmpTuple[0])
         constantsList.extend(tmpTuple[1])
     endTime = time.time()
     writeSingleLineToLog("GLOBALS took " + str(lengthTime) + " seconds")
 
-    return tagsList, constantsList
+    return [], constantsList
 
 def writeSingleLineToLog(inputString):
     if not os.path.exists(LOG_DIRECTORY):
@@ -507,7 +502,6 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
     length = endTime - startTime
     writeSingleLineToLog("tokenizing " + importFile + " took " + str(length) + " seconds and the number of tokens is " + str(len(tokenList)))
 
-    tagsLinesList = []
     constantsList = []
 
     requiredToken = None
@@ -565,7 +559,7 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
     length = endTime - startTime
     writeSingleLineToLog("if statements took " + str(length) + " seconds")
 
-    return tagsLinesList, constantsList
+    return [], constantsList
 
 def archiveTempTags(pid):
     archiveDirectory = os.path.join(TAGS_FILE_DIRECTORY, datetime.today().strftime('%Y-%m-%d'))
@@ -686,7 +680,6 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
         return packageFile, functionLine
     else:
         return "", 0
-
 
 def findFunctionFromMakefile(currentDirectory, varName):
     makeFile = os.path.join(currentDirectory, "Makefile")
