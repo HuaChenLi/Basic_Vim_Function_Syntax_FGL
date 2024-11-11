@@ -52,7 +52,6 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
 
     # This is the part where we want to loop through and find the function definitions in the current file
     librariesList = []
-    existingFunctionNames = set()
 
     existingTypes = {}
     isImportingLibrary = False
@@ -106,7 +105,6 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
                 continue
             else:
                 # We create the list of regular function tags
-                existingFunctionNames.add(token)
                 continue
 
         if isTypeFunction and not prevTokenNotNewline == "(" and not prevTokenNotNewline == ")" and not token == ")":
@@ -191,9 +189,7 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
         fileAlias = lib[1].split(".")
         libraryTagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + "." + lib[1] + TAGS_SUFFIX
         if not os.path.isfile(libraryTagsFile):
-            tmpTuple = getPublicVariablesFromLibrary(importFilePath, fileAlias, packagePaths, existingFunctionNames)
-            if tmpTuple[0] is not None:
-                existingFunctionNames.update(tmpTuple[1])
+            tmpTuple = getPublicVariablesFromLibrary(importFilePath, packagePaths)
             if tmpTuple[2] is not None:
                 constantsList.extend(tmpTuple[2])
     endTime = time.time()
@@ -203,7 +199,7 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
     startTime = time.time()
     makefileTagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".Makefile" + TAGS_SUFFIX
     if not os.path.isfile(makefileTagsFile):
-        tmpTuple = getMakefileFunctions(currentDirectory, existingFunctionNames)
+        tmpTuple = getMakefileFunctions(currentDirectory, set())
         constantsList.extend(tmpTuple[1])
     endTime = time.time()
     lengthTime = endTime - startTime
@@ -221,7 +217,7 @@ def writeConstantsFile(constantsList, constantsFile, mode):
     file.write("".join(constantsList))
     file.close()
 
-def getPublicVariablesFromLibrary(importFile, fileAlias, packagePaths, existingFunctionNames):
+def getPublicVariablesFromLibrary(importFile, packagePaths):
     # I think Genero probably doesn't have overloading, but I think the priority for function scope goes
     # Current File > Imported Library > OBJFILES > CUSTLIBS > LIBFILES
     writeSingleLineToLog("getting functions from " + importFile)
@@ -275,8 +271,6 @@ def getPublicVariablesFromLibrary(importFile, fileAlias, packagePaths, existingF
         prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
         if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end" and not prevPrevToken == "private":
-            # We create the list of the function tags
-            existingFunctionNames.add(token)
             continue
 
         if prevToken == "constant" and prevPrevToken == "public":
@@ -293,7 +287,7 @@ def getPublicVariablesFromLibrary(importFile, fileAlias, packagePaths, existingF
     length = endTime - startTime
     writeSingleLineToLog("if statements took " + str(length) + " seconds")
 
-    return [], existingFunctionNames, constantsList
+    return [], set(), constantsList
 
 def tokenizeString(inputString):
     # basically, the massive line of regex code repeats, so we will grab all printable characters (since all printable characters are between ! to ~ except white spaces)
@@ -439,7 +433,7 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
 
     startTime = time.time()
     for obj in objFileList:
-        tmpTuple = getPublicVariablesFromLibrary(obj[0], [obj[1]], [currentDirectory], existingFunctionNames)
+        tmpTuple = getPublicVariablesFromLibrary(obj[0], [currentDirectory])
         existingFunctionNames.update(tmpTuple[1])
     endTime = time.time()
     lengthTime = endTime - startTime
@@ -447,14 +441,14 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
 
     startTime = time.time()
     for custLib in custLibFileList:
-        tmpTuple = getPublicVariablesFromLibrary(custLib[0], [custLib[1]], packagePaths, existingFunctionNames)
+        tmpTuple = getPublicVariablesFromLibrary(custLib[0], packagePaths)
         existingFunctionNames.update(tmpTuple[1])
     endTime = time.time()
     writeSingleLineToLog("CUSTLIBS took " + str(lengthTime) + " seconds")
 
     startTime = time.time()
     for libFile in libFileList:
-        tmpTuple = getPublicVariablesFromLibrary(libFile, [os.path.splitext(os.path.basename(libFile))[0]], [libFilePath], existingFunctionNames)
+        tmpTuple = getPublicVariablesFromLibrary(libFile, [libFilePath])
     endTime = time.time()
     writeSingleLineToLog("LIBFILES took " + str(lengthTime) + " seconds")
 
