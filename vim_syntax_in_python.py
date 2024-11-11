@@ -154,7 +154,6 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
         if prevTokenNotNewline == "constant":
             if tokenLower not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
-            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             continue
 
         if prevTokenNotNewline == "type":
@@ -292,7 +291,6 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
                 continue
             else:
                 # We create the list of the function tags
-                fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
                 existingFunctionNames.add(token)
                 continue
 
@@ -367,25 +365,6 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
     vimSyntaxLengthOfTime = vimSyntaxEnd - vimSyntaxStart
     writeSingleLineToLog("vim syntax for " + currentFile + " took " + str(vimSyntaxLengthOfTime) + " seconds")
 
-def createListOfTags(functionName, currentFile, lineNumber, functionTokens, existingFunctionNames):
-    # this is interesting, I would need to, for each separation, create a tagLine
-    tagsLinesList = []
-
-    # I've inlined the createSingleTagLine() function to increase the speed very marginally
-    if existingFunctionNames is None:
-        tagsLinesList.append("%s\t%s\t%s\n" % (functionName, currentFile, lineNumber))
-    elif functionName not in existingFunctionNames:
-        tagsLinesList.append("%s\t%s\t%s\n" % (functionName, currentFile, lineNumber))
-    elif len(existingFunctionNames) == 0:
-        tagsLinesList.append("%s\t%s\t%s\n" % (functionName, currentFile, lineNumber))
-
-    functionNameString = functionName
-    for token in reversed(functionTokens):
-        functionNameString = "%s.%s" % (token, functionNameString)
-        tagsLinesList.append("%s\t%s\t%s\n" % (functionNameString, currentFile, lineNumber))
-
-    return tagsLinesList
-
 def createSingleTagLine(jumpToString, jumpToFile, lineNumber):
     return "%s\t%s\t%s\n" % (jumpToString, jumpToFile, lineNumber)
 
@@ -457,7 +436,6 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
 
         if ((prevToken == "function") or (prevToken == "report")) and not prevPrevToken == "end" and not prevPrevToken == "private":
             # We create the list of the function tags
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=existingFunctionNames))
             existingFunctionNames.add(token)
             continue
 
@@ -465,13 +443,11 @@ def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingF
             if token not in GENERO_KEY_WORDS:
                 constantsList.append("%s%s" % (token, "\n"))
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
         if prevToken == "type" and prevPrevToken == "public":
             if token not in GENERO_KEY_WORDS:
                 constantsList.append("%s%s" % (token, "\n"))
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()
     length = endTime - startTime
@@ -669,26 +645,6 @@ def writeSingleLineToLog(inputString):
     outputString = currentTime + ": " + inputString + "\n"
     file.write(outputString)
 
-def createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, fileAlias):
-    isExistingPackageFile = False
-
-    for package in packagePaths:
-        packageFile = os.path.join(package, importFilePath)
-        if os.path.isfile(packageFile):
-            isExistingPackageFile = True
-            break
-
-    if not isExistingPackageFile:
-        writeSingleLineToLog("couldn't find file " + concatenatedImportString)
-        return []
-
-    tagsLineList = [createSingleTagLine(concatenatedImportString, packageFile, 1)]
-
-    if fileAlias is not None:
-        tagsLineList.append(createSingleTagLine(fileAlias, packageFile, 1))
-
-    return tagsLineList
-
 def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
     writeSingleLineToLog("getting constants from " + importFile)
     isExistingPackageFile = False
@@ -754,7 +710,6 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             if token.lower() not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
                 constantsList.append("%s%s" % (token, "\n"))
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
             continue
 
         # this statement is 100% gonna fail with DYNAMIC ARRAY OF RECORD
@@ -765,7 +720,6 @@ def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
             if token.lower() not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
                 constantsList.append("%s%s" % (token, "\n"))
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=packageFile, lineNumber=lineNumber, functionTokens=fileAlias, existingFunctionNames=None))
 
     endTime = time.time()
     length = endTime - startTime
