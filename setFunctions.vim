@@ -11,6 +11,7 @@ let s:script_dir = fnamemodify(resolve(expand('<sfile>', ':p')), ':h')
 "The entire below section is for jumping to variable definition
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! setFunctions#GotoDefinition(filePath)
+    mark '
     let lineNumber = line('.')
     let fileContent = join(getline(1, '$'), "\n")
     let varName = setFunctions#CWordWithKey()
