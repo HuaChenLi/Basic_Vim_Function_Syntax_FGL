@@ -104,7 +104,6 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
                 isTypeFunction = True
                 continue
             else:
-                # We create the list of regular function tags
                 continue
 
         if isTypeFunction and not prevTokenNotNewline == "(" and not prevTokenNotNewline == ")" and not token == ")":
@@ -186,7 +185,6 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
     startTime = time.time()
     for lib in librariesList:
         importFilePath = lib[0]
-        fileAlias = lib[1].split(".")
         libraryTagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + "." + lib[1] + TAGS_SUFFIX
         if not os.path.isfile(libraryTagsFile):
             tmpTuple = getPublicVariablesFromLibrary(importFilePath, packagePaths)
@@ -199,7 +197,7 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
     startTime = time.time()
     makefileTagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".Makefile" + TAGS_SUFFIX
     if not os.path.isfile(makefileTagsFile):
-        tmpTuple = getMakefileFunctions(currentDirectory, set())
+        tmpTuple = getMakefileFunctions(currentDirectory)
         constantsList.extend(tmpTuple[1])
     endTime = time.time()
     lengthTime = endTime - startTime
@@ -364,7 +362,7 @@ def removeTempTags(pid, bufNum):
     except OSError:
         pass
 
-def getMakefileFunctions(currentDirectory, existingFunctionNames):
+def getMakefileFunctions(currentDirectory):
     makeFile = os.path.join(currentDirectory, "Makefile")
     if not os.path.isfile(makeFile):
         return [], []
@@ -434,7 +432,6 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     startTime = time.time()
     for obj in objFileList:
         tmpTuple = getPublicVariablesFromLibrary(obj[0], [currentDirectory])
-        existingFunctionNames.update(tmpTuple[1])
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("OBJFILES took " + str(lengthTime) + " seconds")
@@ -442,7 +439,6 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     startTime = time.time()
     for custLib in custLibFileList:
         tmpTuple = getPublicVariablesFromLibrary(custLib[0], packagePaths)
-        existingFunctionNames.update(tmpTuple[1])
     endTime = time.time()
     writeSingleLineToLog("CUSTLIBS took " + str(lengthTime) + " seconds")
 
@@ -455,7 +451,7 @@ def getMakefileFunctions(currentDirectory, existingFunctionNames):
     constantsList = []
     startTime = time.time()
     for globalFile in globalFileList:
-        tmpTuple = getPublicConstantsFromLibrary(globalFile[0], [globalFile[1]], [currentDirectory])
+        tmpTuple = getPublicConstantsFromLibrary(globalFile[0], [currentDirectory])
         constantsList.extend(tmpTuple[1])
     endTime = time.time()
     writeSingleLineToLog("GLOBALS took " + str(lengthTime) + " seconds")
@@ -474,7 +470,7 @@ def writeSingleLineToLog(inputString):
     outputString = currentTime + ": " + inputString + "\n"
     file.write(outputString)
 
-def getPublicConstantsFromLibrary(importFile, fileAlias, packagePaths):
+def getPublicConstantsFromLibrary(importFile, packagePaths):
     writeSingleLineToLog("getting constants from " + importFile)
     isExistingPackageFile = False
 
