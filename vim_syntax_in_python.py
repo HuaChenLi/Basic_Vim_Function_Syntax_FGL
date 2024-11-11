@@ -136,7 +136,8 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
                 importFilePath = importFilePath + FGL_SUFFIX
                 librariesList.append((importFilePath, token))
             elif token == "\n":
-                importFilePath = importFilePath + FGL_SUFFIX
+                if prevPrevToken != "as":
+                    importFilePath = importFilePath + FGL_SUFFIX
                 librariesList.append((importFilePath, concatenatedImportString))
 
             if token == "\n":
