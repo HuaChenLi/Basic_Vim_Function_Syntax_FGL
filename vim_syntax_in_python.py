@@ -39,18 +39,6 @@ def generateTags(inputString, currentFile, pid, bufNum):
     if not os.path.exists(TAGS_FILE_DIRECTORY):
         os.makedirs(TAGS_FILE_DIRECTORY)
 
-    vim.command("execute 'set tags='") # resets the tags
-
-    tagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + TAGS_SUFFIX
-
-    searchString = r"\b" + re.escape(pid + "." + bufNum) + r"\b" + r"[\.\w]+" + re.escape(TAGS_SUFFIX)
-
-    allTagFiles = os.listdir(TAGS_FILE_DIRECTORY)
-    for f in allTagFiles:
-        existingTagsFile = os.path.join(TAGS_FILE_DIRECTORY, f)
-        if os.path.isfile(existingTagsFile) and re.search(searchString, os.path.join(TAGS_FILE_DIRECTORY, f)):
-            vim.command("execute 'set tags+=" + existingTagsFile + "'")
-
     currentDirectory = os.path.dirname(currentFile)
     packagePaths = [currentDirectory]
     try:
@@ -205,7 +193,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
     lengthTime = endTime - startTime
     writeSingleLineToLog("going through current buffer took " + str(lengthTime) + " seconds")
 
-    constantsFile = os.path.join(TAGS_FILE_DIRECTORY, ".constants." + pid + "." + bufNum + CONSTANTS_SUFFIX)
+    constantsFile = os.path.join(TAGS_FILE_DIRECTORY, "constants." + pid + "." + bufNum + CONSTANTS_SUFFIX)
 
     constantsList = []
     startTime = time.time()
@@ -232,6 +220,7 @@ def generateTags(inputString, currentFile, pid, bufNum):
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting Makefile Functions took " + str(lengthTime) + " seconds")
 
+    writeConstantsFile(constantsList, constantsFile, "a")
     highlightExistingConstants(constantsFile)
 
     vimSyntaxEnd = time.time()
@@ -420,6 +409,11 @@ def createListOfTags(functionName, currentFile, lineNumber, functionTokens, exis
 
 def createSingleTagLine(jumpToString, jumpToFile, lineNumber):
     return "%s\t%s\t%s\n" % (jumpToString, jumpToFile, lineNumber)
+
+def writeConstantsFile(constantsList, constantsFile, mode):
+    file = open(constantsFile, mode)
+    file.write("".join(constantsList))
+    file.close()
 
 def createListOfTypeMethodTags(currentVariables, typeDefinition, jumpToFile):
     tagsLineList = []
