@@ -65,26 +65,6 @@ EOF
 endfunction
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-function! setFunctions#GenerateTagsForCurrentBuffer(filePath, pid, bufNum)
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    let fileContent = join(getline(1,'$'), "\n")
-
-    " python for 2, python3 for 3
-python << EOF
-import sys
-import vim
-
-script_dir = vim.eval('s:script_dir')
-sys.path.insert(0, script_dir)
-
-import vim_syntax_in_python
-
-vim_syntax_in_python.highlightVariablesForCurrentBuffer(vim.eval('fileContent'), vim.eval('a:filePath'), vim.eval('a:pid'), vim.eval('a:bufNum'))
-EOF
-
-endfunction
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! setFunctions#CWordWithKey() abort
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     " Allows the '.' to be used as a keyword temporarily
