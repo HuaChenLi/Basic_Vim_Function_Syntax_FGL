@@ -101,24 +101,9 @@ EOF
 
 endfunction
 
-
-function! setFunctions#DeleteTempTags(pid, bufNum)
-
-python << EOF
-import sys
-import vim
-
-script_dir = vim.eval('s:script_dir')
-sys.path.insert(0, script_dir)
-
-import vim_syntax_in_python
-
-vim_syntax_in_python.removeTempTags(vim.eval('a:pid'), vim.eval('a:bufNum'))
-EOF
-
-endfunction
-
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! setFunctions#ArchiveTempTags(pid)
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 python << EOF
 import sys
