@@ -46,7 +46,7 @@ endfunction
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " This is the wrapper function of the python script
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-function! setFunctions#GenerateTags(filePath, pid, bufNum)
+function! setFunctions#HighlightVariables(filePath, pid, bufNum)
     let fileContent = join(getline(1,'$'), "\n")
 
     " python for 2, python3 for 3
@@ -59,7 +59,7 @@ sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
 
-vim_syntax_in_python.generateTags(vim.eval('fileContent'), vim.eval('a:filePath'), vim.eval('a:pid'), vim.eval('a:bufNum'))
+vim_syntax_in_python.highlightVariables(vim.eval('fileContent'), vim.eval('a:filePath'), vim.eval('a:pid'), vim.eval('a:bufNum'))
 EOF
 
 endfunction
@@ -170,10 +170,10 @@ function! setFunctions#Setup()
 
     " This runs the GenerateTags() whenever a buffer is switched to
     " This could potentially get pretty heavy depending on the number of files there are
-    autocmd! BufEnter <buffer> call setFunctions#GenerateTags(g:filePath, getpid(), bufnr('%'))
+    autocmd! BufEnter <buffer> call setFunctions#HighlightVariables(g:filePath, getpid(), bufnr('%'))
     autocmd! VimLeave <buffer> call setFunctions#ArchiveTempTags(getpid())
-    autocmd! InsertLeave <buffer> call setFunctions#GenerateTagsForCurrentBuffer(g:filePath, getpid(), bufnr('%'))
-    autocmd! BufWritePost <buffer> call setFunctions#GenerateTags(g:filePath, getpid(), bufnr('%'))
+    autocmd! InsertLeave <buffer> call setFunctions#HighlightVariables(g:filePath, getpid(), bufnr('%'))
+    autocmd! BufWritePost <buffer> call HighlightVariables#GenerateTags(g:filePath, getpid(), bufnr('%'))
 
     " The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
     nnoremap <buffer> <silent> <C-]> : execute 'tag '.setFunctions#CWordWithKey()<CR>

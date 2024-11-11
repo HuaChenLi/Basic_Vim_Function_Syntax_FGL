@@ -29,7 +29,7 @@ tokenDictionary = {
     "{" : "}"
 }
 
-def generateTags(inputString, currentFile, pid, bufNum):
+def highlightVariables(inputString, currentFile, pid, bufNum):
     vimSyntaxStart = time.time()
     startTime = time.time()
     writeSingleLineToLog("=========================================================")
