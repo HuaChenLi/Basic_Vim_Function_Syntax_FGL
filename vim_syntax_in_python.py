@@ -201,7 +201,6 @@ def generateTags(inputString, currentFile, pid, bufNum):
             isDefiningVariable = False
             currentVariables = set()
 
-    writeTagsFile(tagsLinesList, tagsFile, "w")
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("going through current buffer took " + str(lengthTime) + " seconds")
@@ -217,7 +216,6 @@ def generateTags(inputString, currentFile, pid, bufNum):
         if not os.path.isfile(libraryTagsFile):
             tmpTuple = getPublicFunctionsFromLibrary(importFilePath, fileAlias, packagePaths, existingFunctionNames)
             if tmpTuple[0] is not None:
-                writeTagsFile(tmpTuple[0], libraryTagsFile, "a")
                 existingFunctionNames.update(tmpTuple[1])
             if tmpTuple[2] is not None:
                 constantsList.extend(tmpTuple[2])
@@ -229,13 +227,11 @@ def generateTags(inputString, currentFile, pid, bufNum):
     makefileTagsFile = TAGS_FILE_BASE + "." + pid + "." + bufNum + ".Makefile" + TAGS_SUFFIX
     if not os.path.isfile(makefileTagsFile):
         tmpTuple = getMakefileFunctions(currentDirectory, existingFunctionNames)
-        writeTagsFile(tmpTuple[0], makefileTagsFile, "a")
         constantsList.extend(tmpTuple[1])
     endTime = time.time()
     lengthTime = endTime - startTime
     writeSingleLineToLog("getting Makefile Functions took " + str(lengthTime) + " seconds")
 
-    writeConstantsFile(constantsList, constantsFile, "a")
     highlightExistingConstants(constantsFile)
 
     vimSyntaxEnd = time.time()
@@ -396,8 +392,6 @@ def generateTagsForCurrentBuffer(inputString, currentFile, pid, bufNum):
             isDefiningVariable = False
             currentVariables = set()
 
-    writeTagsFile(tagsLinesList, tagsFile, "w")
-
     constantsFile = os.path.join(TAGS_FILE_DIRECTORY, ".constants." + pid + "." + bufNum + CONSTANTS_SUFFIX)
     highlightExistingConstants(constantsFile)
 
@@ -433,19 +427,6 @@ def createListOfTypeMethodTags(currentVariables, typeDefinition, jumpToFile):
         for t in typeDefinition:
             tagsLineList.append("%s.%s\t%s\t%s\n" % (v, t[0], jumpToFile, t[1]))
     return tagsLineList
-
-def writeTagsFile(tagsLinesList, tagsFile, mode):
-    # The tags file needs to be sorted alphabetically (by ASCII code) in order to work
-    tagsLinesList.sort()
-    file = open(tagsFile, mode)
-    file.write("".join(tagsLinesList))
-    file.close()
-    vim.command("execute 'set tags+=" + tagsFile + "'")
-
-def writeConstantsFile(constantsList, constantsFile, mode):
-    file = open(constantsFile, mode)
-    file.write("".join(constantsList))
-    file.close()
 
 def getPublicFunctionsFromLibrary(importFile, fileAlias, packagePaths, existingFunctionNames):
     # I think Genero probably doesn't have overloading, but I think the priority for function scope goes
