@@ -51,7 +51,6 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
     tokenList = tokenizeString(inputString)
 
     # This is the part where we want to loop through and find the function definitions in the current file
-    tagsLinesList = []
     librariesList = []
     existingFunctionNames = set()
 
@@ -84,7 +83,6 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
                 globalFilePath = globalFilePath + token
             elif (requiredToken == '"' and token == '"') or (requiredToken == "'" and token == "'") or (requiredToken == "`" and token == "`"):
                 isImportingGlobal = False
-                tagsLinesList.extend(getPublicConstantsFromLibrary(globalFilePath, [globalFilePath], [currentDirectory])[0])
 
         if token in tokenDictionary and requiredToken is None:
             requiredToken = tokenDictionary.get(token)
@@ -108,8 +106,6 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
                 continue
             else:
                 # We create the list of regular function tags
-                fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
-                tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=existingFunctionNames))
                 existingFunctionNames.add(token)
                 continue
 
@@ -142,11 +138,9 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
             if prevToken == "as":
                 importFilePath = importFilePath + FGL_SUFFIX
                 librariesList.append((importFilePath, token))
-                tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, token))
             elif token == "\n":
                 importFilePath = importFilePath + FGL_SUFFIX
                 librariesList.append((importFilePath, concatenatedImportString))
-                tagsLinesList.extend(createImportLibraryTag(importFilePath, concatenatedImportString, packagePaths, None))
 
             if token == "\n":
                 isImportingLibrary = False
@@ -161,15 +155,12 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
             if tokenLower not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
             fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
             continue
 
         if prevTokenNotNewline == "type":
             if tokenLower not in GENERO_KEY_WORDS:
                 vim.command("execute 'syn match constantGroup /\\<" + token + "\\>/'")
-            fileWithoutExtension = os.path.splitext(os.path.basename(currentFile))[0]
             existingTypes[token] = []
-            tagsLinesList.extend(createListOfTags(functionName=token, currentFile=currentFile, lineNumber=lineNumber, functionTokens=[fileWithoutExtension], existingFunctionNames=None))
             continue
 
         if not isDefiningVariable and tokenLower == "define":
@@ -181,7 +172,6 @@ def highlightVariables(inputString, currentFile, pid, bufNum):
             continue
 
         if isDefiningVariable and not (prevTokenNotNewline == "define" or prevTokenNotNewline == ",") and token in existingTypes:
-            tagsLinesList.extend(createListOfTypeMethodTags(currentVariables, existingTypes[token], currentFile))
             currentVariables = set()
 
         # this statement is 100% gonna fail with DYNAMIC ARRAY OF RECORD
