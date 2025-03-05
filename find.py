@@ -289,7 +289,7 @@ def findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, curren
             continue
 
         if isImportingLibrary and concatenatedImportString.endswith(varName):
-            packageFile = checkLibraryExists(importFilePath + FGL_SUFFIX, packagePaths)
+            packageFile = getPackageFile(importFilePath + FGL_SUFFIX, packagePaths)
             functionLine = 1
             isLibraryFunction = True
             break
@@ -300,7 +300,7 @@ def findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, curren
                 if prefix == token:
                     libLogging.writeSingleLineToLog("with alias " + importFilePath)
                     if numParts == 1:
-                        packageFile = checkLibraryExists(importFilePath, packagePaths)
+                        packageFile = getPackageFile(importFilePath, packagePaths)
                         functionLine = 1
                     elif numParts > 1:
                         tmpTuple = findFunctionFromSpecificLibrary(importFilePath, packagePaths, functionName)
@@ -384,7 +384,7 @@ def findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, curren
 
     return packageFile, functionLine
 
-def checkLibraryExists(importFile, packagePaths):    
+def getPackageFile(importFile, packagePaths):    
     libLogging.writeSingleLineToLog("getting functions from here " + importFile)
     isExistingPackageFile = False
 
