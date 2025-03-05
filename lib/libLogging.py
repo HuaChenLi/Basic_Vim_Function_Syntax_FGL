@@ -2,8 +2,8 @@ import os
 import datetime
 from os.path import expanduser
 
-HOME = expanduser("~")
-TAGS_FILE_DIRECTORY = os.path.join(HOME, ".temp_tags")
+from lib.constants import TAGS_FILE_DIRECTORY
+
 LOG_DIRECTORY = os.path.join(TAGS_FILE_DIRECTORY, "fgl_syntax_log")
 
 

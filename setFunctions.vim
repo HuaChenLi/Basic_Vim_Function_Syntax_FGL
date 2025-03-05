@@ -24,6 +24,7 @@ script_dir = vim.eval('s:script_dir')
 sys.path.insert(0, script_dir)
 
 import vim_syntax_in_python
+import find
 
 tmpTuple1 = None
 tmpTuple1 = vim_syntax_in_python.findVariableDefinition(vim.eval('varName'), vim.eval('fileContent'), vim.eval('g:filePath'), vim.eval('lineNumber'))

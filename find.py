@@ -3,26 +3,13 @@ import time
 import re
 
 import lib.libLogging as libLogging
-import tokenize
+import lib.tokenize as tokenize
 
+from lib.constants import tokenDictionary
+from lib.constants import GENERO_KEY_WORDS
+from lib.constants import FGL_SUFFIX
+from lib.constants import FGL_DIRECTORY_SUFFIX
 
-FGL_SUFFIX = ".4gl"
-FGL_DIRECTORY_SUFFIX = ".4gs"
-
-GENERO_KEY_WORDS = set()
-KEYWORDS_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "genero_key_words.txt")
-if os.path.isfile(KEYWORDS_FILE):
-    GENERO_KEY_WORDS.update(open(KEYWORDS_FILE, "r").read().lower().split("\n"))
-
-
-tokenDictionary = {
-    "'" : "'",
-    '"' : '"',
-    "`" : "`",
-    "#" : "\n",
-    "--" : "\n",
-    "{" : "}"
-}
 
 def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
     libLogging.writeSingleLineToLog("getting functions from here " + importFile)

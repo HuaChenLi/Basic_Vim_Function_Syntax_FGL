@@ -2,7 +2,6 @@ import re
 import os
 import time
 import shutil
-from os.path import expanduser
 from datetime import datetime
 
 import find
@@ -10,14 +9,12 @@ import lib.libLogging as libLogging
 import lib.tokenize as tokenize
 import vimCommands
 
-from lib.generoConstants import tokenDictionary
-from lib.generoConstants import FGL_SUFFIX
-from lib.generoConstants import GENERO_KEY_WORDS
-from lib.generoConstants import FGL_DIRECTORY_SUFFIX
-
-HOME = expanduser("~")
-TAGS_FILE_DIRECTORY = os.path.join(HOME, ".temp_tags")
-CONSTANTS_SUFFIX = ".cons"
+from lib.constants import tokenDictionary
+from lib.constants import FGL_SUFFIX
+from lib.constants import GENERO_KEY_WORDS
+from lib.constants import FGL_DIRECTORY_SUFFIX
+from lib.constants import TAGS_FILE_DIRECTORY
+from lib.constants import CONSTANTS_SUFFIX
 
 
 def highlightVariables(inputString, currentFile, pid, bufNum):
