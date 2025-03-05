@@ -26,7 +26,7 @@ sys.path.append(script_dir)
 import findGeneroObject
 
 tmpTuple1 = None
-tmpTuple1 = findGeneroObject.findVariableDefinition(vim.eval('varName'), vim.eval('fileContent'), vim.eval('g:filePath'), vim.eval('lineNumber'))
+tmpTuple1 = findGeneroObject.findGeneroObject(vim.eval('varName'), vim.eval('fileContent'), vim.eval('g:filePath'), vim.eval('lineNumber'))
 
 execCommand = "let packageFile = '" + str(tmpTuple1[0]) + "'"
 vim.command(execCommand)

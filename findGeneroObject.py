@@ -405,10 +405,10 @@ def getPackageFile(importFile, packagePaths):
 
     return packageFile
 
-def findVariableDefinition(varName, buffer, currentFile, currentLineNumber):
+def findGeneroObject(varName, buffer, currentFile, currentLineNumber):
     startTime = time.time()
     libLogging.writeSingleLineToLog("=========================================================")
-    libLogging.writeSingleLineToLog("looking for variable " + varName)
+    libLogging.writeSingleLineToLog("looking for object " + varName)
     libLogging.writeSingleLineToLog("=========================================================")
 
     tokenList = tokenize.tokenizeString(buffer)
