@@ -7,30 +7,18 @@ from datetime import datetime
 
 import find
 import lib.libLogging as libLogging
-import tokenize
+import lib.tokenize as tokenize
 import vimCommands
+
+from lib.generoConstants import tokenDictionary
+from lib.generoConstants import FGL_SUFFIX
+from lib.generoConstants import GENERO_KEY_WORDS
+from lib.generoConstants import FGL_DIRECTORY_SUFFIX
 
 HOME = expanduser("~")
 TAGS_FILE_DIRECTORY = os.path.join(HOME, ".temp_tags")
-LOG_DIRECTORY = os.path.join(TAGS_FILE_DIRECTORY, "fgl_syntax_log")
-TAGS_FILE_BASE = os.path.join(HOME, ".temp_tags",".temp_tags")
-FGL_DIRECTORY_SUFFIX = ".4gs"
-FGL_SUFFIX = ".4gl"
 CONSTANTS_SUFFIX = ".cons"
 
-GENERO_KEY_WORDS = set()
-KEYWORDS_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "genero_key_words.txt")
-if os.path.isfile(KEYWORDS_FILE):
-    GENERO_KEY_WORDS.update(open(KEYWORDS_FILE, "r").read().lower().split("\n"))
-
-tokenDictionary = {
-    "'" : "'",
-    '"' : '"',
-    "`" : "`",
-    "#" : "\n",
-    "--" : "\n",
-    "{" : "}"
-}
 
 def highlightVariables(inputString, currentFile, pid, bufNum):
     vimSyntaxStart = time.time()
