@@ -2,7 +2,7 @@ import os
 import time
 import re
 
-import libLogging
+import lib.libLogging as libLogging
 import tokenize
 
 

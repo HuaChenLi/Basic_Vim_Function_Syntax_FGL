@@ -6,7 +6,7 @@ from os.path import expanduser
 from datetime import datetime
 
 import find
-import libLogging
+import lib.libLogging as libLogging
 import tokenize
 import vimCommands
 
