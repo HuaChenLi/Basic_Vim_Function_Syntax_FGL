@@ -1,6 +1,10 @@
 import os
 import time
+import sys
 import re
+
+sys.path.append(os.path.abspath(""))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'syntax')))
 
 import lib.libLogging as libLogging
 import lib.tokenize as tokenize
@@ -400,3 +404,31 @@ def getPackageFile(importFile, packagePaths):
         return ""
 
     return packageFile
+
+def findVariableDefinition(varName, buffer, currentFile, currentLineNumber):
+    startTime = time.time()
+    libLogging.writeSingleLineToLog("=========================================================")
+    libLogging.writeSingleLineToLog("looking for variable " + varName)
+    libLogging.writeSingleLineToLog("=========================================================")
+
+    tokenList = tokenize.tokenizeString(buffer)
+
+    currentDirectory = os.path.dirname(currentFile)
+    packagePaths = [currentDirectory]
+    try:
+        # allows the environment variable to be split depending on the os
+        packagePaths.extend(os.environ['FGLLDPATH'].split(os.pathsep))
+    except:
+        # this is in case the FGLLDPATH doesn't exist
+        pass
+
+    tmpTuple = findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, currentLineNumber)
+    packageFile = tmpTuple[0]
+    functionLine = tmpTuple[1]
+
+    endTime = time.time()
+    lengthTime = endTime - startTime
+    libLogging.writeSingleLineToLog("looking for definition took " + str(lengthTime))
+
+    return packageFile, functionLine
+

@@ -4,10 +4,10 @@ import time
 import shutil
 from datetime import datetime
 
-import find
+import findGeneroObject as findGeneroObject
 import lib.libLogging as libLogging
 import lib.tokenize as tokenize
-import vimCommands
+import lib.vimCommands as vimCommands
 
 from lib.constants import tokenDictionary
 from lib.constants import FGL_SUFFIX
@@ -271,33 +271,6 @@ def getPublicVariablesFromLibrary(importFile, packagePaths):
     libLogging.writeSingleLineToLog("if statements took " + str(length) + " seconds")
 
     return [], set(), constantsList
-
-def findVariableDefinition(varName, buffer, currentFile, currentLineNumber):
-    startTime = time.time()
-    libLogging.writeSingleLineToLog("=========================================================")
-    libLogging.writeSingleLineToLog("looking for variable " + varName)
-    libLogging.writeSingleLineToLog("=========================================================")
-
-    tokenList = tokenize.tokenizeString(buffer)
-
-    currentDirectory = os.path.dirname(currentFile)
-    packagePaths = [currentDirectory]
-    try:
-        # allows the environment variable to be split depending on the os
-        packagePaths.extend(os.environ['FGLLDPATH'].split(os.pathsep))
-    except:
-        # this is in case the FGLLDPATH doesn't exist
-        pass
-
-    tmpTuple = find.findFunctionAndMethods(varName, tokenList, currentFile, packagePaths, currentLineNumber)
-    packageFile = tmpTuple[0]
-    functionLine = tmpTuple[1]
-
-    endTime = time.time()
-    lengthTime = endTime - startTime
-    libLogging.writeSingleLineToLog("looking for definition took " + str(lengthTime))
-
-    return packageFile, functionLine
 
 def findFunctionWrapper(buffer):
     tokenList = tokenize.tokenizeString(buffer)

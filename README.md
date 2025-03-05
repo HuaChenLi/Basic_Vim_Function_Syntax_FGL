@@ -9,4 +9,4 @@ set FGLLDPATH=C:\Users\hua-c\vimfiles\syntax\packages;C:\Users\hua-c\vimfiles\sy
 
 Run this command on my Windows Machine
 
-cd %HOMEPATH% & del vimfiles\autoload\vim_syntax_in_python.py & del vimfiles\autoload\setFunctions.vim & del vimfiles\autoload\genero_key_words.txt & mklink /H vimfiles\autoload\vim_syntax_in_python.py vimfiles\syntax\vim_syntax_in_python.py & mklink /H vimfiles\autoload\setFunctions.vim vimfiles\syntax\setFunctions.vim & mklink /H vimfiles\autoload\genero_key_words.txt vimfiles\syntax\genero_key_words.txt
+cd %HOMEPATH% & del vimfiles\autoload\vim_syntax_in_python.py & del vimfiles\autoload\setFunctions.vim & del vimfiles\autoload\genero_key_words.txt & del vimfiles\autoload\findGeneroObject.py & mklink /H vimfiles\autoload\vim_syntax_in_python.py vimfiles\syntax\vim_syntax_in_python.py & mklink /H vimfiles\autoload\setFunctions.vim vimfiles\syntax\setFunctions.vim & mklink /H vimfiles\autoload\genero_key_words.txt vimfiles\syntax\genero_key_words.txt & mklink /H vimfiles\autoload\findGeneroObject.py vimfiles\syntax\findGeneroObject.py

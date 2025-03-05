@@ -21,13 +21,12 @@ import sys
 import vim
 
 script_dir = vim.eval('s:script_dir')
-sys.path.insert(0, script_dir)
+sys.path.append(script_dir)
 
-import vim_syntax_in_python
-import find
+import findGeneroObject
 
 tmpTuple1 = None
-tmpTuple1 = vim_syntax_in_python.findVariableDefinition(vim.eval('varName'), vim.eval('fileContent'), vim.eval('g:filePath'), vim.eval('lineNumber'))
+tmpTuple1 = findGeneroObject.findVariableDefinition(vim.eval('varName'), vim.eval('fileContent'), vim.eval('g:filePath'), vim.eval('lineNumber'))
 
 execCommand = "let packageFile = '" + str(tmpTuple1[0]) + "'"
 vim.command(execCommand)
@@ -56,7 +55,9 @@ import sys
 import vim
 
 script_dir = vim.eval('s:script_dir')
-sys.path.insert(0, script_dir)
+sys.path.append(script_dir)
+
+print(script_dir)
 
 import vim_syntax_in_python
 
@@ -136,10 +137,10 @@ function! setFunctions#Setup()
 
     " This runs the GenerateTags() whenever a buffer is switched to
     " This could potentially get pretty heavy depending on the number of files there are
-    autocmd! BufEnter <buffer> call setFunctions#HighlightVariables(g:filePath, getpid(), bufnr('%'))
-    autocmd! VimLeave <buffer> call setFunctions#ArchiveTempTags(getpid())
-    autocmd! InsertLeave <buffer> call setFunctions#HighlightVariables(g:filePath, getpid(), bufnr('%'))
-    autocmd! BufWritePost <buffer> call setFunctions#HighlightVariables(g:filePath, getpid(), bufnr('%'))
+    " autocmd! BufEnter <buffer> call setFunctions#HighlightVariables(g:filePath, getpid(), bufnr('%'))
+    " autocmd! VimLeave <buffer> call setFunctions#ArchiveTempTags(getpid())
+    " autocmd! InsertLeave <buffer> call setFunctions#HighlightVariables(g:filePath, getpid(), bufnr('%'))
+    " autocmd! BufWritePost <buffer> call setFunctions#HighlightVariables(g:filePath, getpid(), bufnr('%'))
 
     " The below section remaps CTRL-] so that the behaviour of the word is only changed when jumping to tag
     nnoremap <buffer> <silent> <C-]> : execute 'tag '.setFunctions#CWordWithKey()<CR>

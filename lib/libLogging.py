@@ -1,5 +1,5 @@
 import os
-import datetime
+from datetime import datetime
 from os.path import expanduser
 
 from lib.constants import TAGS_FILE_DIRECTORY

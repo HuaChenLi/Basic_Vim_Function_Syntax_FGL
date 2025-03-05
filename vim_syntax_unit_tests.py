@@ -27,6 +27,13 @@ class TestStringMethods(unittest.TestCase):
         outputArray = ["\\\\\\", "r", "whacko", "escapes", "\""]
         self.assertEqual(lib.tokenize.tokenizeString(inputString), outputArray)
 
+class TestFileSearches(unittest.TestCase):
+
+    def test_getPackageFile(self):
+        # importFile = 
+        self.assertTrue(1==1)
+
+
 if __name__ == '__main__':
     unittest.main()
 
