@@ -121,8 +121,9 @@ def findFunctionFromMakefile(currentDirectory, varName):
     makeFile = os.path.join(currentDirectory, "Makefile")
     if not os.path.isfile(makeFile):
         return "", 0
-    file = open(makeFile, "r")
-    tokenList = tokenize.tokenizeString(file.read())
+    tmpFile = open(makeFile, "r")
+    tokenList = tokenize.tokenizeString(tmpFile.read())
+    tmpFile.close()
 
     objFileList = []
     custLibFileList = []

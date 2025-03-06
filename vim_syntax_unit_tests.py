@@ -49,7 +49,10 @@ class TestFileSearches(unittest.TestCase):
         self.assertEqual( findGeneroObject.findFunctionFromSpecificLibrary("test3.4gl", [libPath], "test_function"), (str(os.path.join(libPath, "test3.4gl")), 5) )
 
     def test_findFunctionFromMakefile(self):
-        pass
+        # find basic function
+        libPath = os.path.join(PACKAGE_FILE_TEST_DIRECTORY, "testLib")
+        os.environ['FGLLDPATH'] = libPath
+        self.assertEqual( findGeneroObject.findFunctionFromMakefile(PACKAGE_FILE_TEST_DIRECTORY, "test_function400"), (str(os.path.join(libPath, "test4.4gl")), 6) )
 
     def test_findFunctionAndMethods(self):
         pass
