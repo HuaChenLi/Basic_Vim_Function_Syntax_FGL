@@ -400,7 +400,6 @@ def getMakefileFunctions(currentDirectory):
 
     return [], constantsList
 
-
 def getPublicConstantsFromLibrary(importFile, packagePaths):
     libLogging.writeSingleLineToLog("getting constants from " + importFile)
     isExistingPackageFile = False
