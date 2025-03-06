@@ -42,6 +42,17 @@ class TestFileSearches(unittest.TestCase):
         libPath = os.path.join(PACKAGE_FILE_TEST_DIRECTORY, "testLib")
         self.assertEqual( str(findGeneroObject.getPackageFile("test2.4gl", [libPath])), str(os.path.join(libPath, "test2.4gl")))
 
+    def test_findFunctionFromSpecificLibrary(self):
+        pass
+
+    def test_findFunctionFromMakefile(self):
+        pass
+
+    def test_findFunctionAndMethods(self):
+        pass
+
+    def test_findGeneroObject(self):
+        pass
 
 def runTests():
     return len(unittest.main(__name__, exit=False).result.failures) == 0
