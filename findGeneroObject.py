@@ -32,6 +32,7 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
 
     file = open(packageFile, "r")
     fileContent = file.read()
+    file.close()
 
     if not re.search(functionName, fileContent):
         libLogging.writeSingleLineToLog("no function name in here")

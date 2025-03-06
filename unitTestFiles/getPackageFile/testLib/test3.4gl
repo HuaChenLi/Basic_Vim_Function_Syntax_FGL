@@ -1,0 +1,7 @@
+
+
+
+
+PUBLIC FUNCTION test_function()
+
+END FUNCTION

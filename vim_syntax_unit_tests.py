@@ -36,14 +36,17 @@ class TestStringMethods(unittest.TestCase):
         outputArray = ["\\\\\\", "r", "whacko", "escapes", "\""]
         self.assertEqual(lib.tokenize.tokenizeString(inputString), outputArray)
 
+
 class TestFileSearches(unittest.TestCase):
 
     def test_getPackageFile(self):
         libPath = os.path.join(PACKAGE_FILE_TEST_DIRECTORY, "testLib")
-        self.assertEqual( str(findGeneroObject.getPackageFile("test2.4gl", [libPath])), str(os.path.join(libPath, "test2.4gl")))
+        self.assertEqual( str(findGeneroObject.getPackageFile("test2.4gl", [libPath])), str(os.path.join(libPath, "test2.4gl")) )
 
     def test_findFunctionFromSpecificLibrary(self):
-        pass
+        # find basic function
+        libPath = os.path.join(PACKAGE_FILE_TEST_DIRECTORY, "testLib")
+        self.assertEqual( findGeneroObject.findFunctionFromSpecificLibrary("test3.4gl", [libPath], "test_function"), (str(os.path.join(libPath, "test3.4gl")), 5) )
 
     def test_findFunctionFromMakefile(self):
         pass
@@ -53,6 +56,7 @@ class TestFileSearches(unittest.TestCase):
 
     def test_findGeneroObject(self):
         pass
+
 
 def runTests():
     return len(unittest.main(__name__, exit=False).result.failures) == 0
