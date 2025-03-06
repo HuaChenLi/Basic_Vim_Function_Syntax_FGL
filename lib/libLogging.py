@@ -18,3 +18,4 @@ def writeSingleLineToLog(inputString):
     currentTime = datetime.today().strftime('%Y-%m-%d-%H:%M:%S.%f')
     outputString = currentTime + ": " + inputString + "\n"
     file.write(outputString)
+    file.close()

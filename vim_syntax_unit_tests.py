@@ -1,8 +1,14 @@
+import os
 import unittest
 
+from unittest import TextTestRunner
+
 import lib.tokenize
+import findGeneroObject
 
-
+CURRENT_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
+UNIT_TEST_DIRECTORY = os.path.join(CURRENT_DIRECTORY, "unitTestFiles")
+PACKAGE_FILE_TEST_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "getPackageFile")
 
 class TestStringMethods(unittest.TestCase):
 
@@ -30,9 +36,13 @@ class TestStringMethods(unittest.TestCase):
 class TestFileSearches(unittest.TestCase):
 
     def test_getPackageFile(self):
-        # importFile = 
-        self.assertTrue(1==1)
+        libPath = os.path.join(PACKAGE_FILE_TEST_DIRECTORY, "testLib")
+        self.assertEqual( str(findGeneroObject.getPackageFile("test2.4gl", [libPath])), str(os.path.join(libPath, "test2.4gl")))
 
+
+def runTests():
+    return len(unittest.main(__name__, exit=False).result.failures) == 0
+    
 
 if __name__ == '__main__':
     unittest.main()

@@ -14,7 +14,7 @@ syntax_test.hua
 .setFunctions*
 other_python.py
 test_python.py
-*.4gl
+
 *.4gl.*
 
 syntax.code-workspace
