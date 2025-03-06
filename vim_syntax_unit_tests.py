@@ -5,10 +5,13 @@ from unittest import TextTestRunner
 
 import lib.tokenize
 import findGeneroObject
+import lib.libLogging as libLogging
 
 CURRENT_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 UNIT_TEST_DIRECTORY = os.path.join(CURRENT_DIRECTORY, "unitTestFiles")
 PACKAGE_FILE_TEST_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "getPackageFile")
+
+libLogging.LogLevel.logLevel = libLogging.OFF_LEVEL
 
 class TestStringMethods(unittest.TestCase):
 
