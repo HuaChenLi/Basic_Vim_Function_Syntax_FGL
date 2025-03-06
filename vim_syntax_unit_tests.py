@@ -9,8 +9,6 @@ import lib.libLogging as libLogging
 
 CURRENT_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 UNIT_TEST_DIRECTORY = os.path.join(CURRENT_DIRECTORY, "unitTestFiles")
-PACKAGE_FILE_TEST_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "getPackageFile")
-FIND_FUNCTION_FROM_SPECIFIC_LIBRARY = os.path.join(UNIT_TEST_DIRECTORY, "findFunctionFromSpecificLibrary")
 
 libLogging.LogLevel.logLevel = libLogging.OFF_LEVEL
 
@@ -39,21 +37,23 @@ class TestStringMethods(unittest.TestCase):
 
 
 class TestFileSearches(unittest.TestCase):
+    PACKAGE_FILE_TEST_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "getPackageFile")
+    FIND_FUNCTION_FROM_SPECIFIC_LIBRARY = os.path.join(UNIT_TEST_DIRECTORY, "findFunctionFromSpecificLibrary")
 
     def test_getPackageFile(self):
-        libPath = os.path.join(PACKAGE_FILE_TEST_DIRECTORY, "testLib")
+        libPath = os.path.join(self.PACKAGE_FILE_TEST_DIRECTORY, "testLib")
         self.assertEqual( str(findGeneroObject.getPackageFile("test2.4gl", [libPath])), str(os.path.join(libPath, "test2.4gl")) )
 
     def test_findFunctionFromSpecificLibrary(self):
         # find basic function
-        libPath = os.path.join(FIND_FUNCTION_FROM_SPECIFIC_LIBRARY, "testLib")
+        libPath = os.path.join(self.FIND_FUNCTION_FROM_SPECIFIC_LIBRARY, "testLib")
         self.assertEqual( findGeneroObject.findFunctionFromSpecificLibrary("test3.4gl", [libPath], "test_function"), (str(os.path.join(libPath, "test3.4gl")), 5) )
 
     def test_findFunctionFromMakefile(self):
         # find basic function
-        libPath = os.path.join(PACKAGE_FILE_TEST_DIRECTORY, "testLib")
+        libPath = os.path.join(self.PACKAGE_FILE_TEST_DIRECTORY, "testLib")
         os.environ['FGLLDPATH'] = libPath
-        self.assertEqual( findGeneroObject.findFunctionFromMakefile(PACKAGE_FILE_TEST_DIRECTORY, "test_function400"), (str(os.path.join(libPath, "test4.4gl")), 6) )
+        self.assertEqual( findGeneroObject.findFunctionFromMakefile(self.PACKAGE_FILE_TEST_DIRECTORY, "test_function400"), (str(os.path.join(libPath, "test4.4gl")), 6) )
 
     def test_findFunctionAndMethods(self):
         pass
