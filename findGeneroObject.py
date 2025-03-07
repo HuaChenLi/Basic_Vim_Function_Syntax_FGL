@@ -52,9 +52,22 @@ class GeneroToken:
 class GeneroTokenList:
     list = []
 
+    def __init__(self):
+        self.list = []
+
     def getPreviousToken(self, i):
-        if self.list != [] and i > 0 and i < len(self.list):
+        if self.list != [] and i > 0 and i <= len(self.list):
             return self.list[i - 1].getValue()
+        
+    def getPreviousTokenNotNewLine(self, i):
+        if self.list == [] or i <= 0 or i >= len(self.list):
+            print("ssssssssssssssssssssssssssss")
+            return
+        
+        if self.list[i - 1].getValue() == "\n":
+            return self.getPreviousTokenNotNewLine(i - 1)
+        
+        return self.list[i - 1].getValue()
 
 
 def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
@@ -90,8 +103,7 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
     prevPrevToken = ""
     prevTokenNotNewline = ""
     prevToken = ""
-    tmpToken = "\n"
-    lineNumber = 0
+    lineNumber = 1
     functionLine = 0
 
     isFunctionFound = False
@@ -104,13 +116,14 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
     generoTokenList = GeneroTokenList()
     currentRegion = NOTHING_REGION
 
-    for token in tokenList:
-        tmpToken, prevToken = token, tmpToken
-        if prevToken == "\n":
-            lineNumber += 1
-
+    for x, token in enumerate(tokenList):
         tmpGeneroToken = GeneroToken(token)
         generoTokenList.list.append(tmpGeneroToken)
+
+        prevToken = generoTokenList.getPreviousToken(x)
+
+        if prevToken == "\n":
+            lineNumber += 1
 
         if currentRegion == NOTHING_REGION:
             if token in PUNCTUATION_SET:
@@ -128,10 +141,13 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
             if token in COMMENT_DICTIONARY:
                 currentRegion = COMMENT_REGION
                 requiredToken = COMMENT_DICTIONARY.get(token)
+                continue
             elif token in STRING_DICTIONARY:
                 currentRegion = STRING_REGION
-            # elif token.lower() == "function":
-            #     currentRegion = FUNCTION_REGION
+                continue
+            elif token.lower() == "function":
+                currentRegion = FUNCTION_REGION
+                continue
 
         if currentRegion == COMMENT_REGION:
             if token == requiredToken:
@@ -144,8 +160,11 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
             elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
                 requiredToken = None
                 continue
+        # elif currentRegion == FUNCTION_REGION:
+        #     if token 
 
-        prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
+        if prevToken is not None:
+            prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
         if prevToken not in tokenDictionary and prevToken != "\n":
             prevPrevToken = prevTokenNotNewline
