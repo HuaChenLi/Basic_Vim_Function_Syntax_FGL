@@ -10,7 +10,6 @@ import lib.libLogging as libLogging
 CURRENT_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 UNIT_TEST_DIRECTORY = os.path.join(CURRENT_DIRECTORY, "unitTestFiles")
 
-libLogging.LogLevel.logLevel = libLogging.OFF_LEVEL
 
 class TestStringMethods(unittest.TestCase):
 
@@ -40,6 +39,7 @@ class TestFileSearches(unittest.TestCase):
     PACKAGE_FILE_TEST_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "getPackageFile")
     FIND_FUNCTION_FROM_SPECIFIC_LIBRARY_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "findFunctionFromSpecificLibrary")
     FIND_FUNCTION_FROM_MAKEFILE_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "findFunctionFromMakefile")
+    FIND_FUNCTION_AND_METHODS_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "findFunctionAndMethods")
 
     def test_getPackageFile(self):
         libPath = os.path.join(self.PACKAGE_FILE_TEST_DIRECTORY, "testLib")
@@ -57,13 +57,18 @@ class TestFileSearches(unittest.TestCase):
         self.assertEqual( findGeneroObject.findFunctionFromMakefile(self.FIND_FUNCTION_FROM_MAKEFILE_DIRECTORY, "test_function400"), (str(os.path.join(libPath, "test4.4gl")), 6) )
 
     def test_findFunctionAndMethods(self):
-        pass
+        # find basic function
+        tokenList = ["import", "fgl", "test5", "\n", "call", "testLib", ".", "test_function100", "("]
+        libPath = os.path.join(self.FIND_FUNCTION_AND_METHODS_DIRECTORY, "testLib")
+        currentFile = os.path.join(self.FIND_FUNCTION_AND_METHODS_DIRECTORY, "nonExistantFile.4gl")
+        self.assertEqual( findGeneroObject.findFunctionAndMethods("test_function100", tokenList, currentFile, [libPath], 2), (libFile, 7))
 
     def test_findGeneroObject(self):
         pass
 
 
 def runTests():
+    libLogging.LogLevel.logLevel = libLogging.OFF_LEVEL
     return len(unittest.main(__name__, exit=False).result.failures) == 0
     
 

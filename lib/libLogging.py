@@ -16,8 +16,6 @@ def writeSingleLineToLog(inputString):
     if LogLevel.logLevel == OFF_LEVEL:
         return
 
-    print(LogLevel.logLevel)
-
     if not os.path.exists(LOG_DIRECTORY):
         os.makedirs(LOG_DIRECTORY)
 
