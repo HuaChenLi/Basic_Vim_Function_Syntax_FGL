@@ -15,6 +15,25 @@ from lib.constants import FGL_SUFFIX
 from lib.constants import FGL_DIRECTORY_SUFFIX
 
 
+IDENTIFIER = 1
+KEYWORD = 2
+LITERAL = 3
+OPERATOR = 4
+PUNCTUATION = 5
+COMMENT = 6
+
+
+class generoToken:
+    value = None
+    category = None
+
+    def setValue(self, v):
+        self.value = v
+
+    def setRegion(self, r):
+       self.category = r
+
+
 def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
     libLogging.writeSingleLineToLog("getting functions from here " + importFile)
     isExistingPackageFile = False
