@@ -13,6 +13,9 @@ from lib.constants import tokenDictionary
 from lib.constants import GENERO_KEY_WORDS
 from lib.constants import FGL_SUFFIX
 from lib.constants import FGL_DIRECTORY_SUFFIX
+from lib.constants import COMMENT_DICTIONARY
+from lib.constants import STRING_DICTIONARY
+from lib.constants import PUNCTUATION_SET
 
 
 IDENTIFIER = 1
@@ -23,15 +26,35 @@ PUNCTUATION = 5
 COMMENT = 6
 
 
-class generoToken:
+NOTHING_REGION = 100
+COMMENT_REGION = 101
+FUNCTION_REGION = 102
+STRING_REGION = 103
+
+
+class GeneroToken:
     value = None
     category = None
+
+    def __init__(self, v):
+        self.value = v
 
     def setValue(self, v):
         self.value = v
 
-    def setRegion(self, r):
+    def getValue(self):
+        return self.value
+
+    def setCategory(self, r):
        self.category = r
+
+
+class GeneroTokenList:
+    list = []
+
+    def getPreviousToken(self, i):
+        if self.list != [] and i > 0 and i < len(self.list):
+            return self.list[i - 1].getValue()
 
 
 def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
@@ -78,20 +101,49 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
 
     startTime = time.time()
 
+    generoTokenList = GeneroTokenList()
+    currentRegion = NOTHING_REGION
+
     for token in tokenList:
         tmpToken, prevToken = token, tmpToken
         if prevToken == "\n":
             lineNumber += 1
 
-        if token in tokenDictionary and requiredToken is None:
-            requiredToken = tokenDictionary.get(token)
-        elif requiredToken is not None and token != requiredToken:
-            continue
-        elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
-            continue
-        elif token == requiredToken:
-            requiredToken = None
-            continue
+        tmpGeneroToken = GeneroToken(token)
+        generoTokenList.list.append(tmpGeneroToken)
+
+        if currentRegion == NOTHING_REGION:
+            if token in PUNCTUATION_SET:
+                tmpGeneroToken.setCategory(PUNCTUATION)
+            elif token in PUNCTUATION_SET:
+                tmpGeneroToken.setCategory()
+            elif token in COMMENT_DICTIONARY:
+                tmpGeneroToken.setCategory(COMMENT)
+            elif token in GENERO_KEY_WORDS:
+                tmpGeneroToken.setCategory(KEYWORD)
+            elif token in STRING_DICTIONARY:
+                tmpGeneroToken.setCategory(STRING_REGION)
+
+            
+            if token in COMMENT_DICTIONARY:
+                currentRegion = COMMENT_REGION
+                requiredToken = COMMENT_DICTIONARY.get(token)
+            elif token in STRING_DICTIONARY:
+                currentRegion = STRING_REGION
+            # elif token.lower() == "function":
+            #     currentRegion = FUNCTION_REGION
+
+        if currentRegion == COMMENT_REGION:
+            if token == requiredToken:
+                requiredToken = None
+                continue
+        elif currentRegion == STRING_REGION:
+            if requiredToken == token == "`":
+                requiredToken = None
+                continue
+            elif ((token == "'" and requiredToken == "'") or (token == '"' and requiredToken == '"')) and re.match(r"^\\(\\\\)*$", prevToken):
+                requiredToken = None
+                continue
 
         prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
