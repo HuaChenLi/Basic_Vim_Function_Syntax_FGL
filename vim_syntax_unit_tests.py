@@ -61,6 +61,7 @@ class TestFileSearches(unittest.TestCase):
         tokenList = ["import", "fgl", "test5", "\n", "call", "testLib", ".", "test_function100", "("]
         libPath = os.path.join(self.FIND_FUNCTION_AND_METHODS_DIRECTORY, "testLib")
         currentFile = os.path.join(self.FIND_FUNCTION_AND_METHODS_DIRECTORY, "nonExistantFile.4gl")
+        libFile = os.path.join(libPath, "test5.4gl")
         self.assertEqual( findGeneroObject.findFunctionAndMethods("test_function100", tokenList, currentFile, [libPath], 2), (libFile, 7))
 
     def test_findGeneroObject(self):
