@@ -64,9 +64,21 @@ class GeneroTokenList:
             return
         
         if self.list[i - 1].getValue() == "\n":
-            return self.getPreviousTokenNotNewLine(i - 1)
+            return self.getPreviousTokenByNumberNotNewLine(i - 1, 1)
         
         return self.list[i - 1].getValue()
+    
+    def getPreviousTokenByNumberNotNewLine(self, pos, numSpotsBack):
+        if self.list == [] or pos <= 0 or pos > len(self.list):
+            return
+        
+        if self.list[pos - 1].getValue() == "\n":
+            return self.getPreviousTokenByNumberNotNewLine(pos - 1, numSpotsBack)
+        
+        if numSpotsBack > 1:
+            return self.getPreviousTokenByNumberNotNewLine(pos - 1, numSpotsBack - 1)
+
+        return self.list[pos - 1].getValue()
 
 
 def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
@@ -165,8 +177,7 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
         if prevToken is not None:
             prevToken = prevToken.lower() # putting .lower() here so it doesn't run when it doesn't have to
 
-        if prevToken not in tokenDictionary and prevToken != "\n":
-            prevPrevToken = prevTokenNotNewline
+        prevPrevToken = generoTokenList.getPreviousTokenByNumberNotNewLine(x, 2)
 
         if generoTokenList.getPreviousTokenNotNewLine(x) is not None:
             prevTokenNotNewline = generoTokenList.getPreviousTokenNotNewLine(x).lower()
