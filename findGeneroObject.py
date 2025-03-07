@@ -60,8 +60,7 @@ class GeneroTokenList:
             return self.list[i - 1].getValue()
         
     def getPreviousTokenNotNewLine(self, i):
-        if self.list == [] or i <= 0 or i >= len(self.list):
-            print("ssssssssssssssssssssssssssss")
+        if self.list == [] or i <= 0 or i > len(self.list):
             return
         
         if self.list[i - 1].getValue() == "\n":
@@ -168,7 +167,9 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
 
         if prevToken not in tokenDictionary and prevToken != "\n":
             prevPrevToken = prevTokenNotNewline
-            prevTokenNotNewline = prevToken
+
+        if prevTokenNotNewline is not None:
+            prevTokenNotNewline = generoTokenList.getPreviousTokenNotNewLine(x).lower()
 
         if not isDefiningVariable and prevTokenNotNewline == "constant":
             variableList.add(token)
