@@ -40,6 +40,7 @@ class TestFileSearches(unittest.TestCase):
     FIND_FUNCTION_FROM_SPECIFIC_LIBRARY_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "findFunctionFromSpecificLibrary")
     FIND_FUNCTION_FROM_MAKEFILE_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "findFunctionFromMakefile")
     FIND_FUNCTION_AND_METHODS_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "findFunctionAndMethods")
+    FIND_GENERO_OBJECT_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "findGeneroObject")
 
     def test_getPackageFile(self):
         # find basic function
@@ -63,10 +64,15 @@ class TestFileSearches(unittest.TestCase):
         libPath = os.path.join(self.FIND_FUNCTION_AND_METHODS_DIRECTORY, "testLib")
         currentFile = os.path.join(self.FIND_FUNCTION_AND_METHODS_DIRECTORY, "nonExistantFile.4gl")
         libFile = os.path.join(libPath, "test5.4gl")
-        self.assertEqual( findGeneroObject.findFunctionAndMethods("test_function100", tokenList, currentFile, [libPath], 2), (libFile, 7))
+        self.assertEqual( findGeneroObject.findFunctionAndMethods("test_function100", tokenList, currentFile, [libPath], 2), (libFile, 7) )
 
     def test_findGeneroObject(self):
-        pass
+        # find basic function
+        bufferString = "import fgl test6\n" \
+        "call function test_function80"
+        currentFile = os.path.join(self.FIND_GENERO_OBJECT_DIRECTORY, "nonExistantFile.4gl")
+        libFile = os.path.join(self.FIND_GENERO_OBJECT_DIRECTORY, "testLib", "test6.4gl")
+        self.assertEqual( findGeneroObject.findGeneroObject("test_function80", bufferString, currentFile, 2), (currentFile, 2) )
 
 
 def runTests():
