@@ -168,7 +168,7 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
         if prevToken not in tokenDictionary and prevToken != "\n":
             prevPrevToken = prevTokenNotNewline
 
-        if prevTokenNotNewline is not None:
+        if generoTokenList.getPreviousTokenNotNewLine(x) is not None:
             prevTokenNotNewline = generoTokenList.getPreviousTokenNotNewLine(x).lower()
 
         if not isDefiningVariable and prevTokenNotNewline == "constant":
