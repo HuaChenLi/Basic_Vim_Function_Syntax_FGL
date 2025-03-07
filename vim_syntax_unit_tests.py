@@ -42,6 +42,7 @@ class TestFileSearches(unittest.TestCase):
     FIND_FUNCTION_AND_METHODS_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "findFunctionAndMethods")
 
     def test_getPackageFile(self):
+        # find basic function
         libPath = os.path.join(self.PACKAGE_FILE_TEST_DIRECTORY, "testLib")
         self.assertEqual( str(findGeneroObject.getPackageFile("test2.4gl", [libPath])), str(os.path.join(libPath, "test2.4gl")) )
 
