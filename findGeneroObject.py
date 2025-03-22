@@ -28,8 +28,15 @@ COMMENT = 6
 
 NOTHING_REGION = 100
 COMMENT_REGION = 101
-FUNCTION_REGION = 102
-STRING_REGION = 103
+FUNCTION_NAME_REGION = 102
+FUNCTION_REGION = 103
+STRING_REGION = 104
+VARIABLE_NAME_REGION = 105
+REPORT_NAME_REGION = 106
+REPORT_REGION = 107
+MAIN_REGION = 108
+CONSTANT_REGION = 109
+SQL_REGION = 110
 
 
 class GeneroToken:
@@ -157,7 +164,7 @@ def findFunctionFromSpecificLibrary(importFile, packagePaths, functionName):
                 currentRegion = STRING_REGION
                 continue
             elif token.lower() == "function":
-                currentRegion = FUNCTION_REGION
+                currentRegion = FUNCTION_NAME_REGION
                 continue
 
         if currentRegion == COMMENT_REGION:
