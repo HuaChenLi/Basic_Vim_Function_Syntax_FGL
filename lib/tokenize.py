@@ -6,5 +6,5 @@ def tokenizeString(inputString):
     # probably can create a regex that is smart enough to do the whole thing by itself, but can probably just handle it in the python code afterwards
 
     # this regex is a bit more efficient than before, not sure if it can be even more efficient
-    tokenBlock = re.findall(r"\w+|!|\"|#|\$|%|&|'|\(|\)|\*|\+|,|--|-|\/|\.|:|;|<|=|>|\?|@|\[|\\+|\]|\^|`|{|\||}|~|\n", inputString)
+    tokenBlock = re.findall(r"[\w\.]+|!|\"|#|\$|%|&|'|\(|\)|\*|\+|,|--|-|\/|\.|:|;|<|=|>|\?|@|\[|\\+|\]|\^|`|{|\||}|~|\n", inputString)
     return tokenBlock

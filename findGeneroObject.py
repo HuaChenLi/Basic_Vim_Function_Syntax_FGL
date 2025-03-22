@@ -38,6 +38,9 @@ MAIN_REGION = 108
 CONSTANT_REGION = 109
 SQL_REGION = 110
 
+FUNCTION_REPORT_METHOD = 200
+REPORT = 201
+VARIABLE = 202
 
 class GeneroToken:
     value = None
@@ -267,14 +270,14 @@ def findFunctionFromMakefile(currentDirectory, varName):
             importingFileType = prevToken
             continue
 
-        if importingFileType == "OBJFILES" and token == "o" and prevToken == ".":
-            file = prevPrevToken + FGL_SUFFIX
+        if importingFileType == "OBJFILES" and re.match(r"\w+\.o", token):
+            file = token.rsplit(".", 1)[0] + FGL_SUFFIX
             objFileList.append((file, prevPrevToken))
-        elif importingFileType == "CUSTLIBS" and token == "o" and prevToken == ".":
-            file = prevPrevToken + FGL_SUFFIX
+        elif importingFileType == "CUSTLIBS" and re.match(r"\w+\.o", token):
+            file = token.rsplit(".", 1)[0] + FGL_SUFFIX
             custLibFileList.append((file, prevPrevToken))
         elif importingFileType == "LIBFILES":
-            if token == "a" and prevToken == ".":
+            if re.match(r"\w+\.a", token):
                 libFilePath = libFilePath + FGL_DIRECTORY_SUFFIX
                 if os.path.isdir(libFilePath):
                     libFileList = [f for f in os.listdir(libFilePath) if os.path.isfile(os.path.join(libFilePath, f))]
@@ -289,9 +292,9 @@ def findFunctionFromMakefile(currentDirectory, varName):
                     pass
             elif token != "a" and prevToken == "/":
                 libFilePath = os.path.join(libFilePath, token)
-        elif importingFileType == "GLOBALS" and token == "o" and prevToken == ".":
-            file = prevPrevToken + FGL_SUFFIX
-            globalFileList.append((file, prevPrevToken))
+        elif importingFileType == "GLOBALS" and re.match(r"\w+\.o", token):
+            file = token.rsplit(".", 1)[0] + FGL_SUFFIX
+            globalFileList.append((file, token.rsplit(".", 1)[0]))
     endTime = time.time()
     lengthTime = endTime - startTime
     libLogging.writeSingleLineToLog("checking tokens in Makefile took " + str(lengthTime) + " seconds")

@@ -34,6 +34,17 @@ class TestStringMethods(unittest.TestCase):
         outputArray = ["\\\\\\", "r", "whacko", "escapes", "\""]
         self.assertEqual(lib.tokenize.tokenizeString(inputString), outputArray)
 
+        inputString = "test.test"
+        outputArray = ["test.test"]
+        self.assertEqual(lib.tokenize.tokenizeString(inputString), outputArray)
+        
+        inputString = "test.test hello"
+        outputArray = ["test.test", "hello"]
+        self.assertEqual(lib.tokenize.tokenizeString(inputString), outputArray)
+
+        inputString = "import fgl lib.test"
+        outputArray = ["import", "fgl", "lib.test"]
+        self.assertEqual(lib.tokenize.tokenizeString(inputString), outputArray)
 
 class TestFileSearches(unittest.TestCase):
     PACKAGE_FILE_TEST_DIRECTORY = os.path.join(UNIT_TEST_DIRECTORY, "getPackageFile")
